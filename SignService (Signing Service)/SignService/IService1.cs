@@ -354,6 +354,8 @@ namespace SignService
         [DataMember] public string Message { get; set; }
         [DataMember] public string MachineName { get; set; }
         [DataMember] public string MacAddress { get; set; }
+        [DataMember] public string WindowsUserName { get; set; }   
+        [DataMember] public string ClientIpAddress { get; set; }
     }
 
     [DataContract]
@@ -365,10 +367,14 @@ namespace SignService
         [DataMember] public string InputMac { get; set; }
         [DataMember] public string NormalizedInputMac { get; set; }
 
+        [DataMember] public bool IsMatch { get; set; }
+
         [DataMember] public string MachineName { get; set; }
         [DataMember] public string DeviceMac { get; set; }   
 
-        [DataMember] public bool IsMatch { get; set; }
+        [DataMember] public string WindowsUserName { get; set; }
+        [DataMember] public string ClientIpAddress { get; set; }
+
     }
 
 }
