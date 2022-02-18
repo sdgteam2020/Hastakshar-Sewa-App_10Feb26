@@ -1,0 +1,161 @@
+﻿<UserControl x:Class="DGISAPP.Views.SFTU"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:wpfx1="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <materialDesign:TransitioningContent x:Name="TrainsitionigContentSlide" OpeningEffect="{materialDesign:TransitionEffect SlideInFromLeft, Duration=0:0:0.8}">
+        <materialDesign:Card Padding="15" Width="700" Margin="10" x:Name="Card1" >
+            <Grid>
+                <StackPanel HorizontalAlignment="Left" >
+                    <Label x:Name="lblFileEncryption" FontSize="18" FontWeight="Bold">File Encryption (Single or Multiple Files)</Label>
+                    <Separator/>
+                    <StackPanel Background="LightBlue">
+                        <Label FontSize="12" FontWeight="Bold"  >Instructions :</Label>
+                        <Label x:Name="lblStep1" FontSize="12">Step 1. Enter Password for Encrypting file(s).</Label>
+                        <Label x:Name="lblStep2" FontSize="12">Step 2. Select single or Multiple files for Encryption and wait for few seconds.</Label>
+                        <Label x:Name="lblStep3" FontSize="12">Step 3. AES 256 Encrypted file (new file name :- Originalfilena_me_AES_date_milisecond.mil) at original location.</Label>
+                        <Label x:Name="lblStep4" FontSize="12">Step 4. Click OK to acknowledge or Open Path to open folder containing encrypted file(s).</Label>
+                        <Label x:Name="lblStep5" FontSize="12">Step 5. Share file with .mil extn to the recipient.</Label>
+
+                        <Label x:Name="lblNote" FontSize="12">Note : File encrypted using Hastakshar SEWA can be decrypted by this App only and Original file is not changed.</Label>
+                        <wpfx1:BusyIndicator  Name="BusyBar" IsBusy="False">
+                            <wpfx1:BusyIndicator.BusyContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="File Encrption in progress please wait" Name="Infomsg" FontWeight="Bold" HorizontalAlignment="Center" Padding="0,0,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </wpfx1:BusyIndicator.BusyContentTemplate>
+                        </wpfx1:BusyIndicator>
+                    </StackPanel>
+                    <WrapPanel HorizontalAlignment="Left" Margin="0,0,0,0" Background="LightBlue" Width="700" >
+                        <!--<RadioButton Content="Encryption by Password"   Margin="20,10,5,5" x:Name="RDefault"  Click="Default_Click">
+                        </RadioButton>-->
+                        <RadioButton Content="Secure File Tfr"  Margin="20,10,5,5"  IsChecked="True" x:Name="Encrypt"  Click="Encrypt_Click">
+                        </RadioButton>
+                        <RadioButton Content="Export File"  Margin="20,10,5,5"   x:Name="Export"  Click="Export_Click">
+                        </RadioButton>
+
+                    </WrapPanel>
+                    <WrapPanel HorizontalAlignment="Left" Margin="0,0,0,0" Width="700" >
+                        <TextBlock Style="{StaticResource MaterialDesignSubheadingTextBlock}" Name="txtDefaultPass"  FontWeight="SemiBold" Text="Please Enter Password for Encryption :" Padding="0 10 0 0" >
+             <!--<TextBlock.RenderTransform>
+                 <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+             </TextBlock.RenderTransform>-->
+                        </TextBlock>
+                        <Button x:Name="btnGetPublicKey" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Visible" Click="btnGetPublicKey_Click" Content="Get Public Key"  Height="29"  Margin="60,5,0,2"/>
+                        <RadioButton Content="Army No"   Margin="10,10,0,5" x:Name="RArmyNo" Visibility="Visible" Checked="RadioButton_Checked">
+                        </RadioButton>
+                        <RadioButton Content="Name"  Margin="10,10,0,5"   x:Name="RName" Visibility="Hidden" Checked="RadioButton_Checked">
+                        </RadioButton>
+                    </WrapPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- Row 0 → MAC Label -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Row 1 → MAC TextBox -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Row 2 → Warning -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Row 3 → Search -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Row 4 → Password -->
+                        </Grid.RowDefinitions>
+                        <!-- MAC Address Label -->
+                        <Label Grid.Row="0"
+                               Name="lblMacAddress"
+                        FontSize="12"
+                        Padding="0 10 10 0"
+                        Content="MAC Address :" />
+
+                        <!-- MAC Address TextBox -->
+                        <TextBox Grid.Row="1"
+                          Name="txtMacAddress"
+                          Margin="0,6,0,0"
+                          Width="600"
+                          FontFamily="Champagne &amp; Limousines"
+                          FontSize="18"
+                          materialDesign:HintAssist.Hint="Enter MAC Address (e.g. 00-1A-2B-3C-4D-5E)"/>
+
+
+                        <!-- warning / hint line -->
+                        <Label Grid.Row="2"
+                    FontSize="12"
+                    Padding="0 10 10 0"
+                    Name="txtDefaultPasswarnning">
+                            Please Enter Recipient's Public Key
+                        </Label>
+
+                        <!-- Search box -->
+                        <TextBox Grid.Row="3"
+                      Name="txtSearch"
+                      Margin="0,6,0,0"
+                      Visibility="Hidden"
+                      materialDesign:HintAssist.Hint="Search Name/Army No"
+                      MaxLength="20"
+                      Width="600"
+                      FontFamily="Champagne &amp; Limousines"
+                      FontSize="18"
+                      TextChanged="txtSearch_TextChanged"
+                      PreviewKeyDown="txtSearch_PreviewKeyDown"
+                      LostKeyboardFocus="txtSearch_LostKeyboardFocus"/>
+
+                        <!-- ✅ Suggestion Popup: always aligned to txtSearch -->
+                        <Popup Name="popSuggestions"
+                    PlacementTarget="{Binding ElementName=txtSearch}"
+                    Placement="Bottom"
+                    StaysOpen="False"
+                    AllowsTransparency="True"
+                    PopupAnimation="Fade">
+                            <Border Width="{Binding ActualWidth, ElementName=txtSearch}"
+                         Background="White"
+                         BorderBrush="#B0B0B0"
+                         BorderThickness="1"
+                         CornerRadius="4"
+                         SnapsToDevicePixels="True">
+                                <ListBox Name="lstSuggestions"
+                              MaxHeight="220"
+                              FontFamily="Champagne &amp; Limousines"
+                              FontSize="18"
+                              MouseDoubleClick="lstSuggestions_MouseDoubleClick"
+                              PreviewKeyDown="lstSuggestions_PreviewKeyDown">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="10,6"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                </ListBox>
+                            </Border>
+                        </Popup>
+
+                        <!-- Public key / password box -->
+                        <PasswordBox Grid.Row="4"
+                          x:Name="textpassword"
+                          Margin="0,6,0,0"
+                          materialDesign:HintAssist.Hint="Please Enter Recipient's Public Key"
+                          MaxLength="16"
+                          Width="600"
+                          FontFamily="Champagne &amp; Limousines"
+                          FontSize="18"/>
+                    </Grid>
+
+
+                    <StackPanel x:Name="DropList" Drop="DropList_Drop"  DragEnter="DropList_DragEnter" Background="#FFE2E2E2" AllowDrop="True" Margin="0,11,0,0"  Height="200">
+                        <Label x:Name="lbl2" Margin="0,45,0,0"  FontWeight="Bold" Content="Drag and Drop single or Multiple Files" VerticalAlignment="Center" HorizontalAlignment="Center" Height="37"/>
+                        <Label Content="or"  FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"></Label>
+                        <Button x:Name="btnOpenFile" VerticalAlignment="Center" HorizontalAlignment="Center" Click="btnOpenFiles_Click" Content="Select File(s)"  Height="41"/>
+                    </StackPanel>
+
+                </StackPanel>
+            </Grid>
+            
+        </materialDesign:Card>
+    </materialDesign:TransitioningContent>
+
+</UserControl>
