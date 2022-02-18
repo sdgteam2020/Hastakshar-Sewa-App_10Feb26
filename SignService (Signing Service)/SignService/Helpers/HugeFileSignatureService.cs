@@ -55,7 +55,13 @@ namespace SignService.Helpers
                     Description = description,
                     SignedBy = cert.Subject,
                     SigningDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss tt")
+                    
                 };
+                var MacResult = await new Service1().GetMacAddress();
+                if (MacResult.Status == true)
+                {
+                    sigObj.MacAddress = MacResult.MacAddress.ToString();
+                }
 
                 var outPath = filePath + ".sig.json";
 
@@ -164,6 +170,7 @@ namespace SignService.Helpers
             public string Description { get; set; }
             public string SignedBy { get; set; }
             public string SigningDate { get; set; }
+            public string MacAddress { get; set; }
         }
     }
 }

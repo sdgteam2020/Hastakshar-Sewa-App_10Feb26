@@ -13,6 +13,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using WinniesMessageBox;
+using Xceed.Document.NET;
 
 namespace DGISApp
 {
@@ -23,7 +24,7 @@ namespace DGISApp
         string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
 
         Aes myAes = Aes.Create();
-        bool ret1 = false;
+        int ret1 = 0;
         public SymmetricDecryption()
         {
             InitializeComponent();
@@ -104,7 +105,7 @@ namespace DGISApp
                     }
 
 
-                }
+              }
 
                 if (RDefault.IsChecked == true)
                 {
@@ -269,14 +270,14 @@ namespace DGISApp
 
 
                                             processedFiles++;
-                                            if (!ret1)
+                                            if (ret1 ==0)
                                             {
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
                                                     return MyMessageBox.Show("Wrong Token Inserted Does Not Match Private Key");
                                                 }));
 
-                                            }
+                                                        }
                                             else if (processedFiles == totalFiles)
                                             {
 
@@ -590,7 +591,7 @@ namespace DGISApp
 
 
                                     processedFiles++;
-                                    if (!ret1)
+                                    if (ret1==0)
                                     {
                                         var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                         {

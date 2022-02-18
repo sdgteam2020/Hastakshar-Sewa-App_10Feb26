@@ -2051,7 +2051,7 @@ namespace SignService
             int totalFiles = files.Count();
 
             int processedFiles = 0;
-            bool ret1 = false;
+            int ret1=0;
             X509Certificate2Collection fcollection = await helper.GetCertificates();
             X509Certificate2 cert1 = null;
             if (fcollection.Count == 1)
@@ -2094,11 +2094,9 @@ namespace SignService
                         ret1 = Service1.DecryptFile(fileforloop, filePath, cert1);
 
                     }
-
-                    if (!ret1)
+                   
+                    if (ret1 ==0)
                     {
-
-
                         responseMessage.Message = "Wrong Token Inserted Does Not Match Private Key.";
                         responseMessage.Valid = false;
                         return responseMessage;
@@ -2137,7 +2135,7 @@ namespace SignService
             if (end == "") return (text.Substring(p1));
             else return text.Substring(p1, p2 - p1) + "";
         }
-        public static bool EncryptFile(string inputFile, string outputFile, string rsaKeyXml, byte[] magicHeader)
+        public static bool EncryptFile(string inputFile, string outputFile, string rsaKeyXml, byte[] magicHeader, string macAddress = null)
         {
             try
             {
@@ -2149,12 +2147,36 @@ namespace SignService
                     aes.GenerateIV();
 
                     byte[] encryptedData;
+                    //using (MemoryStream ms = new MemoryStream())
+                    //using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    //{
+
+                    //    //cs.Write(magicHeader, 0, magicHeader.Length);
+                    //    cs.Write(fileData, 0, fileData.Length);
+                    //    cs.FlushFinalBlock();
+                    //    encryptedData = ms.ToArray();
+                    //}
+
                     using (MemoryStream ms = new MemoryStream())
                     using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    using (BinaryWriter bw = new BinaryWriter(cs, Encoding.UTF8, true))
                     {
+                        bool hasMac = !string.IsNullOrWhiteSpace(macAddress);
+                        bw.Write(hasMac);
 
-                        cs.Write(fileData, 0, fileData.Length);
+                        if (hasMac)
+                        {
+                            byte[] macBytes = Encoding.UTF8.GetBytes(macAddress);
+                            bw.Write(macBytes.Length);
+                            bw.Write(macBytes);
+                        }
+
+                        bw.Write(fileData.Length);
+                        bw.Write(fileData);
+
+                        bw.Flush();
                         cs.FlushFinalBlock();
+
                         encryptedData = ms.ToArray();
                     }
 
@@ -2187,7 +2209,7 @@ namespace SignService
 
 
         }
-        public static bool DecryptFile(string encryptedFile, string outputFile, X509Certificate2 privateCert)
+        public static int DecryptFile(string encryptedFile, string outputFile, X509Certificate2 privateCert)
         {
             try
             {
@@ -2220,24 +2242,74 @@ namespace SignService
                             aes.Key = aesKey;
                             aes.IV = aesIV;
 
+                            // Decrypt the file data using AES
+                            //using (MemoryStream ms = new MemoryStream())
+                            //using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
+                            //{
+                            //    cs.Write(encryptedData, 0, encryptedData.Length);
+                            //    cs.FlushFinalBlock();
+                            //    decryptedData = ms.ToArray();
+                            //}
+                            string macAddress = null;
+
                             using (MemoryStream ms = new MemoryStream())
                             using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
                             {
                                 cs.Write(encryptedData, 0, encryptedData.Length);
                                 cs.FlushFinalBlock();
-                                decryptedData = ms.ToArray();
+
+                                ms.Position = 0;
+
+                                using (BinaryReader br = new BinaryReader(ms, Encoding.UTF8))
+                                {
+                                    bool hasMac = br.ReadBoolean();
+
+                                    if (hasMac)
+                                    {
+                                        int macLength = br.ReadInt32();
+                                        byte[] macBytes = br.ReadBytes(macLength);
+                                        macAddress = Encoding.UTF8.GetString(macBytes);
+                                    }
+
+                                    int fileLength = br.ReadInt32();
+                                    decryptedData = br.ReadBytes(fileLength);
+                                }
                             }
+                            if (!string.IsNullOrEmpty(macAddress))
+                            {
+                                
+                                var service = new Service1();
+                                var macResponse = service.GetMacAddress().GetAwaiter().GetResult();
+
+                                if (!macResponse.Status)
+                                    return 2;
+                                if (macResponse.MacAddress != macAddress)
+                                {
+                                    return 3;
+                                }
+                                else
+                                {
+                                    string DownloadPath = System.IO.Path.GetDirectoryName(outputFile);
+                                    FileInfo fi = new FileInfo(outputFile);
+                                    string fileName = fi.Name.Split('_')[0];
+                                    outputFile = DownloadPath+"\\"+ fileName+".pdf";
+                                    File.WriteAllBytes(outputFile, decryptedData);
+                                    return 4;
+                                }
+                                    
+                            }
+                           
                         }
                     }
                 }
 
                 File.WriteAllBytes(outputFile, decryptedData);
-                return true;
+                return 1;
             }
             catch (Exception ex)
             {
                 ErrorLog.LogErrorToFile(ex);
-                return false;
+                return 0;
 
 
             }
