@@ -16,17 +16,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
-using System.Security.Principal;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
 using System.Xml;
 using ValidateCertificate;
 using WinniesMessageBox;
@@ -2976,8 +2973,7 @@ namespace SignService
             try
             {
                 var mac = GetPrimaryMacAddress();
-                var machine = Environment.MachineName;
-                var user = GetWindowsUserNameSafe();
+                var machine = Environment.MachineName;               
                 var ip = GetClientIpAddressSafe();
 
                 if (string.IsNullOrWhiteSpace(mac))
@@ -2990,7 +2986,7 @@ namespace SignService
                         Message = "MAC address not found (no active physical adapter detected).",
                         MachineName = machine,
                         MacAddress = null,
-                        WindowsUserName = user,
+                        WindowsUserName = Environment.UserName,
                         ClientIpAddress = ip
                     };
                 }
@@ -3003,7 +2999,7 @@ namespace SignService
                     Message = "MAC address fetched successfully.",
                     MachineName = machine,
                     MacAddress = mac,
-                    WindowsUserName = user,
+                    WindowsUserName = Environment.UserName,
                     ClientIpAddress = ip
                 };
             }
@@ -3017,96 +3013,118 @@ namespace SignService
                     Message = "Failed to read MAC address. " + ex.Message,
                     MachineName = Environment.MachineName,
                     MacAddress = null,
-                    WindowsUserName = GetWindowsUserNameSafe(),
+                    WindowsUserName = Environment.UserName,
                     ClientIpAddress = GetClientIpAddressSafe()
                 };
             }
         }
 
-        public async Task<MacVerifyResponse> VerifyMac(string mac)
+        public async Task<MacVerifyResponse> VerifyMac(DeviceVerifyRequest req)
         {
             await System.Threading.Tasks.Task.Yield();
+
             try
             {
                 var machine = Environment.MachineName;
-
-                if (string.IsNullOrWhiteSpace(mac))
-                {
-                    SetHttpStatusSafe(HttpStatusCode.BadRequest);
-                    return new MacVerifyResponse
-                    {
-                        Status = false,
-                        Message = "MAC address is required.",
-                        InputMac = mac,
-                        NormalizedInputMac = null,
-                        MachineName = machine,
-                        DeviceMac = null,
-                        IsMatch = false
-                    };
-                }
-
-                var inputNorm = NormalizeMac(mac);
-                if (inputNorm == null)
-                {
-                    SetHttpStatusSafe(HttpStatusCode.BadRequest);
-                    return new MacVerifyResponse
-                    {
-                        Status = false,
-                        Message = "Invalid MAC address format.",
-                        InputMac = mac,
-                        NormalizedInputMac = null,
-                        MachineName = machine,
-                        DeviceMac = null,
-                        IsMatch = false
-                    };
-                }
                  
                 var deviceMac = GetPrimaryMacAddress();
-                var deviceNorm = NormalizeMac(deviceMac);
+                var deviceMacNorm = NormalizeMac(deviceMac);
 
-                if (string.IsNullOrWhiteSpace(deviceMac) || deviceNorm == null)
+                var deviceUser = Environment.UserName;          
+
+                var deviceIp  = GetClientIpAddressSafe();            
+                
+                if (req == null)
+                {
+                    SetHttpStatusSafe(HttpStatusCode.BadRequest);
+                    return new MacVerifyResponse
+                    {
+                        Status = false,
+                        Message = "Request body is required.",
+                        MachineName = machine,
+                        DeviceMac = deviceMac,
+                        DeviceUserName = deviceUser,
+                        DeviceIpAddress = deviceIp,
+                        IsAllMatch = false
+                    };
+                }
+
+                var inputMacNorm = NormalizeMac(req.Mac);
+                var inputUserNorm = req.UserName;
+                var inputIpNorm = req.IpAddress;
+
+                if (inputMacNorm == null || inputUserNorm == null || inputIpNorm == null)
+                {
+                    SetHttpStatusSafe(HttpStatusCode.BadRequest);
+                    return new MacVerifyResponse
+                    {
+                        Status = false,
+                        Message = "Mac/UserName/IpAddress are required and must be valid.",
+                        InputMac = req.Mac,
+                        InputUserName = req.UserName,
+                        InputIpAddress = req.IpAddress,
+                        MachineName = machine,
+                        DeviceMac = deviceMac,
+                        DeviceUserName = deviceUser,
+                        DeviceIpAddress = deviceIp,
+                        IsAllMatch = false
+                    };
+                }
+
+                if (string.IsNullOrWhiteSpace(deviceMac) || deviceMacNorm == null || string.IsNullOrWhiteSpace(deviceUser) || string.IsNullOrWhiteSpace(deviceIp))
                 {
                     SetHttpStatusSafe(HttpStatusCode.NotFound);
                     return new MacVerifyResponse
                     {
                         Status = false,
-                        Message = "Device MAC address not found on this system.",
-                        InputMac = mac,
-                        NormalizedInputMac = inputNorm,
+                        Message = "Device identity not available on this system (MAC/User/IP missing).",
+                        InputMac = req.Mac,
+                        InputUserName = req.UserName,
+                        InputIpAddress = req.IpAddress,
                         MachineName = machine,
-                        DeviceMac = null,
-                        IsMatch = false
+                        DeviceMac = deviceMac,
+                        DeviceUserName = deviceUser,
+                        DeviceIpAddress = deviceIp,
+                        IsAllMatch = false
                     };
                 }
-
-                bool match = string.Equals(inputNorm, deviceNorm, StringComparison.OrdinalIgnoreCase);
                  
-                SetHttpStatusSafe(match ? HttpStatusCode.OK : HttpStatusCode.Unauthorized);
+                var macMatch = string.Equals(inputMacNorm, deviceMacNorm, StringComparison.OrdinalIgnoreCase);
+                var userMatch = string.Equals(inputUserNorm, deviceUser, StringComparison.OrdinalIgnoreCase);
+                var ipMatch = string.Equals(inputIpNorm, deviceIp, StringComparison.OrdinalIgnoreCase);
+
+                var all = macMatch && userMatch && ipMatch;
+
+                SetHttpStatusSafe(all ? HttpStatusCode.OK : HttpStatusCode.Unauthorized);
 
                 return new MacVerifyResponse
                 {
                     Status = true,
-                    Message = match ? "MAC verified successfully." : "MAC verification failed.",
-                    InputMac = mac,
-                    NormalizedInputMac = inputNorm,
+                    Message = all ? "Device verified successfully." : "Device verification failed.",
+
+                    InputMac = req.Mac,
+                    InputUserName = req.UserName,
+                    InputIpAddress = req.IpAddress,
+
                     MachineName = machine,
                     DeviceMac = deviceMac,
-                    IsMatch = match
+                    DeviceUserName = deviceUser,
+                    DeviceIpAddress = deviceIp,
+
+                    IsMacMatch = macMatch,
+                    IsUserMatch = userMatch,
+                    IsIpMatch = ipMatch,
+                    IsAllMatch = all
                 };
             }
             catch (Exception ex)
             {
                 SetHttpStatusSafe(HttpStatusCode.InternalServerError);
-
                 return new MacVerifyResponse
                 {
                     Status = false,
-                    Message = "VerifyMac failed: " + ex.Message,
-                    InputMac = mac,
-                    NormalizedInputMac = null,
-                    MachineName = Environment.MachineName,
-                    DeviceMac = null,
-                    IsMatch = false
+                    Message = "VerifyDevice failed: " + ex.Message,
+                    IsAllMatch = false
                 };
             }
         }
@@ -3185,29 +3203,16 @@ namespace SignService
             return string.Join("-", bytes.Select(b => b.ToString("X2")));
         }
 
-        private static string GetWindowsUserNameSafe()
-        {
-            try
-            {
-                 
-                var name = WindowsIdentity.GetCurrent()?.Name;
-                if (!string.IsNullOrWhiteSpace(name)) return name;
-                 
-                return Environment.UserName;
-            }
-            catch
-            {
-                return Environment.UserName;
-            }
-        }
-
         private static string GetClientIpAddressSafe()
         {
             try
             {
-                IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
-                string ip = a[0].ToString();
-                return ip;
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                var ip = host.AddressList.FirstOrDefault(a =>
+                    a.AddressFamily == AddressFamily.InterNetwork &&
+                    !IPAddress.IsLoopback(a));
+
+                return ip?.ToString();
             }
             catch
             {
