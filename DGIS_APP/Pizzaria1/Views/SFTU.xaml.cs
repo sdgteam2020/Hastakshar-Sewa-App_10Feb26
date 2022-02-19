@@ -102,12 +102,27 @@ namespace DGISAPP.Views
                 if (Encrypt.IsChecked == true)
                 {
                     string macAddress = txtMacAddress.Text.ToString();
+                    string username = txtUsername.Text.ToString();
+                    string dateValidity = dpValidity.Text.ToString();
                     if (macAddress == "")
                     {
 
                         MyMessageBox.ShowDialog("Please Enter Mac Address");
                         return;
                     }
+                    if (username == "")
+                    {
+
+                        MyMessageBox.ShowDialog("Please Enter username");
+                        return;
+                    }
+                    if (dateValidity == "")
+                    {
+
+                        MyMessageBox.ShowDialog("Please Enter Validity");
+                        return;
+                    }
+                    macAddress=macAddress+"_"+username+"_"+dateValidity;
                     if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
                     {
                         fileEncrypt(droppedFilePaths, macAddress);
@@ -150,9 +165,6 @@ namespace DGISAPP.Views
                 if (!string.IsNullOrEmpty(macAddress)) {
                      MacAddress = macAddress;
                 }
-               
-
-
                 ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
                 DownloadPath = System.IO.Path.GetDirectoryName(path);
 
@@ -170,7 +182,6 @@ namespace DGISAPP.Views
                     var IsFileEncrypted = expectedHeader.SequenceEqual(fileHeader);
                     if (fi.Extension == ".mil")
                     {
-
                         MyMessageBox.ShowDialog("mil File Extension Not Allow .");
                         break;
                     }
@@ -179,13 +190,11 @@ namespace DGISAPP.Views
                         MyMessageBox.ShowDialog("This is File Encrypted.");
                         break;
                     }
-
                     FileStream stream = File.OpenRead(path);
                     byte[] bytes = new byte[stream.Length];
                     stream.Read(bytes, 0, bytes.Length);
                     stream.Read(bytes, 0, bytes.Length);
                     stream.Close();
-                   
                     new Thread(async () =>
                     {
                         this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
@@ -284,13 +293,15 @@ namespace DGISAPP.Views
             lblNote.Content = "Note : Use Asymmetric encryption only for one-to-one file sharing as matching public-private Key pair\r\n           (IACA token) can only encrypt/ decrypt the file.";
 
             txtDefaultPass.Text = "Please fetch public key of inserted token :";
-            txtDefaultPasswarnning.Visibility = Visibility.Hidden;
-            txtDefaultPasswarnning.Content = "Please Enter Recipient's Public Key";
+            txtDefaultPasswarnning.Content = " Please Enter Recipient's Public Key";
+            txtDefaultPasswarnning.Visibility = Visibility.Visible;
             RArmyNo.Visibility = Visibility.Visible;
             btnGetPublicKey.Visibility = Visibility.Visible;
             textpassword.Visibility = Visibility.Visible;
-            txtMacAddress.Visibility = Visibility.Visible;
-            lblMacAddress.Visibility = Visibility.Visible;
+            //  txtMacAddress.Visibility = Visibility.Visible;
+            // lblMacAddress.Visibility = Visibility.Visible;
+            secureFileLblGrid.Visibility = Visibility.Visible;
+            secureFileTxtGrid.Visibility = Visibility.Visible;
             HintAssist.SetHint(textpassword, "Enter Recipient's Public Key");
             HintAssist.SetHint(txtMacAddress, "Enter MAC Address (e.g. 00-1A-2B-3C-4D-5E)");
             textpassword.MaxLength = 5000;
@@ -314,13 +325,15 @@ namespace DGISAPP.Views
             lblNote.Content = "Note : Export. It is used to verify file integrity (tamper detection).";
             
             Encrypt.IsChecked = false;
-          
+            secureFileLblGrid.Visibility = Visibility.Hidden;
+            secureFileTxtGrid.Visibility = Visibility.Hidden;
             btnGetPublicKey.Visibility = Visibility.Hidden;
             RArmyNo.Visibility = Visibility.Hidden;
             RName.Visibility = Visibility.Hidden;
-            txtMacAddress.Visibility = Visibility.Hidden;
+            //txtMacAddress.Visibility = Visibility.Hidden;
             txtSearch.Visibility = Visibility.Hidden;
-            lblMacAddress.Visibility= Visibility.Hidden;
+            //lblMacAddress.Visibility= Visibility.Hidden;
+            txtDefaultPasswarnning.Visibility = Visibility.Hidden;
             txtSearch.Text = "";
             ShowSuggestions(false);
 
@@ -964,7 +977,7 @@ namespace DGISAPP.Views
                                         {
                                             var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                             {
-                                                return MyMessageBox.Show("MAC address mismatch. File not allowed on this machine.");
+                                                return MyMessageBox.Show("MAC address or Username mismatch or validity expired. File not allowed on this machine.");
 
                                             }));
                                             return;

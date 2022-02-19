@@ -67,24 +67,67 @@
                             <RowDefinition Height="Auto"/>
                             <!-- Row 4 → Password -->
                         </Grid.RowDefinitions>
-                        <!-- MAC Address Label -->
-                        <Label Grid.Row="0"
-                               Name="lblMacAddress"
-                        FontSize="12"
-                        Padding="0 10 10 0"
-                        Content="MAC Address :" />
 
-                        <!-- MAC Address TextBox -->
-                        <TextBox Grid.Row="1"
-                          Name="txtMacAddress"
-                          Margin="0,6,0,0"
-                          Width="600"
-                          FontFamily="Champagne &amp; Limousines"
-                          FontSize="18"
-                          materialDesign:HintAssist.Hint="Enter MAC Address (e.g. 00-1A-2B-3C-4D-5E)"/>
+                        <Grid Grid.Row="0" Name="secureFileLblGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
+                            <!-- Column 0 -->
+                            
+                            <Label Grid.Column="0"
+                                   Name="lblMacAddress"
+               Content="MAC Address :"
+               FontSize="12"
+               Padding="0 10 10 0"/>
 
-                        <!-- warning / hint line -->
+                            <!-- Column 1 -->
+                            <Label Grid.Column="1"
+                                   Name="lblUsername"
+               Content="Username :"
+               FontSize="12"
+               Padding="10 10 10 0"/>
+
+                            <!-- Column 2 -->
+                            <Label Grid.Column="2"
+                                   Name="lblvalidity"
+               Content="Validity :"
+               FontSize="12"
+               Padding="10 10 10 0"/>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Name="secureFileTxtGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Column 0 -->
+                            <TextBox Grid.Column="0"
+                 Name="txtMacAddress"
+                 Margin="0,6,10,0"
+                 FontFamily="Champagne &amp; Limousines"
+                 FontSize="18"
+                 materialDesign:HintAssist.Hint="Enter MAC Address (e.g. 00-1A-2B-3C-4D-5E)"/>
+
+                            <!-- Column 1 -->
+                            <TextBox Grid.Column="1" 
+                 Name="txtUsername"
+                 Margin="0,6,10,0"
+                 FontFamily="Champagne &amp; Limousines"
+                 FontSize="18"
+                 materialDesign:HintAssist.Hint="Enter Username"/>
+
+                            <!-- Column 2 -->
+                            <DatePicker Grid.Column="2"
+                    Name="dpValidity"
+                    Margin="0,6,0,0"
+                    FontSize="16"/>
+                        </Grid>
+
                         <Label Grid.Row="2"
                     FontSize="12"
                     Padding="0 10 10 0"
@@ -92,7 +135,7 @@
                             Please Enter Recipient's Public Key
                         </Label>
 
-                        <!-- Search box -->
+                      
                         <TextBox Grid.Row="3"
                       Name="txtSearch"
                       Margin="0,6,0,0"
@@ -106,7 +149,6 @@
                       PreviewKeyDown="txtSearch_PreviewKeyDown"
                       LostKeyboardFocus="txtSearch_LostKeyboardFocus"/>
 
-                        <!-- ✅ Suggestion Popup: always aligned to txtSearch -->
                         <Popup Name="popSuggestions"
                     PlacementTarget="{Binding ElementName=txtSearch}"
                     Placement="Bottom"
@@ -133,8 +175,6 @@
                                 </ListBox>
                             </Border>
                         </Popup>
-
-                        <!-- Public key / password box -->
                         <PasswordBox Grid.Row="4"
                           x:Name="textpassword"
                           Margin="0,6,0,0"

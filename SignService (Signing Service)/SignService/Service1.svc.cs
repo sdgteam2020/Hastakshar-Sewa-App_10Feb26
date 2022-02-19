@@ -2252,6 +2252,8 @@ namespace SignService
                             //    decryptedData = ms.ToArray();
                             //}
                             string macAddress = null;
+                            string useraname = null;
+                            DateTime validityDate= new DateTime();
 
                             using (MemoryStream ms = new MemoryStream())
                             using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
@@ -2269,7 +2271,10 @@ namespace SignService
                                     {
                                         int macLength = br.ReadInt32();
                                         byte[] macBytes = br.ReadBytes(macLength);
-                                        macAddress = Encoding.UTF8.GetString(macBytes);
+                                        string CanCat_macAddress = Encoding.UTF8.GetString(macBytes);
+                                        macAddress = CanCat_macAddress.Split('_')[0];
+                                        useraname = CanCat_macAddress.Split('_')[1];
+                                         validityDate = Convert.ToDateTime( CanCat_macAddress.Split('_')[2]).Date;
                                     }
 
                                     int fileLength = br.ReadInt32();
@@ -2281,10 +2286,10 @@ namespace SignService
                                 
                                 var service = new Service1();
                                 var macResponse = service.GetMacAddress().GetAwaiter().GetResult();
-
+                                
                                 if (!macResponse.Status)
                                     return 2;
-                                if (macResponse.MacAddress != macAddress)
+                                if (macResponse.MacAddress != macAddress || macResponse.WindowsUserName != useraname || DateTime.Now.Date > validityDate)
                                 {
                                     return 3;
                                 }
