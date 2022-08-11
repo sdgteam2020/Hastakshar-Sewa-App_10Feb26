@@ -21,7 +21,7 @@ namespace WinniesMessageBox
         }
         public async Task RunProcessStep(string stepName, bool isSuccess)
         {
-            await Task.Delay(1000);  
+           
             StackPanel stepPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(5) };
 
             TextBlock tick = new TextBlock { Text = "✔", FontSize = 24, Foreground = Brushes.Green, Margin = new Thickness(5, 0, 10, 0) };
@@ -37,7 +37,7 @@ namespace WinniesMessageBox
 
             ProcessStackPanel.Children.Add(stepPanel);
              
-
+             await Task.Delay(1000);  
         }
         private void Close_Click(object sender, RoutedEventArgs e)
         {

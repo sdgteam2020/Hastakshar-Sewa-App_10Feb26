@@ -14,7 +14,7 @@ namespace SignService.Helpers
         private const int BufferSize = 16 * 1024 * 1024; 
         private const int ParallelChunks = 8;
  
-        public static async Task<string> SignPortableAsync(
+        public static async Task<(string FilePath, string hash)> SignPortableAsync(
             string filePath,
             X509Certificate2 cert,
             Action<double> progress,
@@ -62,7 +62,8 @@ namespace SignService.Helpers
                 {
                     sigObj.MacAddress = MacResult.MacAddress.ToString();
                 }
-
+                string HashValue = sigObj.HashHex;
+               // var sign = JsonConvert.SerializeObject(sigObj, Formatting.Indented);
                 var outPath = filePath + ".sig.json";
 
                 await Task.Run(() => File.WriteAllText(
@@ -71,7 +72,7 @@ namespace SignService.Helpers
                     Encoding.UTF8));
 
                 progress?.Invoke(100);  
-                return outPath;
+                return (outPath, HashValue);
             }
         }
          
@@ -115,34 +116,55 @@ namespace SignService.Helpers
             }
         }
  
-        public static async Task<bool> VerifyPortableAsync(string filePath, string sigJsonPath, Action<double> progress)
+        public static async Task<bool> VerifyPortableAsync(string filePath, string sigJsonPath, Action<double> progress,string hashValue=null)
         {
-            var sigObj = JsonConvert.DeserializeObject<PortableSig>(await Task.Run(() => File.ReadAllText(sigJsonPath, Encoding.UTF8)));
-
-            if (!string.Equals(sigObj.HashAlgorithm, "SHA-256", StringComparison.OrdinalIgnoreCase))
-                throw new NotSupportedException("Only SHA-256 supported.");
-            if (!string.Equals(sigObj.SignatureAlgorithm, "RSA-PKCS1-v1_5", StringComparison.OrdinalIgnoreCase))
-                throw new NotSupportedException("Only RSA PKCS#1 v1.5 supported.");
-
-            using (var rsa = new X509Certificate2(Convert.FromBase64String(sigObj.CertificateChainBase64[0])).GetRSAPublicKey())
+            try
             {
-                var totalBytes = new FileInfo(filePath).Length;
-                 
-                var hash = await HashFileInParallel(filePath, progress, totalBytes, (chunkHashes) =>
-                {
-                    using (var sha256 = SHA256.Create())
-                    {
-                        foreach (var chunkHash in chunkHashes)
-                        {
-                            sha256.TransformBlock(chunkHash, 0, chunkHash.Length, null, 0);
-                        }
-                        sha256.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-                        return sha256.Hash;
-                    }
-                });
+                var sigObj = JsonConvert.DeserializeObject<PortableSig>(await Task.Run(() => File.ReadAllText(sigJsonPath, Encoding.UTF8)));
 
-                return rsa.VerifyHash(hash, Convert.FromBase64String(sigObj.SignatureBase64), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                if (!string.Equals(sigObj.HashAlgorithm, "SHA-256", StringComparison.OrdinalIgnoreCase))
+                    throw new NotSupportedException("Only SHA-256 supported.");
+                if (!string.Equals(sigObj.SignatureAlgorithm, "RSA-PKCS1-v1_5", StringComparison.OrdinalIgnoreCase))
+                    throw new NotSupportedException("Only RSA PKCS#1 v1.5 supported.");
+
+                using (var rsa = new X509Certificate2(Convert.FromBase64String(sigObj.CertificateChainBase64[0])).GetRSAPublicKey())
+                {
+                    var totalBytes = new FileInfo(filePath).Length;
+
+                    var hash = await HashFileInParallel(filePath, progress, totalBytes, (chunkHashes) =>
+                    {
+                        using (var sha256 = SHA256.Create())
+                        {
+                            foreach (var chunkHash in chunkHashes)
+                            {
+                                sha256.TransformBlock(chunkHash, 0, chunkHash.Length, null, 0);
+                            }
+                            sha256.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+                            return sha256.Hash;
+                        }
+                    });
+
+                    bool result = rsa.VerifyHash(hash, Convert.FromBase64String(sigObj.SignatureBase64), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                    if (result)
+                    {
+                        if (hashValue != null)
+                        {
+                            if (hashValue == sigObj.HashHex)
+                                return true;
+                        }
+                        return false;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
             }
+            catch (Exception ex) 
+            {
+                return false;
+            }
+            
         }
 
         private static string[] BuildCertChain(X509Certificate2 leaf)

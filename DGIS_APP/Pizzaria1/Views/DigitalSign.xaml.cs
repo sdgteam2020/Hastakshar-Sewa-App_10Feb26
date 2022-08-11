@@ -1715,9 +1715,11 @@ namespace DGISApp
                 {
                     ShowMsg("Token is expired. Pl contact issuer !");
                     return;
-                } 
-                string sigPath = await HugeFileSignatureService.SignPortableAsync(
-                    filePath, cert, UpdateProgress, remark);
+                }
+                var (sigPath, sigJson) = await HugeFileSignatureService.SignPortableAsync(
+                   filePath, cert, UpdateProgress, remark);
+                //string sigPath = await HugeFileSignatureService.SignPortableAsync(
+                //    filePath, cert, UpdateProgress, remark);
                 if (!string.IsNullOrEmpty(sigPath))
                 {
                     saveDigitalSignInfo = new DTOSaveDigitalSignInfo();

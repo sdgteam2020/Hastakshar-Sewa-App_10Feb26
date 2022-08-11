@@ -45,7 +45,7 @@ namespace SignService
           
             try
             {
-                if (!isLocalError)
+                if (!isLocalError && ex !=null)
                     SendLogToApi(ip, ex.Message, ex.StackTrace, error);
             }
             catch

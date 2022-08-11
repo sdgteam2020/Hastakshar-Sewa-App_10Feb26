@@ -184,7 +184,8 @@ namespace DGISApp
 
                                             this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                             this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
-
+                                           // string mac;
+                                           // byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString(), out mac);
                                             byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString());
                                             if (roundtrip == null)
                                             {
@@ -261,7 +262,10 @@ namespace DGISApp
                                                 }
                                                 if (cert1 != null)
                                                 {
-                                                    ret1 = Service1.DecryptFile(path, filePath, cert1);
+                                                    string macDetails;   // declare variable first
+
+                                                       ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
+                                                    //ret1 = Service1.DecryptFile(path, filePath, cert1);
 
                                                 }
                                             }
@@ -445,6 +449,8 @@ namespace DGISApp
                                             this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                             this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
 
+                                            //string mac;
+                                            //byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString(), out mac);
 
                                             byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString());
 
@@ -572,7 +578,10 @@ namespace DGISApp
                                         }
                                         if (DateTime.Now <= cert1.NotAfter)
                                         {
-                                            ret1 = Service1.DecryptFile(path, filePath, cert1);
+                                            string macDetails;   // declare variable first
+
+                                            ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
+                                            // ret1 = Service1.DecryptFile(path, filePath, cert1);
                                         }
                                         else
                                         {
