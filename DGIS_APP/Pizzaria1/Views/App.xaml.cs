@@ -27,6 +27,12 @@ namespace DGISApp
         {
             try
             {
+                // ===== IGNORE CERT (DEV/LAB ONLY) =====
+                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
+                System.Net.ServicePointManager.ServerCertificateValidationCallback =
+                    (sender2, cert, chain, errors) => true;
+                // ===============================================
                 MainWindow wnd = new MainWindow();
                 bool isNewInstance = true;
                 // MyMessageBox.ShowDialog("Error");

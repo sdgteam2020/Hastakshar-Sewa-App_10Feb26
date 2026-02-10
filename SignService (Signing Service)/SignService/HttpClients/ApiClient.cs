@@ -8,7 +8,8 @@ namespace SignService.HttpClients
     public class ApiClient
     {
         //private readonly static string _baseUrl = "https://dgis.army.mil/DGIS_App_API";
-        private static readonly string _baseUrl = "https://localhost:7018/";
+        //private static readonly string _baseUrl = "https://localhost:7018/";
+        private static readonly string _baseUrl = "https://192.168.10.251";
         private static readonly DeviceJwtHttpClient _client = new DeviceJwtHttpClient(_baseUrl);
 
         public async Task<List<XmlDataForPublicKey>> PostRequestAsync(string endpoint, object postData)

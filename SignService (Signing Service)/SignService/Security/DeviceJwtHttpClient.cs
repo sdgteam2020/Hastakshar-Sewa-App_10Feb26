@@ -98,28 +98,78 @@ namespace SignService.Security
             }
         }
 
-        private async Task<TokenResponse> RequestDeviceTokenAsync(string deviceId, string deviceKey, CancellationToken ct)
+        private async Task<TokenResponse> RequestDeviceTokenAsync(
+                string deviceId,
+                string deviceKey,
+                CancellationToken ct)
         {
-            var req = new {deviceId, deviceKey }; // ✅ camelCase
-            var json = JsonConvert.SerializeObject(req);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var payload = new { deviceId, deviceKey }; // camelCase JSON
+            var json = JsonConvert.SerializeObject(payload);
 
-            var url = new Uri(_httpClient.BaseAddress, "api/device-auth/token"); // ✅ absolute
-            var resp = await _httpClient.PostAsync(url, content, ct).ConfigureAwait(false);
-            var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            if (!resp.IsSuccessStatusCode)
-                throw new Exception($"Token error: {(int)resp.StatusCode} {resp.StatusCode} - {body}");
+            
+            var url = new Uri(_httpClient.BaseAddress, "api/device-auth/token");
 
-            var token = JsonConvert.DeserializeObject<TokenResponse>(body);
-            if (token == null || string.IsNullOrWhiteSpace(token.AccessToken))
-                throw new Exception("Token response invalid.");
+            try
+            {
+                 var resp = await _httpClient.PostAsync(url, content, ct).ConfigureAwait(false);
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            if (token.ExpiresInSeconds <= 0)
-                token.ExpiresInSeconds = 1800;
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException(
+                        $"Token error: {(int)resp.StatusCode} {resp.StatusCode} - {body}"
+                    );
+                }
 
-            return token;
+                var token = JsonConvert.DeserializeObject<TokenResponse>(body);
+                if (token == null || string.IsNullOrWhiteSpace(token.AccessToken))
+                    throw new Exception($"Token response invalid. RawBody={body}");
+
+                if (token.ExpiresInSeconds <= 0)
+                    token.ExpiresInSeconds = 1800;
+
+                return token;
+            }
+            catch (HttpRequestException ex)
+            {
+                ErrorLog.LogErrorToFile(ex,
+                    "DEVICE-JWT HTTP FAILED\n" +
+                    $"BaseAddress={_httpClient.BaseAddress}\n" +
+                    $"RequestUri={url}\n" +
+                    $"Method=POST\n" +
+                    "ContentType=application/json\n" +
+                    $"Payload={json}\n" 
+                   
+                );
+                throw;
+            }
+            catch (TaskCanceledException ex) // timeout / cancellation
+            {
+                ErrorLog.LogErrorToFile(ex,
+                    "DEVICE-JWT TIMEOUT/CANCELED\n" +
+                    $"BaseAddress={_httpClient.BaseAddress}\n" +
+                    $"RequestUri={url}\n" +
+                    $"Method=POST\n" +
+                    $"Payload={json}\n" 
+                );
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // optional: catch-all so you don't lose unexpected parsing issues
+                ErrorLog.LogErrorToFile(ex,
+                    "DEVICE-JWT UNEXPECTED ERROR\n" +
+                    $"BaseAddress={_httpClient.BaseAddress}\n" +
+                    $"RequestUri={url}\n" +
+                    $"Method=POST\n" +
+                    $"Payload={json}\n"                   
+                );
+                throw;
+            }
         }
+
 
 
         /// <summary>
