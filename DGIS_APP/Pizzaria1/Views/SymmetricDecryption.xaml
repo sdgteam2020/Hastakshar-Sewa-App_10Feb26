@@ -1,0 +1,55 @@
+﻿<UserControl x:Class="DGISApp.SymmetricDecryption"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DGISApp" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:wpfx1="http://schemas.xceed.com/wpf/xaml/toolkit"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <materialDesign:TransitioningContent x:Name="TrainsitionigContentSlide" OpeningEffect="{materialDesign:TransitionEffect SlideInFromLeft, Duration=0:0:0.8}">
+        <materialDesign:Card Padding="15" Width="700" Margin="30">
+    <Grid>
+                <StackPanel HorizontalAlignment="Left">
+                    <Label x:Name="lblFileDecryption" FontSize="18" FontWeight="Bold">File Decryption (Single or Multiple Files)</Label>
+                    <Separator/>
+                    <StackPanel Background="LightBlue">
+                        <Label FontSize="12" FontWeight="Bold"  >Instructions :</Label>
+                        <Label x:Name="lblStep1" FontSize="12">Step 1. Enter Original Password Used for Encrypting file(s).</Label>
+                        <Label x:Name="lblStep2" FontSize="12">Step 2. Select single or Multiple files for Decryption (should have *.mil extn).</Label>
+                        <Label x:Name="lblStep3" FontSize="12">Step 3. Wait for few seconds for Decrypted file(s) (new file name :- originalfilena_me_DEC_date_milisecond).</Label>
+                        <Label x:Name="lblStep4" FontSize="12">Step 4. Click OK to acknowledge or Open Path to open folder containing Decrypted file(s).</Label>
+                        <Label x:Name="lblNote" FontSize="12">Note : Original encrypted file is not changed.</Label>
+                        <wpfx1:BusyIndicator   Name="BusyBar" IsBusy="False">
+                            <wpfx1:BusyIndicator.BusyContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="File Decryption in progress please wait" Name="Infomsg" FontWeight="Bold" HorizontalAlignment="Center" Padding="0,0,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </wpfx1:BusyIndicator.BusyContentTemplate>
+                        </wpfx1:BusyIndicator>
+                    </StackPanel>
+                    <WrapPanel HorizontalAlignment="Left" Margin="0,0,0,0" Background="LightBlue" Width="700" >
+                        <RadioButton Content="Symmetric Decryption"   Margin="20,10,50,5" x:Name="RDefault" IsChecked="True" Click="Default_Click">
+                        </RadioButton>
+                        <RadioButton Content="Asymmetric Decryption"  Margin="20,10,50,5"   x:Name="Encrypt"  Click="Encrypt_Click">
+                        </RadioButton>
+
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource MaterialDesignSubheadingTextBlock}" x:Name="lblpassword" FontWeight="SemiBold" Text="Please Enter Decryption Password :" Padding="0 5 0 0" >
+                        <TextBlock.RenderTransform>
+                            <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                    <PasswordBox  x:Name="textpassword" Margin="0,25" materialDesign:HintAssist.Hint="Enter Password" MaxLength="16"  Width="600" FontFamily="Champagne &amp; Limousines" FontSize="18"/>
+
+                    <StackPanel x:Name="DropList" Drop="DropList_Drop" DragEnter="DropList_DragEnter" Background="#FFE2E2E2" AllowDrop="True" Margin="0,5,0,0"  Height="300">
+                        <Label x:Name="lbl2" Margin="0,30,0,0"  FontWeight="Bold" Content="Drag and Drop single or Multiple Files" VerticalAlignment="Center" HorizontalAlignment="Center" Height="37"/>
+                        <Label Content="or"  FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"></Label>
+                        <Button x:Name="btnOpenFile" VerticalAlignment="Center" HorizontalAlignment="Center" Click="btnOpenFiles_Click" Content="Select File(s)" Height="41"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+    </materialDesign:TransitioningContent>
+</UserControl>

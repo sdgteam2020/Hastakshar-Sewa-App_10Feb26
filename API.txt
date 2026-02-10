@@ -1,0 +1,215 @@
+
+
+1- API:--- "http://localhost/Temporary_Listen_Addresses/FetchPersID"
+
+Note:-        if token is valid then IC number reflect in subject
+
+[
+    {
+        "API": "http://localhost/Temporary_Listen_Addresses/FetchPersID",
+        "CRL_OCSPCheck": false,
+        "Remarks": "Personal No of Unique Cert is fetched for the inserted Token",
+        "Status": "200",
+        "Thumbprint": null,
+        "TokenValid": true,
+        "ValidFrom": "07-07-2022 16:13:58",
+        "ValidTo": "07-07-2024 16:13:58",
+        "issuer": null,
+        "subject": "A2A7D3ED10E454CDD66285EBDFCC293549762148F74D4A65221250769C8E6448"
+    }
+]
+
+
+
+Note:-  if app is running but token is not connected
+
+[
+    {
+        "API": "http://localhost/Temporary_Listen_Addresses/FetchPersID",
+        "CRL_OCSPCheck": false,
+        "Remarks": "Certificate not Found. Please insert valid Token and Try agian!",
+        "Status": "404",
+        "Thumbprint": null,
+        "TokenValid": false,
+        "ValidFrom": null,
+        "ValidTo": null,
+        "issuer": null,
+        "subject": null
+    }
+]
+
+Note:-        if app is not running and token is not connected
+
+<HTML>
+
+<HEAD>
+	<TITLE>Service Unavailable</TITLE>
+	<META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii">
+</HEAD>
+
+<BODY>
+	<h2>Service Unavailable</h2>
+	<hr>
+	<p>HTTP Error 503. The service is unavailable.</p>
+</BODY>
+
+</HTML>
+
+
+2. http://localhost/Temporary_Listen_Addresses/FetchTokenDetails
+
+3. 'http://localhost/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetails?IsCheckCrl=true&ThumbPrint=BF4C6D87DC5A3F2998CBC877FCDFDCA0633C51E4'
+
+--Input Parameter- ThumbPrint and true/ false
+
+Ideal Condition:-
+	
+	
+    	 [
+    {
+        "API": "http://localhost/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+        "CRL_OCSPCheck": true,
+        "CRL_OCSPMsg": "",
+        "Remarks": "Unique Cert details of inserted Token",
+        "Status": "200",
+        "Thumbprint": "BF4C6D87DC5A3F2998CBC877FCDFDCA0633C51E4",
+        "TokenValid": true,
+        "ValidFrom": "1/13/2023 12:13:39 PM",
+        "ValidTo": "1/13/2026 12:13:39 PM",
+        "issuer": "CN=IA sub-CA for Class 3 2022, OU=Sub-CA, O=Indian Army, C=IN",
+        "subject": "CN=JASJEET SINGH, SERIALNUMBER=IC75695P, T=LT COL, O=AHQ, OU=ASDC, PostalCode=110011, S=Delhi, C=IN"
+    }
+]
+      
+CRL Not reachable
+
+[
+    {
+        "API": "http://localhost/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+        "CRL_OCSPCheck": true,
+        "CRL_OCSPMsg": "Digital Cert of token cannot be verified with CA due to Network issues",
+        "Remarks": "Unique Cert details of inserted Token",
+        "Status": "200",
+        "Thumbprint": "BF4C6D87DC5A3F2998CBC877FCDFDCA0633C51E4",
+        "TokenValid": true,
+        "ValidFrom": "1/13/2023 12:13:39 PM",
+        "ValidTo": "1/13/2026 12:13:39 PM",
+        "issuer": "CN=IA sub-CA for Class 3 2022, OU=Sub-CA, O=Indian Army, C=IN",
+        "subject": "CN=JASJEET SINGH, SERIALNUMBER=IC75695P, T=LT COL, O=AHQ, OU=ASDC, PostalCode=110011, S=Delhi, C=IN"
+    }
+]
+	Wrong Thumbprint:-
+	[
+    {
+        "API": "http://localhost/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+        "CRL_OCSPCheck": true,
+        "CRL_OCSPMsg": "",
+        "Remarks": "Certificate not Found. Please insert valid Token and Try agian!",
+        "Status": "404",
+        "Thumbprint": null,
+        "TokenValid": false,
+        "ValidFrom": null,
+        "ValidTo": null,
+        "issuer": null,
+        "subject": null
+    }
+]
+
+4. 
+'http://localhost/Temporary_Listen_Addresses/ValidatePersID' 
+
+--header 'Content-Type: application/json' \
+--data '{"inputPersID":"IC75695P"}'
+	
+	Ideal Condition:-
+	
+	{
+    	"ValidatePersIDResult": [
+        {
+            "Expired": false,
+            "Remark": "Token is Valid !",
+            "Status": "200",
+            "vaildId": true
+}
+]
+}
+      
+	Wrong IC No:-
+{
+	"ValidatePersIDResult": [
+        {
+            "Expired": false,
+            "Remark": "Token is Not Valid !",
+            "Status": "200",
+        }
+]
+}
+
+5. curl --location 'http://localhost/Temporary_Listen_Addresses/ValidatePersID2FA' \
+--header 'Content-Type: application/json' \
+--data '{"inputPersID":"IC75695P"}'
+
+Output
+
+	Ideal Condition:-
+	
+	"ValidatePersID2FAResult": true
+	
+	Cancel token login:-
+
+	"ValidatePersID2FAResult": false
+
+
+	Wrong IC No:-
+
+	"ValidatePersID2FAResult": false
+
+
+6.  'http://localhost/Temporary_Listen_Addresses/SignXml' \
+--header 'Content-Type: application/xml' \
+--data '<?xml version="1.0" encoding="utf-8"?>
+<breakfast_menu>
+<food>
+<name>Belgian Waffles</name>
+<price>$5.95</price>
+<description>Two of our famous Belgian Waffles with plenty of real maple syrup</description>
+<calories>650</calories>
+</food>
+<food>
+<name>Strawberry Belgian Waffles</name>
+<price>$7.95</price>
+<description>Light Belgian waffles covered with strawberries and whipped cream</description>
+<calories>900</calories>
+</food>
+<food>
+<name>Berry-Berry Belgian Waffles</name>
+<price>$8.95</price>
+<description>Light Belgian waffles covered with an assortment of fresh berries and whipped cream</description>
+<calories>900</calories>
+</food>
+<food>
+<name>French Toast</name>
+<price>$4.50</price>
+<description>Thick slices made from our homemade sourdough bread</description>
+<calories>600</calories>
+</food>
+<food>
+<name>Homestyle Breakfast</name>
+<price>$6.95</price>
+<description>Two eggs, bacon or sausage, toast, and our ever-popular hash browns</description>
+<calories>950</calories>
+</food>
+</breakfast_menu>'
+
+7. http://localhost/Temporary_Listen_Addresses/HasInternetConnectionAsyncTest
+
+8. http://localhost/Temporary_Listen_Addresses/DigitalSignAsync
+
+Post method in POstman
+
+Body:-
+
+[{"Thumbprint":"9FE4F515965813E29F0344BE1BF7EB001B8FE882","InputFileLoc":"D:/PendingForSignature","OutputFileLoc":"D:/SignDocument"
+,"XCoordinate":"40","YCoordinate":"65"
+
+}]

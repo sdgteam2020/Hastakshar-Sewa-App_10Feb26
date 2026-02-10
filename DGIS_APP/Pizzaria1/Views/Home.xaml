@@ -1,0 +1,66 @@
+﻿<UserControl x:Class="DGISApp.Home"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DGISApp"
+             mc:Ignorable="d" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Height="900" Width="800">
+    <Grid>
+        <materialDesign:DialogHost Name="Dialog1" Identifier="RootDialog">
+            <materialDesign:DialogHost.DialogContent>
+                <Label Content="Ankit Swami"></Label>
+            </materialDesign:DialogHost.DialogContent>
+
+        </materialDesign:DialogHost>
+        <materialDesign:TransitioningContent x:Name="TrainsitionigContentSlide" VerticalAlignment="Top" OpeningEffect="{materialDesign:TransitionEffect SlideInFromLeft, Duration=0:0:0.8}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+
+                <StackPanel>
+                    <!--<TextBlock Text="Apenas" FontFamily="Cooper Black" Foreground="#FFC00000"/>-->
+                    <StackPanel Margin="10" Width="692" HorizontalAlignment="Left">
+                        <!-- 1) Logo on top -->
+                        <Image
+                                Source="Assets/dgislogo.png"
+                                Width="160" Height="160"
+                                Stretch="Uniform"
+                                HorizontalAlignment="Center"   
+                                Margin="0,-10,0,40"
+                                RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                        <!-- 2) Heading -->
+                        <TextBlock Text="Hastakshar SEWA"
+                                       FontSize="50"
+                                       FontFamily="Georgia"
+                                       Foreground="#FFC00000"
+                                       TextWrapping="Wrap"/>
+
+                        <!-- 3) Subheading (first letters styled) -->
+                        <TextBlock FontSize="30" FontFamily="Georgia" Foreground="#FFC00000" TextWrapping="Wrap">
+                                <Run Text="("/>
+                                <Bold>S</Bold><Run Text="ecure "/>
+                                <Bold>E</Bold><Run Text="ncryption "/>
+                                <Run Text="&amp; "/>
+                                <Bold>W</Bold><Run Text="atermark "/>
+                                <Bold>A</Bold><Run Text="pplication"/>
+                                <Run Text=")"/>
+                        </TextBlock>
+
+                        <!-- 4) Rest of your content ... -->
+                        <TextBlock Name="lblVer" Text="Features" FontSize="25" FontFamily="Champagne &amp; Limousines" FontWeight="Bold" Margin="5,12,5,5"/>
+
+                        <TextBlock Text="1. Custom Digital Signature (PDF/Word Document)." FontSize="20" FontFamily="Champagne &amp; Limousines" Margin="5"/>
+                        <TextBlock Text="2. Symmetric and Asymmetric file Encryption/Decryption." FontSize="20" FontFamily="Champagne &amp; Limousines" Margin="5"/>
+                        <TextBlock Text="3. WaterMarking (PDF/Word Document)." FontSize="20" FontFamily="Champagne &amp; Limousines" Margin="5"/>
+                        <TextBlock Text="4. Verify Digitally Sign Document." FontSize="20" FontFamily="Champagne &amp; Limousines" Margin="5"/>
+                        <TextBlock Text="5. Auto Patch Update." FontSize="20" FontFamily="Champagne &amp; Limousines" Margin="5"/>
+                    </StackPanel>
+
+                    <!--<TextBlock Text="@Developed By : Army Software Development Center" FontSize="15" FontFamily="Champagne &amp; Limousines" Margin="10,150,0,0"/>-->
+                    <!--<Button FontFamily="Champagne &amp; Limousines" Content="Pedir Agora" FontSize="18" Margin="25"/>-->
+                </StackPanel>
+            </StackPanel>
+        </materialDesign:TransitioningContent>
+    </Grid>
+</UserControl>

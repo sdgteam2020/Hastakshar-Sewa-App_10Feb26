@@ -1,0 +1,74 @@
+﻿<UserControl x:Class="DGISApp.VerifyDigitalSign"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DGISApp"
+             xmlns:wpfx1="http://schemas.xceed.com/wpf/xaml/toolkit" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <materialDesign:TransitioningContent x:Name="TrainsitionigContentSlide" OpeningEffect="{materialDesign:TransitionEffect SlideInFromLeft, Duration=0:0:0.8}">
+        <materialDesign:Card Padding="15" Width="700" Margin="30">
+            <Grid>
+                <StackPanel HorizontalAlignment="Left" >
+                    <Label FontSize="18" FontWeight="Bold">Verify Digital Signature</Label>
+                    <Separator/>
+                    <StackPanel Background="LightBlue" >
+                        <Label FontSize="12" FontWeight="Bold"  >Instructions :</Label>
+                        <Label FontSize="12" Name="lblStep1">Step 1. Select Digitally Signed Document and wait for few seconds.</Label>
+                        <wpfx1:BusyIndicator   Name="BusyBar" IsBusy="False">
+                            <wpfx1:BusyIndicator.BusyContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="Checking Digital Signature" Name="Infomsg" FontWeight="Bold" HorizontalAlignment="Center" Padding="0,0,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </wpfx1:BusyIndicator.BusyContentTemplate>
+                        </wpfx1:BusyIndicator>
+                        <!-- Progress bar: ONLY for Any File mode -->
+                        <ProgressBar x:Name="progress"
+                                      Minimum="0"
+                                      Maximum="100"
+                                      Height="0"
+                                      Value="0"
+                                      Visibility="Hidden" />
+                    </StackPanel>
+                    <!--Strat Code for Radio button for Signing Mode -->
+                    <TextBlock Style="{StaticResource MaterialDesignSubheadingTextBlock}"
+                               FontWeight="SemiBold"
+                               Text="Sign Verify Mode :"
+                               Padding="0 1 0 8">
+                        <TextBlock.RenderTransform>
+                            <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+
+                    <WrapPanel HorizontalAlignment="Left" Background="LightBlue" Width="650">
+                        <RadioButton x:Name="RBModePdfWord"
+                                     Content="PDF/Word"
+                                     Margin="20,8,50,8"
+                                     IsChecked="True"
+                                     Checked="RBModePdfWord_Checked"/>
+
+                        <RadioButton x:Name="RBModeAnyFile"
+                                     Content="Any File (Generic Sign)"
+                                     Margin="20,8,50,8"
+                                     Checked="RBModeAnyFile_Checked"/>
+                    </WrapPanel>
+
+                    <!--End Code for Radio button for Signing Mode -->
+
+                    <StackPanel x:Name="DropList" Drop="DropList_Drop" Height="200" DragEnter="DropList_DragEnter" Background="#FFE2E2E2" AllowDrop="True" Margin="0,200,0,0" >
+                        <Label x:Name="lbl2" Margin="0,60,0,0"  FontWeight="Bold" Content="Drag and Drop" VerticalAlignment="Center" HorizontalAlignment="Center" Height="37"/>
+                        <Label Content="or"  FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"></Label>
+                        <Button x:Name="btnOpenFile" VerticalAlignment="Center" HorizontalAlignment="Center" Click="btnOpenFiles_Click" Content="Select Document" Height="41"/>
+                    </StackPanel>
+
+
+                    <Label Name="lbl1" Content="" HorizontalAlignment="Left" Height="47"  VerticalAlignment="Bottom" Margin="28,0,0,56" Width="732"/>
+
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+    </materialDesign:TransitioningContent>
+</UserControl>

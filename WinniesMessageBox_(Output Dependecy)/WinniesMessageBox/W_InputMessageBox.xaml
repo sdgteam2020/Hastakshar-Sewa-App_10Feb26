@@ -1,0 +1,27 @@
+﻿<Window x:Class="WinniesMessageBox.W_InputMessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WinniesMessageBox"
+        mc:Ignorable="d"
+        Title="W_InputMessageBox" Height="200" Width="400" MaxHeight="500" AllowsTransparency="True" WindowStyle="None" Background="{x:Null}" Closing="Window_Closing" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+            <BeginStoryboard>
+                <Storyboard FillBehavior="HoldEnd" AutoReverse="False">
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
+    <Grid>
+        <Grid x:Name="gBody">
+            <Label Content="Enter password:" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="10" />
+            <!--<TextBox x:Name="passwordBox" HorizontalAlignment="Left" VerticalAlignment="Top" Width="212" Margin="97,41,0,0" BorderThickness="1" />-->
+            <TextBox x:Name="passwordBox" HorizontalAlignment="Left" VerticalAlignment="Top" Width="212" Margin="97,41,0,0" BorderThickness="1" TextWrapping="Wrap" />
+            <Button Content="OK" IsDefault="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="118,70,0,0" Click="OkButton_Click" />
+            <Button Content="Cancel" IsCancel="True" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="211,70,0,0" Click="CancelButton_Click" />
+        </Grid>
+    </Grid>
+</Window>

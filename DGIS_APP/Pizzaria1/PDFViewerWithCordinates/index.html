@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer with Drawing & Digital Signature</title>
+    <script src="pdf.min.js"></script>
+    <script src="jquery.js"></script>
+    <style>
+        body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    margin: 0;
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+        #pdf-container {
+            position: relative;
+            display: inline-block;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+        
+button {
+    padding: 8px 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+dialog {
+            width: 300px;
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        /* Overlay Effect */
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        /* Buttons */
+        .dialog-buttons {
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 5px;
+        }
+        .btn-confirm {
+            background: green;
+            color: white;
+        }
+        .btn-cancel {
+            background: red;
+            color: white;
+        }
+    </style>
+
+</head>
+<body>
+    <h4 style="color:red">
+        Browser Compatibility Notice :-
+        This application supports only Google Chrome and Microsoft Edge version 120 or higher.
+
+        Please update your browser to the latest version
+    </h4>
+
+    <h3>PDF Viewer with Drawing & Digital Signature</h3>
+    <div class="button-container">
+        <button id="prev-page">Previous</button>
+        <button id="next-page">Next</button>
+    </div>
+    <p>Page: <span id="page-num">1</span> / <span id="page-count">0</span></p>
+
+    <p><span id="coordinates">0, 0</span></p>
+    <div id="pdf-container">
+        <canvas id="pdf-canvas" width="700" height="750"></canvas>
+        <canvas id="draw-canvas" width="700" height="750" style="position:absolute; top:0; left:0;"></canvas>
+    </div>
+    <!-- Custom Confirmation Dialog -->
+    <!-- Custom Modal Confirmation Dialog -->
+    <dialog id="customConfirm">
+        <p>Do you want to sign here?</p>
+        <div class="dialog-buttons">
+            <button class="btn btn-confirm" onclick="handleConfirm(true)">Yes</button>
+            <button class="btn btn-cancel" onclick="handleConfirm(false)">No</button>
+        </div>
+    </dialog>
+    <script>
+        let pdf, pageNum = 1;
+        let isDrawing = false;
+        let startX, startY, bottom;
+        var checksign = 0;
+        CallApiWithCordinate(-1, -1);
+        setInterval(function () {
+            if (checksign == 0)
+
+                CallApiWithCordinate(-1, -1);
+        }, 2000);
+
+        // const file = event.target.files[0];
+        let apiUrl = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/Getpdffile";
+        $.ajax({
+            url: apiUrl,
+            method: "GET",
+            success: function (response) {
+                let base64String = response; // API returns Base64 string
+                let byteArray = convertBase64ToByteArray(base64String);
+                // Convert Byte Array to Blob
+                let pdfBlob = new Blob([byteArray], { type: "application/pdf" });
+                // Convert Blob to File
+                let pdfFile = new File([pdfBlob], "downloaded.pdf", { type: "application/pdf" });
+                console.log("File object:", pdfFile);
+                // Simulate file input selection
+                let fileList = new DataTransfer();
+                fileList.items.add(pdfFile);
+                //document.getElementById("upload-pdf").files = fileList.files;
+                let file = pdfFile;
+                if (file) {
+                    const fileReader = new FileReader();
+                    fileReader.onload = function () {
+                        const pdfData = new Uint8Array(this.result);
+
+
+                        loadPDF(pdfData);
+
+                    };
+                    fileReader.readAsArrayBuffer(file);
+                }
+            },
+            error: function (err) {
+                alert("Error Somethis went wrong")
+            }
+        });
+
+        // Previous Page
+        $("#prev-page").on("click", function () {
+            if (pageNum > 1) {
+                pageNum--;
+                renderPage(pageNum);
+            }
+        });
+
+        // Next Page
+        $("#next-page").on("click", function () {
+            if (pdf && pageNum < pdf.numPages) {
+                pageNum++;
+                renderPage(pageNum);
+            }
+        });
+
+        function loadPDF(pdfData) {
+            const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+            loadingTask.promise.then(loadedPdf => {
+                pdf = loadedPdf;
+                document.getElementById("page-count").textContent = pdf.numPages;
+                renderPage(pageNum);
+            }).catch(error => console.error("Error loading PDF: ", error.message));
+        }
+        let scaleFactor = 1; // Default zoom scale
+        function renderPage(num) {
+            pdf.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: scaleFactor });
+                const pdfCanvas = document.getElementById('pdf-canvas');
+                const context = pdfCanvas.getContext('2d');
+
+                pdfCanvas.width = viewport.width;
+                pdfCanvas.height = viewport.height - 20;
+                drawCanvas.width = viewport.width; // Match drawCanvas size
+                drawCanvas.height = viewport.height - 20; // Match drawCanvas size
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+
+                $("#page-num").html(num);
+            });
+        }
+        // document.getElementById("zoom-in").addEventListener("click", () => {
+        //     scaleFactor += 0.2; // Increase zoom
+        //     renderPage(pageNum);
+        // });
+
+        // document.getElementById("zoom-out").addEventListener("click", () => {
+        //     if (scaleFactor > 0.4) {
+        //         scaleFactor -= 0.2; // Decrease zoom
+        //         renderPage(pageNum);
+        //     }
+        // });
+        // Drawing on canvas
+        const drawCanvas = document.getElementById("draw-canvas");
+        const ctx = drawCanvas.getContext("2d");
+
+        drawCanvas.addEventListener("mousedown", (e) => {
+            isDrawing = true;
+            startX = e.offsetX / scaleFactor;
+            startY = e.offsetY / scaleFactor;
+        });
+
+
+        drawCanvas.addEventListener("mousemove", (e) => {
+            if (!isDrawing) return;
+            ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            ctx.beginPath();
+            ctx.rect(
+                startX * scaleFactor,
+                startY * scaleFactor,
+                (e.offsetX / scaleFactor) - startX,
+                (e.offsetY / scaleFactor) - startY
+            );
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            bottom = drawCanvas.height - (startY * scaleFactor);
+            $('#coordinates').text(`${Math.floor(startX)}, ${Math.floor(bottom)}`);
+        });
+
+
+        drawCanvas.addEventListener("mouseup", () => {
+            const modal = document.getElementById("customConfirm");
+            modal.showModal();  // Open modal
+            //     CallApiWithCordinate(-1, -1);
+            //     let result = confirm("Do you want to sign here?");
+            //     isDrawing = false;
+            //   if (result) {
+            //     checksign==1;
+            //  window.chrome.webview.postMessage("");
+            // CallApiWithCordinate(Math.floor(startX),Math.floor(bottom))
+            // Perform action when OK is clicked
+            //   } else {
+
+            //       // Perform action when Cancel is clicked
+            //   }
+
+        });
+        function handleConfirm(isConfirmed) {
+            const modal = document.getElementById("customConfirm");
+            modal.close();  // Close modal
+            isDrawing = false;
+            if (isConfirmed) {
+                CallApiWithCordinate(Math.floor(startX), Math.floor(bottom))
+            } else {
+
+            }
+        }
+        function clearCanvas() {
+            ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        }
+        // Convert Base64 to Uint8Array (Byte Array)
+        function convertBase64ToByteArray(base64) {
+            let binaryString = atob(base64);
+            let byteArray = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                byteArray[i] = binaryString.charCodeAt(i);
+            }
+            return byteArray;
+        }
+        function CallApiWithCordinate(X, Y) {
+            let apiUrl = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/PdfCordinatefile";
+            let data = {
+                X: X,
+                Y: Y,
+                PageNo: $("#page-num").html(),
+
+            };
+            $.ajax({
+                url: apiUrl,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response == 1 && X > 1) {
+
+                        console.log("Success:", response);
+                        window.close();
+                    }
+
+                },
+                error: function (error) {
+                    alert(error)
+                    // console.error("Error:", error);
+                    // alert("Failed to send data.");
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

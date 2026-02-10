@@ -1,0 +1,73 @@
+﻿<UserControl x:Class="DGISApp.Watermark"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    xmlns:wpfx1="http://schemas.xceed.com/wpf/xaml/toolkit"
+    xmlns:local="clr-namespace:DGISApp" 
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    mc:Ignorable="d" 
+    d:DesignHeight="450" d:DesignWidth="800">
+    <materialDesign:TransitioningContent x:Name="TrainsitionigContentSlide" OpeningEffect="{materialDesign:TransitionEffect SlideInFromLeft, Duration=0:0:0.8}">
+        <materialDesign:Card Padding="15" Width="700" Margin="10">
+            <Grid>
+                <StackPanel HorizontalAlignment="Left" >
+                    <Label FontSize="18" FontWeight="Bold">WaterMarking (Single or Multiple PDF/Word Docus)</Label>
+                    <Separator/>
+                    <StackPanel Background="LightBlue">
+                        <Label FontSize="12" FontWeight="Bold"  >Instructions :</Label>
+                        <Label FontSize="12">Step 1. Select atleast one option for WaterMarking (Date and Time ,IP Address or Customized label).</Label>
+                        <Label FontSize="12">Step 2. In order to Watermark file with Multiple values and create copies, give the values in string separated by Commas.</Label>
+                        <Label FontSize="12">Step 3. Select Single or Multiple Docus for WaterMarking.</Label>
+                        <Label FontSize="12">Step 4. Click OK to create WaterMarked PDF(s) (New file name:- Originalfilename_WM_Text_date_milisecond).</Label>
+                        <Label FontSize="12">Note : Original file is not changed.</Label>
+                        <wpfx1:BusyIndicator   Name="BusyBar" IsBusy="False">
+                            <wpfx1:BusyIndicator.BusyContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="4">
+                                        <TextBlock Text="WaterMarking in progress please wait" Name="Infomsg" FontWeight="Bold" HorizontalAlignment="Center" Padding="0,0,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </wpfx1:BusyIndicator.BusyContentTemplate>
+                        </wpfx1:BusyIndicator>
+                    </StackPanel>
+                    <TextBlock Padding="0 10 0 15" Style="{StaticResource MaterialDesignSubheadingTextBlock}" FontWeight="SemiBold"  Text="WaterMarking Options (Atleast select one) :">
+                        <TextBlock.RenderTransform>
+                            <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                    <WrapPanel HorizontalAlignment="Left" Margin="0" Background="LightBlue">
+                        <CheckBox Content="Date and Time"  x:Name="datetime">
+                            <CheckBox.LayoutTransform>
+                                <ScaleTransform ScaleX="1.4" ScaleY="1.4 " />
+                            </CheckBox.LayoutTransform>
+                        </CheckBox>
+                        <CheckBox Content="IP Address"  Margin="20,10" Visibility="Visible"  x:Name="ipaddress">
+                            <CheckBox.LayoutTransform>
+                                <ScaleTransform ScaleX="1.4" ScaleY="1.4" />
+                            </CheckBox.LayoutTransform>
+                        </CheckBox>
+                        <TextBox x:Name="textBoxEmail" materialDesign:HintAssist.Hint="Enter Unique WaterMark Text or Text Separated by Commas" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Width="600" Margin="0 0 8 0" FontFamily="Champagne &amp; Limousines" Background="White" FontSize="17"/>
+                    </WrapPanel>
+                    
+                    <TextBlock Padding="0 10 0 0" Style="{StaticResource MaterialDesignSubheadingTextBlock}" FontWeight="SemiBold" Text="Select PDF/Word Docus for WaterMarking :" >
+                        <TextBlock.RenderTransform>
+                            <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                    <StackPanel x:Name="DropList" Drop="DropList_Drop" Height="200" DragEnter="DropList_DragEnter" Background="#FFE2E2E2" AllowDrop="True" Margin="0,10,0,0" >
+                        <Label x:Name="lbl2" Margin="10,20,10,0"  FontWeight="Bold" Content="Drag and Drop (Single or Multiple PDF/Word Docus)" VerticalAlignment="Center" HorizontalAlignment="Center" Height="37" />
+                        <Label Content="or"  FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"></Label>
+                        <Button x:Name="btnOpenFile" VerticalAlignment="Center" HorizontalAlignment="Center" Click="btnOpenFiles_Click" Content="Select Docu(s)"  Height="41"/>
+                    </StackPanel>
+                </StackPanel>
+
+            </Grid>
+
+        </materialDesign:Card>
+
+
+
+    </materialDesign:TransitioningContent>
+
+</UserControl>
