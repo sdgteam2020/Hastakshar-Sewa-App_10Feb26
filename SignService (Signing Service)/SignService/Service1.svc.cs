@@ -3118,12 +3118,17 @@ namespace SignService
         /// <returns></returns>
         public async Task<bool> SaveDigitalSignedDataToAnalytics(DTOSaveDigitalSignInfo saveDigitalSignInfo)
         {
-            System.Net.IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
-            saveDigitalSignInfo.IpAddress = a.Length > 0 ? a[0].ToString() : "Unknown";
-            string SendJaon = Newtonsoft.Json.JsonConvert.SerializeObject(saveDigitalSignInfo);
-            var content = new StringContent(SendJaon, Encoding.UTF8, "application/json");            
-            var response = await new ApiClient().PostRequestAsync<bool>("api/DigitalSign/SaveDigitalSign", content);            
-            return true;
+            var ips = Dns.GetHostAddresses(Dns.GetHostName());
+            saveDigitalSignInfo.IpAddress = ips.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.ToString()
+                                           ?? "Unknown";
+
+            // Send DTO directly (NO StringContent)
+            var result = await new ApiClient().PostRequestAsync<bool>(
+                "api/DigitalSign/SaveDigitalSign",
+                saveDigitalSignInfo
+            );
+
+            return result;
         }
 
         public async Task<MacResponse> GetMacAddress()
