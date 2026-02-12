@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace SignService
 {
-    public class ErrorLog 
-    {       
-        public static void LogErrorToFile(Exception ex,string error="")
+    public class ErrorLog
+    {
+        public static void LogErrorToFile(Exception ex, string error = "", bool isLocalError = false)
         {
 
-           // IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
+            // IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
             string hostName = Dns.GetHostName();
 
             // Get the list of IP addresses associated with the hostname
@@ -23,16 +23,16 @@ namespace SignService
             //string filePath = "ErrorLog.txt"; // Path to the error log file
             string errorMessage = $"****************************************************************************************************************\n ";
             string ip = a[0].ToString();
-            errorMessage += "IP Address:-"+ ip;
+            errorMessage += "IP Address:-" + ip;
             errorMessage += "\n Operating System: " + Environment.OSVersion;
             errorMessage += "\n 64-bit OS: " + Environment.Is64BitOperatingSystem;
             errorMessage += "\n Machine Name: " + Environment.MachineName;
             errorMessage += "\n System Directory: " + Environment.SystemDirectory;
             errorMessage += "\n User Name: " + Environment.UserName;
-            if(ex!=null)
-            errorMessage += $"[{DateTime.Now}] \n Exception: {ex.Message}\n Stack Trace: {ex.StackTrace}";
+            if (ex != null)
+                errorMessage += $"[{DateTime.Now}] \n Exception: {ex.Message}\n Stack Trace: {ex.StackTrace}";
             else
-            errorMessage += $"[{DateTime.Now}] \n Error: {error}";
+                errorMessage += $"[{DateTime.Now}] \n Error: {error}";
             errorMessage += "\n*********************************************************************************************************************\n";
             try
             {
@@ -50,7 +50,8 @@ namespace SignService
             // ---- 2) Send to API (best-effort) ----
             try
             {
-                SendLogToApi(ip, ex.Message, ex.StackTrace, error);
+                if (!isLocalError)
+                    SendLogToApi(ip, ex.Message, ex.StackTrace, error);
             }
             catch
             {
@@ -80,7 +81,7 @@ namespace SignService
         {
             try
             {
-                
+
                 // Build payload (same fields as your JSON builder)
                 var payload = BuildPayload(ip, errorMessage, stackTrace, extra);
 
@@ -93,7 +94,7 @@ namespace SignService
             catch (Exception ex)
             {
                 // Never throw from logging; log locally only
-                ErrorLog.LogErrorToFile(ex);
+                LogErrorToFile(ex, "Excepction During the SaveClientLogs", true);
             }
         }
 
