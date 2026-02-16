@@ -24,21 +24,17 @@ namespace DGISApp
         public MainWindow()
         {
             InitializeComponent();
-            this.Loaded += MainWindow_Loaded;
-            //SaveInstallationAsync();
-            //SaveDailyRunAsync();
-            //XMLAPICall();
+            this.Loaded += MainWindow_Loaded; 
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                // ✅ let WPF render window first
+                 
                 await Task.Yield();
-
-                // Run in background (don’t block UI)
-                _ = RunStartupCallsAsync();   // fire-and-forget safely
+                 
+                _ = RunStartupCallsAsync();   
             }
             catch (Exception ex)
             {
@@ -82,13 +78,13 @@ namespace DGISApp
             try
             {
                 XmlDataForPublicKey xmlDataForPublicKey = new XmlDataForPublicKey();
-                //string filePath = "PublicKeyData.xml";
+               
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string Appfolder = System.IO.Path.Combine(path, "DGIS");
                 Directory.CreateDirectory(Appfolder);
                 string filePath = System.IO.Path.Combine(Appfolder, "PublicKeyData.xml");
 
-                if (File.Exists(filePath)) // Check if file exists
+                if (File.Exists(filePath))  
                 {
                     FileInfo fi = new FileInfo(filePath);
                    
@@ -99,9 +95,9 @@ namespace DGISApp
                     nsmgr.AddNamespace("ns", "http://schemas.datacontract.org/2004/07/SignService");
 
                     XmlNodeList nodes = doc.SelectNodes($"/PublicKeysData/ns:XmlDataForPublicKey", nsmgr);
-                    if (File.Exists(filePath)) // Check if file exists
+                    if (File.Exists(filePath))  
                     {
-                        File.Delete(filePath); // Delete the file
+                        File.Delete(filePath);  
                         Console.WriteLine("File deleted successfully.");
                     }
                     if (nodes != null)
@@ -142,21 +138,19 @@ namespace DGISApp
             DataContractSerializer serializer = new DataContractSerializer(typeof(XmlDataForPublicKey));
 
             if (!File.Exists(filePath))
-            {
-                // Create new XML document with root and first entry
+            { 
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
                 using (XmlWriter writer = XmlWriter.Create(fileStream, new XmlWriterSettings { Indent = true }))
                 {
                     writer.WriteStartDocument();
-                    writer.WriteStartElement("PublicKeysData"); // Root Node
+                    writer.WriteStartElement("PublicKeysData");  
                     serializer.WriteObject(writer, data);
                     writer.WriteEndElement();
                     writer.WriteEndDocument();
                 }
             }
             else
-            {
-                // Load existing XML, add new entry, and save back
+            { 
                 XmlDocument doc = new XmlDocument();
                 doc.Load(filePath);
 
@@ -189,7 +183,7 @@ namespace DGISApp
             IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
 
             Assembly assembly = Assembly.GetEntryAssembly();
-            NVersion = assembly.GetName().Version.ToString();//ConfigurationManager.AppSettings["Version"].ToString();
+            NVersion = assembly.GetName().Version.ToString(); 
             string ip = a[0].ToString();
             string hostName = Dns.GetHostName();
             string version = NVersion;
@@ -213,14 +207,12 @@ namespace DGISApp
         }
 
         private void ButtonFechar_Click(object sender, RoutedEventArgs e)
-        {
-            //Application.Current.Shutdown();
+        { 
             this.Visibility = Visibility.Hidden;
         }
 
         private void ButtonMinimize_Click(object sender, RoutedEventArgs e)
-        {
-            //WindowState = WindowState.Minimized;
+        { 
             this.Visibility = Visibility.Hidden;
         }
 

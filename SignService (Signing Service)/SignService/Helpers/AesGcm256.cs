@@ -13,13 +13,11 @@ namespace SignService.Helpers
     {
         private static readonly SecureRandom Random = new SecureRandom();
         string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
-
-        // Pre-configured Encryption Parameters
+         
         public static readonly int NonceBitSize = 128;
         public static readonly int MacBitSize = 128;
         public static readonly int KeyBitSize = 256;
-
-        //Preconfigured Password Key Derivation Parameters
+         
         public static readonly int SaltBitSize = 128;
         public static readonly int Iterations = 10000;
         public static readonly int MinPasswordLength = 04;
@@ -46,11 +44,10 @@ namespace SignService.Helpers
             for (int i = 0; i < (hexStr.Length / 2); i++)
             {
                 byte firstNibble = Byte.Parse(hexStr.Substring((2 * i), 1),
-                                   System.Globalization.NumberStyles.HexNumber); // [x,y)
+                                   System.Globalization.NumberStyles.HexNumber);  
                 byte secondNibble = Byte.Parse(hexStr.Substring((2 * i) + 1, 1),
                                     System.Globalization.NumberStyles.HexNumber);
-                int finalByte = (secondNibble) | (firstNibble << 4); // bit-operations 
-                                                                     // only with numbers, not bytes.
+                int finalByte = (secondNibble) | (firstNibble << 4);   
                 bArray[i] = (byte)finalByte;
             }
             return bArray;
@@ -81,46 +78,32 @@ namespace SignService.Helpers
 
 
         public static byte[] SimpleEncrypt(byte[] secretMessage, byte[] key, byte[] nonSecretPayload = null)
-        {
-            //User Error Checks
+        { 
             if (key == null || key.Length != KeyBitSize / 8)
                 throw new ArgumentException(String.Format("Key needs to be {0} bit!", KeyBitSize), "key");
 
             if (secretMessage == null || secretMessage.Length == 0)
                 throw new ArgumentException("Secret Message Required!", "secretMessage");
-
-            //Non-secret Payload Optional
+             
             nonSecretPayload = nonSecretPayload ?? new byte[] { };
-
-            //Using random nonce large enough not to repeat
+             
             var nonce = new byte[NonceBitSize / 8];
             Random.NextBytes(nonce, 0, nonce.Length);
 
             var cipher = new GcmBlockCipher(new AesFastEngine());
             var parameters = new AeadParameters(new KeyParameter(key), MacBitSize, nonce, nonSecretPayload);
             cipher.Init(true, parameters);
-
-            //Generate Cipher Text With Auth Tag
-
+             
             var cipherText = new byte[cipher.GetOutputSize(secretMessage.Length)];
             var len = cipher.ProcessBytes(secretMessage, 0, secretMessage.Length, cipherText, 0);
             cipher.DoFinal(cipherText, len);
-
-
-
-
-
-
-            //Assemble Message
+             
             using (var combinedStream = new MemoryStream())
             {
                 using (var binaryWriter = new BinaryWriter(combinedStream))
-                {
-                    //Prepend Authenticated Payload
-                    binaryWriter.Write(nonSecretPayload);
-                    //Prepend Nonce
-                    binaryWriter.Write(nonce);
-                    //Write Cipher Text
+                { 
+                    binaryWriter.Write(nonSecretPayload); 
+                    binaryWriter.Write(nonce); 
                     binaryWriter.Write(cipherText);
                 }
                 return combinedStream.ToArray();
@@ -128,8 +111,7 @@ namespace SignService.Helpers
         }
 
         public static byte[] SimpleDecrypt(byte[] encryptedMessage, byte[] key, int nonSecretPayloadLength = 0)
-        {
-            //User Error Checks
+        { 
             if (key == null || key.Length != KeyBitSize / 8)
                 throw new ArgumentException(String.Format("Key needs to be {0} bit!", KeyBitSize), "key");
 
@@ -138,18 +120,15 @@ namespace SignService.Helpers
 
             using (var cipherStream = new MemoryStream(encryptedMessage))
             using (var cipherReader = new BinaryReader(cipherStream))
-            {
-                //Grab Payload
+            { 
                 var nonSecretPayload = cipherReader.ReadBytes(nonSecretPayloadLength);
-
-                //Grab Nonce
+                 
                 var nonce = cipherReader.ReadBytes(NonceBitSize / 8);
 
                 var cipher = new GcmBlockCipher(new AesFastEngine());
                 var parameters = new AeadParameters(new KeyParameter(key), MacBitSize, nonce, nonSecretPayload);
                 cipher.Init(false, parameters);
-
-                //Decrypt Cipher Text
+                 
                 var cipherText = cipherReader.ReadBytes(encryptedMessage.Length - nonSecretPayloadLength - nonce.Length);
                 var plainText = new byte[cipher.GetOutputSize(cipherText.Length)];
 
@@ -172,8 +151,7 @@ namespace SignService.Helpers
         public static byte[] SimpleEncryptWithPassword(byte[] secretMessage, string password, byte[] nonSecretPayload = null)
         {
             nonSecretPayload = nonSecretPayload ?? new byte[] { };
-
-            //User Error Checks
+             
             if (string.IsNullOrWhiteSpace(password) || password.Length < MinPasswordLength)
                 throw new ArgumentException(String.Format("Must have a password of at least {0} characters!", MinPasswordLength), "password");
 
@@ -181,20 +159,16 @@ namespace SignService.Helpers
                 throw new ArgumentException("Secret Message Required!", "secretMessage");
 
             var generator = new Pkcs5S2ParametersGenerator();
-
-            //Use Random Salt to minimize pre-generated weak password attacks.
+             
             var salt = new byte[SaltBitSize / 8];
             Random.NextBytes(salt);
 
             generator.Init(
               PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()),
               salt,
-              Iterations);
-
-            //Generate Key
+              Iterations); 
             var key = (KeyParameter)generator.GenerateDerivedMacParameters(KeyBitSize);
-
-            //Create Full Non Secret Payload
+             
             var payload = new byte[salt.Length + nonSecretPayload.Length];
             Array.Copy(nonSecretPayload, payload, nonSecretPayload.Length);
             Array.Copy(salt, 0, payload, nonSecretPayload.Length, salt.Length);
@@ -203,8 +177,7 @@ namespace SignService.Helpers
         }
 
         public static byte[] SimpleDecryptWithPassword(byte[] encryptedMessage, string password, int nonSecretPayloadLength = 0)
-        {
-            //User Error Checks
+        { 
             if (string.IsNullOrWhiteSpace(password) || password.Length < MinPasswordLength)
                 throw new ArgumentException(String.Format("Must have a password of at least {0} characters!", MinPasswordLength), "password");
 
@@ -212,8 +185,7 @@ namespace SignService.Helpers
                 throw new ArgumentException("Encrypted Message Required!", "encryptedMessage");
 
             var generator = new Pkcs5S2ParametersGenerator();
-
-            //Grab Salt from Payload
+             
             var salt = new byte[SaltBitSize / 8];
             Array.Copy(encryptedMessage, nonSecretPayloadLength, salt, 0, salt.Length);
 
@@ -221,8 +193,7 @@ namespace SignService.Helpers
               PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()),
               salt,
               Iterations);
-
-            //Generate Key
+             
             var key = (KeyParameter)generator.GenerateDerivedMacParameters(KeyBitSize);
 
             return SimpleDecrypt(encryptedMessage, key.GetKey(), salt.Length + nonSecretPayloadLength);

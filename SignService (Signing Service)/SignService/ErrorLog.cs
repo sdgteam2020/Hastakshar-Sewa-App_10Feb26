@@ -11,16 +11,11 @@ namespace SignService
     public class ErrorLog
     {
         public static void LogErrorToFile(Exception ex, string error = "", bool isLocalError = false)
-        {
-
-            // IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
+        { 
             string hostName = Dns.GetHostName();
-
-            // Get the list of IP addresses associated with the hostname
+             
             IPAddress[] a = Dns.GetHostEntry(hostName).AddressList;
-
-            //string filePath = System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + @"\ErrorLog.txt";// Path to the error log file
-            //string filePath = "ErrorLog.txt"; // Path to the error log file
+             
             string errorMessage = $"****************************************************************************************************************\n ";
             string ip = a[0].ToString();
             errorMessage += "IP Address:-" + ip;
@@ -40,14 +35,14 @@ namespace SignService
                 string Appfolder = System.IO.Path.Combine(path, "DGIS");
                 Directory.CreateDirectory(Appfolder);
                 string filePath = System.IO.Path.Combine(Appfolder, "ErrorLog.txt");
-                // Append the error message to the file
+               
                 File.AppendAllText(filePath, errorMessage);
             }
             catch (Exception fileEx)
             {
                 Console.WriteLine($"Failed to write to log file: {fileEx.Message}");
             }
-            // ---- 2) Send to API (best-effort) ----
+          
             try
             {
                 if (!isLocalError)
@@ -55,23 +50,19 @@ namespace SignService
             }
             catch
             {
-                // swallow errors (do not crash)
+                
             }
         }
 
         private const int TimeoutSeconds = 5;
 
-        /// <summary>
-        /// Non-async callers can call this. It will not crash your app.
-        /// </summary>
+      
         public static void SendLogToApi(string ip, string errorMessage, string stackTrace, string extra)
         {
             _ = Task.Run(() => SendLogToApiAsync(ip, errorMessage, stackTrace, extra, CancellationToken.None));
         }
 
-        /// <summary>
-        /// Preferred async method.
-        /// </summary>
+        
         public static async Task SendLogToApiAsync(
             string ip,
             string errorMessage,
@@ -80,20 +71,15 @@ namespace SignService
             CancellationToken ct)
         {
             try
-            {
-
-                // Build payload (same fields as your JSON builder)
-                var payload = BuildPayload(ip, errorMessage, stackTrace, extra);
-
-                // ✅ JWT auto-attached + auto-refresh inside DeviceJwtHttpClient
+            { 
+                var payload = BuildPayload(ip, errorMessage, stackTrace, extra); 
                 await new ApiClient().PostRequestAsync<string>(
                     "api/ClientLogs/SaveClientLogs",
                     payload
                 );
             }
             catch (Exception ex)
-            {
-                // Never throw from logging; log locally only
+            { 
                 LogErrorToFile(ex, "Excepction During the SaveClientLogs", true);
             }
         }
@@ -114,7 +100,7 @@ namespace SignService
                 appName,
                 appVersion,
                 errorMessage = errMsg,
-                stackTrace,   // can be null
+                stackTrace,    
                 extra = string.IsNullOrWhiteSpace(extra) ? null : extra
             };
         }

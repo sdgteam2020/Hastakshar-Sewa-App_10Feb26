@@ -7,7 +7,6 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ValidateCertificate
 {
@@ -86,7 +85,7 @@ namespace ValidateCertificate
                 Console.WriteLine("Getting CRL from " + crlurl);
 
                 X509CrlParser crlParser = new X509CrlParser();
-                // Creates the CRL
+               
                 Stream url = WebRequest.Create(crlurl).GetResponse().GetResponseStream();
                 return crlParser.ReadCrl(url);
             }
@@ -134,12 +133,12 @@ namespace ValidateCertificate
                 Console.WriteLine("validation date: " + validationDate);
                 Console.WriteLine("CRL this update: " + thisUpdate);
                 Console.WriteLine("CRL next update: " + x509crl.NextUpdate);
-                if (x509crl.NextUpdate != null && validationDate.CompareTo(x509crl.NextUpdate.Value) > 0) //jbonilla After
+                if (x509crl.NextUpdate != null && validationDate.CompareTo(x509crl.NextUpdate.Value) > 0)  
                 {
                     Console.WriteLine("CRL too old");
                     return false;
                 }
-                // assert cRLSign KeyUsage bit
+     
                 if (null == issuerCertificate.GetKeyUsage())
                 {
                     Console.WriteLine("No KeyUsage extension for CRL issuing certificate");

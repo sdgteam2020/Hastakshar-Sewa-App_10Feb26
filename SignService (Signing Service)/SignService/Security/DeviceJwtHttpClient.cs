@@ -26,39 +26,29 @@ namespace SignService.Security
         {
             _baseUrl = baseUrl.TrimEnd('/') + "/";
 
-            // IMPORTANT: reuse HttpClient (do NOT create per call)
+            
             _httpClient = new HttpClient
             {
                 BaseAddress = new Uri(_baseUrl),
-                 Timeout = TimeSpan.FromSeconds(15)  // ✅ important
-            };
-
-            // If you're using self-signed cert locally, DON'T do this in production.
-            // For production, remove this and fix the certificate properly.
-            // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                 Timeout = TimeSpan.FromSeconds(15)  
+            }; 
         }
 
-        /// <summary>
-        /// Ensures a valid JWT token exists in memory. Refreshes if expiring soon.
-        /// </summary>
+   
         public async Task EnsureTokenAsync(string deviceId, string deviceKey, CancellationToken ct = default)
-        {
-            // ✅ stop hammering if token is forbidden
+        { 
             if (_tokenFailedPermanently)
                 throw new Exception("Device token request previously failed (403). Skipping retry.");
-
-            // Optional: cooldown (prevents tight loops even if not permanent)
+             
             if (DateTime.UtcNow < _tokenFailUntilUtc)
                 throw new Exception("Token request is in cooldown. Try again later.");
-
-            // Refresh 2 minutes early
+             
             if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _expiresUtc.AddMinutes(-2))
                 return;
 
             await _tokenLock.WaitAsync(ct);
             try
-            {
-                // double-check after lock
+            { 
                 if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _expiresUtc.AddMinutes(-2))
                     return;
 
@@ -71,25 +61,21 @@ namespace SignService.Security
 
                     _httpClient.DefaultRequestHeaders.Authorization =
                         new AuthenticationHeaderValue("Bearer", _accessToken);
-
-                    // ✅ reset failure flags on success
+                     
                     _tokenFailedPermanently = false;
                     _tokenFailUntilUtc = DateTime.MinValue;
                 }
                 catch (Exception ex)
-                {
-                    // ✅ IMPORTANT: mark as failed to prevent infinite retry loop
-                    // If it’s 403, make it permanent. Otherwise cooldown for 60s.
+                { 
                     var msg = ex.Message ?? "";
                   
 
                     if (msg.Contains("403") || msg.Contains("Forbidden"))
                         _tokenFailedPermanently = true;
                     if (msg.Contains("403") || msg.Contains("Forbidden"))
-                        _tokenFailUntilUtc = DateTime.UtcNow.AddMinutes(5); // cooldown
-
-
-                    throw; // rethrow so caller knows token failed
+                        _tokenFailUntilUtc = DateTime.UtcNow.AddMinutes(5);  
+                     
+                    throw;  
                 }
             }
             finally
@@ -103,7 +89,7 @@ namespace SignService.Security
                 string deviceKey,
                 CancellationToken ct)
         {
-            var payload = new { deviceId, deviceKey }; // camelCase JSON
+            var payload = new { deviceId, deviceKey };  
             var json = JsonConvert.SerializeObject(payload);
 
              var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -145,7 +131,7 @@ namespace SignService.Security
                 );
                 throw;
             }
-            catch (TaskCanceledException ex) // timeout / cancellation
+            catch (TaskCanceledException ex)  
             {
                 ErrorLog.LogErrorToFile(ex,
                     "DEVICE-JWT TIMEOUT/CANCELED\n" +
@@ -158,7 +144,7 @@ namespace SignService.Security
             }
             catch (Exception ex)
             {
-                // optional: catch-all so you don't lose unexpected parsing issues
+                
                 ErrorLog.LogErrorToFile(ex,
                     "DEVICE-JWT UNEXPECTED ERROR\n" +
                     $"BaseAddress={_httpClient.BaseAddress}\n" +
@@ -169,13 +155,7 @@ namespace SignService.Security
                 throw;
             }
         }
-
-
-
-        /// <summary>
-        /// POST JSON to endpoint and deserialize response. Attaches Bearer token automatically.
-        /// Retries once if 401 occurs (token expired).
-        /// </summary>
+         
         public async Task<T> PostJsonAsync<T>(string endpoint, object postData, string deviceId, string deviceKey, CancellationToken ct = default)
         {
             await EnsureTokenAsync(deviceId, deviceKey, ct);
@@ -215,7 +195,7 @@ namespace SignService.Security
 
         private async Task<(bool isSuccess, bool isUnauthorized, T value, string errorMessage)> PostOnceAsync<T>(string endpoint, object postData, CancellationToken ct)
         {
-            var url = endpoint.TrimStart('/'); // so BaseAddress works
+            var url = endpoint.TrimStart('/'); 
             var jsonBody = JsonConvert.SerializeObject(postData);
             var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 

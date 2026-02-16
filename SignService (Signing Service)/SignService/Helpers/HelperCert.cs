@@ -1,12 +1,11 @@
-﻿using iText.Forms.Fields;
-using iText.Forms;
+﻿using iText.Forms;
+using iText.Forms.Fields;
 using iText.Kernel.Pdf;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using static iText.StyledXmlParser.Css.Parse.CssDeclarationValueTokenizer;
 
 namespace SignService.Helpers
 {
@@ -64,8 +63,7 @@ namespace SignService.Helpers
                         try
                         {
                             if (!(cert.Subject.Contains("localhost") || cert.Subject.Contains("DESKTOP")))
-                            {
-                                //if(cert.Subject.Contains("SERIALNUMBER"))
+                            { 
                                 if (cert.PrivateKey is RSACryptoServiceProvider rsaProvider && rsaProvider.CspKeyContainerInfo.HardwareDevice)
                                 {
                                     fcollection.Add(cert);
@@ -73,9 +71,7 @@ namespace SignService.Helpers
                             }
                         }
                         catch (CryptographicException)
-                        {
-                            // Handle any exception when accessing the private key
-                            // You can log the error or skip this certificate
+                        { 
                         }
                     }
                     store.Close();
@@ -84,8 +80,7 @@ namespace SignService.Helpers
                 {
                     responseStatus.Status = "0";
                     responseStatus.Remark = "Pl insert valid Token !";
-                    return responseStatus;
-                    //MyMessageBox.ShowDialog("Pl insert valid Token !");
+                    return responseStatus; 
                 }
                 else
                 {
@@ -115,12 +110,10 @@ namespace SignService.Helpers
                                     return responseStatus;
                                 }
                                 else
-                                {
-                                   // CertThumbPrint = cert1.Thumbprint;
-                                   // responseStatus.Status = "1";
+                                { 
                                      responseStatus.Status = "-1";
                                      responseStatus.Remark = "Token is expired. Pl contact issuer!";
-                                  //  responseStatus.Remark = CertThumbPrint;
+                                  
                                     return responseStatus;
                                     
                                 }
@@ -146,28 +139,21 @@ namespace SignService.Helpers
                     CertThumbPrint = "";
                     responseStatus.Status = "0";
                     responseStatus.Remark = "Pl insert valid Token !";
-                    return responseStatus;
-                    // MyMessageBox.ShowDialog("Pl insert valid Token !");
-                   // CertThumbPrint = "";
+                    return responseStatus; 
                 }
                 else
                 {
                     CertThumbPrint = "";
                     responseStatus.Status = "-1";
                     responseStatus.Remark = "Try again or report to ASDC. Reason1:- " + ex.Message;
-                    return responseStatus;
-                   // // MyMessageBox.ShowDialog("Try again or report to ASDC. Reason1:- " + ex.Message);
+                    return responseStatus; 
                    
                 }
              
             }
             responseStatus.Status = "0";
             responseStatus.Remark = "Try again";
-            return responseStatus;
-            // return "Check completed!";
-        }
-
-
-       
+            return responseStatus; 
+        } 
     }
 }

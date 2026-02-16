@@ -10,19 +10,14 @@ using MyApp;
 using Newtonsoft.Json;
 using SignService;
 using SignService.Helpers;
-using Spire.Pdf.Fields;
-using Spire.Pdf.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography;
-using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceModel.Web;
 using System.Text;
@@ -63,7 +58,7 @@ namespace DGISApp
             LoadDataAsync();
         }
 
-        //*
+        
         private async void LoadDataAsync()
         {
             HelperCert helperCert = new HelperCert();
@@ -78,7 +73,7 @@ namespace DGISApp
                 CertThumbPrint = result.Remark;
 
         }
-        //*
+         
 
         public async Task<bool> IsConnectedToInternet()
         {
@@ -170,15 +165,9 @@ namespace DGISApp
                             }
                         }
                         else
-                        {
-                            //Card1.Width = 750;
-                            //pdfviewer.Visibility = Visibility.Visible;
-                            //LoadPdf(droppedFilePaths);
-                            // MyMessageBox.ShowDialog("f");
-
+                        { 
                             OpenCustomCordinateSelecter(droppedFilePaths);
-
-
+                             
                         }
 
 
@@ -241,7 +230,7 @@ namespace DGISApp
                 string SendJaon = Newtonsoft.Json.JsonConvert.SerializeObject(senddataList.ToArray());
                 var content = new StringContent(SendJaon, Encoding.UTF8, "application/json");
                 var client = new HttpClient();
-                // var response = await client.PostAsync(apiUrl, content);
+                 
                 IService1 service1 = new Service1();
                 var apiResponse = await service1.DigitalSignBulkAsync(senddataList);
 
@@ -344,7 +333,7 @@ namespace DGISApp
         {
             bool CheckCrl = false;
             String NewFileName = "";
-            //List<string> Passfiles = new List<string>();
+           
             int pagecount = 0;
             int IntPrintPageNo = 1;
             Boolean custom = false;
@@ -414,7 +403,7 @@ namespace DGISApp
 
                             cancellationTokenSource = new CancellationTokenSource();
                             new Thread(() => SignDocument(DownloadPath, fileforloop, IntPrintPageNo, x, y, custom, CheckCrl, cancellationTokenSource.Token)).Start();
-                            //Passfiles.Add(fileforloop);
+                           
 
 
                         }
@@ -457,7 +446,7 @@ namespace DGISApp
                         this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
                     }
                 }
-                //new Thread(() => SignDocumentMultiple(DownloadPath, Passfiles.ToArray(), IntPrintPageNo, x, y, custom, CheckCrl, cancellationTokenSource.Token)).Start();
+                 
             }
             catch (Exception ex)
             {
@@ -496,13 +485,7 @@ namespace DGISApp
                 this.BusyBar.IsBusy = false;
                 return;
             }
-            // not is imposed to by pass the ethernet check status for not check ocsp status.
-            //**
-
-            //bool isConnected = await HasInternetConnectionAsyncTest();
-
-            //if (isConnected)
-            //{
+            
             try
             {
                 HelperCert helperCert = new HelperCert();
@@ -548,12 +531,7 @@ namespace DGISApp
                             }
                             else
                             {
-                                OpenCustomCordinateSelecter(droppedFilePaths);
-
-                                // Card1.Width = 750;
-                                //pdfviewer.Visibility = Visibility.Visible;
-
-                                //  LoadPdf(fileNames);
+                                OpenCustomCordinateSelecter(droppedFilePaths); 
                             }
                         }
                     }
@@ -586,10 +564,7 @@ namespace DGISApp
                             {
 
                                 OpenCustomCordinateSelecter(new[] { selectedFile });
-
-                                // Card1.Width = 750;
-                                //pdfviewer.Visibility = Visibility.Visible;
-                                //LoadPdf(new[] { selectedFile });
+                                 
                             }
                         }
                     }
@@ -616,18 +591,18 @@ namespace DGISApp
                 if (CustomSignCordinate.X > 0 && CustomSignCordinate.Y > 0)
                 {
 
-                    return 1; // Stop execution when condition is met
+                    return 1; 
 
                 }
 
                 else if ((currentTime - CustomSignCordinate.UpdatedOn).TotalSeconds > 3 && CustomSignCordinate.UpdatedOn.Year > 2024)
                 {
-                    return -1;//Close Browser
+                    return -1; 
                 }
 
 
 
-                await System.Threading.Tasks.Task.Delay(3000); // Wait for 3 second without blocking the UI
+                await System.Threading.Tasks.Task.Delay(3000);  
             }
 
         }
@@ -655,32 +630,25 @@ namespace DGISApp
 
             }
             else
-            {
-                //MyMessageBox.ShowDialog(PDFViewerWithCordinates);
-                // Get the directory of the current executable
+            { 
                 string appDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-
-                // Construct the path to the index.html file
+                 
                 string htmlFilePath = Path.Combine(appDirectory, "PDFViewerWithCordinates", "index.html");
-
-                // Use the "file://" protocol to open local HTML files in Edge
+                 
                 string url = $"file:///{htmlFilePath.Replace("\\", "/").Replace(" ", "%20")}";
+                 
+                int width = 1200;   
+                int height = 700; 
 
-                //Process.Start("msedge.exe", url);
-                int width = 1200;  // Desired window width
-                int height = 700; // Desired window height
 
-
-                // Get screen size
+                 
                 int screenWidth = (int)SystemParameters.PrimaryScreenWidth;
                 int screenHeight = (int)SystemParameters.PrimaryScreenHeight;
 
-                // Calculate center position
+                 
                 int posX = (screenWidth - width) / 2;
                 int posY = (screenHeight - height) / 2;
-
-                // Open Edge with custom size and position
-                // Process.Start("msedge.exe", $"--new-window \"{url}\" --window-size={width},{height} --window-position={posX},{posY}");chrome
+                 
                 var keychrome = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe");
                 var keyfirefox = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\firefox.exe");
                 var keymsedge = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe");
@@ -746,30 +714,7 @@ namespace DGISApp
                 {
 
                     OpenBrowserForCordinate(file, filename);
-
-                    //this.BusyBar.IsBusy = false;
-                    //this.DropList.IsEnabled = true;
-                    //string ertcordinate = MyMessageBox.ShowDialogForWeb(filename);
-                    //if (ertcordinate == "1")
-                    //{
-                    //    int x = CustomSignCordinate.X;
-                    //    this.BusyBar.IsBusy = false;
-                    //    this.DropList.IsEnabled = true;
-
-                    //    onlineDigitalSig(file, CustomSignCordinate.X, CustomSignCordinate.Y, CustomSignCordinate.PageNo);
-                    //}
-                    //else if (ertcordinate == "-2")
-                    //{
-                    //    MyMessageBox.ShowDialog("Invalid Cordinate Select !");
-                    //    this.BusyBar.IsBusy = false;
-                    //    this.DropList.IsEnabled = true;
-                    //}
-                    //else
-                    //{
-                    //    this.BusyBar.IsBusy = false;
-                    //    this.DropList.IsEnabled = true;
-                    //}
-                    // this.pdfdoc.Load(filename);
+                     
                 }
                 else if (Path.GetExtension(filename) == ".docx" || Path.GetExtension(filename) == ".doc" || Path.GetExtension(filename) == ".DOCX")
                 {
@@ -798,27 +743,7 @@ namespace DGISApp
 
 
                         OpenBrowserForCordinate(file, NewFileName);
-
-                        //string ertcordinate = MyMessageBox.ShowDialogForWeb(NewFileName);
-                        //if (ertcordinate == "1")
-                        //{
-                        //    int x = CustomSignCordinate.X;
-                        //    this.BusyBar.IsBusy = false;
-                        //    this.DropList.IsEnabled = true;
-
-                        //    onlineDigitalSig(file, CustomSignCordinate.X, CustomSignCordinate.Y, CustomSignCordinate.PageNo);
-                        //}
-                        //else if (ertcordinate == "-2")
-                        //{
-                        //    MyMessageBox.ShowDialog("Invalid Cordinate Select !");
-                        //    this.BusyBar.IsBusy = false;
-                        //    this.DropList.IsEnabled = true;
-                        //}
-                        //else
-                        //{
-                        //    this.BusyBar.IsBusy = false;
-                        //    this.DropList.IsEnabled = true;
-                        //}
+ 
                     }
                     else
                     {
@@ -1035,9 +960,7 @@ namespace DGISApp
                             if (filename != "")
                             {
                                 try
-                                {
-                                    //download = saveFileDialog.SelectedPath + @"\";
-
+                                {  
                                     download = downloadfilePath + @"\";
 
                                     if (es.GetEncryptionAlgorithm() != null)
@@ -1078,15 +1001,8 @@ namespace DGISApp
                                                     StrName = SubjectSplit[i].ToString().Replace("CN=", "").Trim();
                                                 if (SubjectSplit[i].Contains("T="))
                                                     StrRank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
-                                            }
-                                            // string StrName = SubjectSplit[0].ToString().Replace("CN=", "").Trim();
-                                            //string StrICNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                            //string StrRank = SubjectSplit[2].ToString().Replace("T=", "").Trim();
-
-                                            saveDigitalSignInfo.SerialNo = StrICNo;
-
-
-
+                                            } 
+                                            saveDigitalSignInfo.SerialNo = StrICNo; 
                                             iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(filename));
                                             SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
                                             IList<string> sigNames = signatureUtil.GetSignatureNames();
@@ -1115,14 +1031,11 @@ namespace DGISApp
 
                                                     try
                                                     {
-                                                        fileStream = new FileStream(FileFullName, FileMode.Create);
-                                                        //signer1 = new PdfSigner(reader, new FileStream(FileFullName, FileMode.Create), new StampingProperties());
+                                                        fileStream = new FileStream(FileFullName, FileMode.Create); 
                                                         signer1 = new PdfSigner(reader, fileStream, new StampingProperties());
                                                     }
                                                     catch (Exception)
-                                                    {
-                                                        //signer1.ToString();
-                                                        //.SignDetached(reader, new FileStream(FileFullName, FileMode.Create), new StampingProperties()) ;
+                                                    { 
                                                     }
 
                                                     PdfSignatureAppearance appearance = signer1.GetSignatureAppearance()
@@ -1144,9 +1057,7 @@ namespace DGISApp
                                                             .SetPageRect(rect)
                                                             .SetPageNumber(PageNum);
                                                     signer1.SetFieldName(signer1.GetNewSigFieldName());
-                                                    //CADES
-
-
+                                                     
                                                     try
                                                     {
                                                         signer1.SignDetached(es, chain3, null, null, null, 0, CryptoStandard.CMS);
@@ -1154,7 +1065,7 @@ namespace DGISApp
                                                     catch
                                                     {
                                                         ErrorEncountered = true;
-                                                        //signer1 = null; //*
+                                                        
                                                         this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Sign !")));
                                                         this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
                                                         this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
@@ -1193,7 +1104,7 @@ namespace DGISApp
                                                             }
                                                         }
                                                     }
-                                                    //iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 80);
+                                                   
                                                     iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(Xaxis, Yaxis, 180, 50);
 
 
@@ -1362,9 +1273,7 @@ namespace DGISApp
                         reader.Close();
                     }
                 }));
-
-
-                // Run your code from a thread that joins the STA Thread
+                 
                 t.SetApartmentState(ApartmentState.STA);
                 t.Start();
                 t.Join();
@@ -1397,8 +1306,7 @@ namespace DGISApp
                 if (fileStream != null)
                 {
                     fileStream.Close();
-                }
-                //this.Dispatcher.Invoke(new Action(() => pdfdoc.Unload()));
+                } 
             }
 
             if (FileFullName != "")
@@ -1497,10 +1405,8 @@ namespace DGISApp
                 {
                     bool isConnected = await helper.HasInternetConnectionAsyncTest();
                     if (isConnected)
-                    {
-                        //await Task.Delay(10000);
-                        ChkCrl.Background = Brushes.Green;
-                        //ChkCrlAny.Background = Brushes.Green;
+                    {            
+                        ChkCrl.Background = Brushes.Green; 
 
                         string Certificate = await GetTokenDetail(true, CertThumbPrint);
 
@@ -1515,8 +1421,7 @@ namespace DGISApp
                             {
                                 crloscp = certificateData.CRL_OCSPCheck;
                                 crlocspmsg = certificateData.CRL_OCSPMsg;
-                                ChkCrl.Background = Brushes.Red;
-                                //ChkCrlAny.Background = Brushes.Red;
+                                ChkCrl.Background = Brushes.Red; 
                                 MyMessageBox.ShowDialog(TokenRemarks);
                                 return;
                             }
@@ -1533,18 +1438,15 @@ namespace DGISApp
 
                                 X509Certificate2 cert1 = certCollection[0];
                             }
-                        }
-                        //MyMessageBox.Show("Connected to the internet & CRL Checked.");
+                        } 
 
                     }
                     else
 
                     {
-                        ChkCrl.Background = Brushes.Red;
-                        //ChkCrlAny.Background = Brushes.Red;
+                        ChkCrl.Background = Brushes.Red; 
                         crloscp = true;
-                        crlocspmsg = "";
-                        //MyMessageBox.Show("Pl check you Nw connection and Try Again!");
+                        crlocspmsg = ""; 
                     }
                 }
                 else
@@ -1554,8 +1456,7 @@ namespace DGISApp
                 }
             }
             catch (Exception ex)
-            {
-                //MyMessageBox.ShowDialog(ex.Message, MyMessageBox.Buttons.OK);
+            { 
                 ErrorLog.LogErrorToFile(ex);
             }
         }
@@ -1612,9 +1513,7 @@ namespace DGISApp
                 }
             }
         }
-
-
-        //add code for radio button checked event
+         
         private void RBModePdfWord_Checked(object sender, RoutedEventArgs e)
         {
             lblDigitalSigningMode.Content = "Digital Signing (Single or Bulk PDF/Word Docus)";
@@ -1647,8 +1546,8 @@ namespace DGISApp
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];   // can be null
-            string referer = headers?["Referer"];  // can be null
+            string origin = headers?["Origin"];    
+            string referer = headers?["Referer"];  
             try
             {
 
@@ -1662,9 +1561,7 @@ namespace DGISApp
                 if (dlg.ShowDialog() == true)
                 {
                     lblAnyFilePath.Content = dlg.FileName;
-
-                    //AnyFileDigitalSign(dlg.FileName,CertThumbPrint, true);
-                    //
+                     
                     await GenericSignFileAsync(dlg.FileName);
                 }
             }
@@ -1691,8 +1588,8 @@ namespace DGISApp
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];   // can be null
-            string referer = headers?["Referer"];  // can be null
+            string origin = headers?["Origin"];    
+            string referer = headers?["Referer"];  
             try
             {
                 if (!e.Data.GetDataPresent(DataFormats.FileDrop, true)) return;
@@ -1717,35 +1614,24 @@ namespace DGISApp
             }
             catch (Exception ex)
             {
-                //MyMessageBox.ShowDialog(ex.Message);
+                 
                 ErrorLog.LogErrorToFile(ex);
             }
         }
-
-        //private void ChkCrlAny_Click(object sender, RoutedEventArgs e)
-        //{
-        //    // Reuse existing CRL handler logic
-        //    // (it uses ChkCrl state + sets crloscp/crlocspmsg)
-        //    // So we sync ChkCrl with ChkCrlAny before calling it.
-        //    if (ChkCrl != null && ChkCrlAny != null)
-        //        ChkCrl.IsChecked = ChkCrlAny.IsChecked;
-
-        //    ChkCrl_Click(ChkCrl, e);
-        //}
-
+ 
         private async System.Threading.Tasks.Task GenericSignFileAsync(string filePath)
         {
             try
             {
-                // ✅ Always read UI values on UI thread (because you might call from anywhere)
+                
                 string remark = "";
                 bool checkCrlTick = false;
-                //bool isAnyFileSigned = false;
+                 
                 DTOSaveDigitalSignInfo saveDigitalSignInfo;
                 var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-                string origin = headers?["Origin"];   // can be null
-                string referer = headers?["Referer"];  // can be null
+                string origin = headers?["Origin"];    
+                string referer = headers?["Referer"];  
 
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -1765,8 +1651,7 @@ namespace DGISApp
                     ShowMsg("Special Characters Not Allow ");
                     return;
                 }
-
-                // ✅ Busy UI on UI thread
+                 
                 await Dispatcher.InvokeAsync(() =>
                 {
                     if (DropListAny != null) DropListAny.IsEnabled = false;
@@ -1779,8 +1664,7 @@ namespace DGISApp
 
                     BusyBar.IsBusy = true;
                 });
-
-                // Token thumbprint refresh
+                 
                 HelperCert helperCert = new HelperCert();
                 var result = await helperCert.CheckSomethingAsync();
 
@@ -1791,8 +1675,7 @@ namespace DGISApp
                 }
 
                 CertThumbPrint = result.Remark;
-
-                // CRL check (uses local checkCrlTick)
+                 
                 if (checkCrlTick)
                 {
                     if (crloscp == true && crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
@@ -1813,8 +1696,7 @@ namespace DGISApp
                         return;
                     }
                 }
-
-                // Load certificate
+                 
                 X509Certificate2 cert;
                 using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
                 {
@@ -1833,9 +1715,7 @@ namespace DGISApp
                 {
                     ShowMsg("Token is expired. Pl contact issuer !");
                     return;
-                }
-
-                // ✅ Sign (background/parallel in service)
+                } 
                 string sigPath = await HugeFileSignatureService.SignPortableAsync(
                     filePath, cert, UpdateProgress, remark);
                 if (!string.IsNullOrEmpty(sigPath))
@@ -1897,8 +1777,7 @@ namespace DGISApp
 
 
         private void UpdateProgress(double percent)
-        {
-            // This can be called from any thread
+        { 
             Dispatcher.Invoke(() => progress.Value = percent);
         }
 

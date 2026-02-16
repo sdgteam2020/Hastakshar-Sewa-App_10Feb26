@@ -21,8 +21,7 @@ namespace ValidateCertificate
         private readonly int MaxClockSkew = 36000000;
 
         public CertificateStatus Query(X509Certificate eeCert, X509Certificate issuerCert)
-        {
-            // Query the first Ocsp Url found in certificate
+        { 
             List<string> urls = GetAuthorityInformationAccessOcspUrl(eeCert);
 
 
@@ -30,7 +29,7 @@ namespace ValidateCertificate
             if (urls.Count == 0)
             {
                 Console.WriteLine("No OCSP url found in ee certificate.");
-                //return;
+              
                 return CertificateStatus.NotFound;
             }
             else
@@ -57,7 +56,7 @@ namespace ValidateCertificate
                 request.ContentType = contentType;
                 request.ContentLength = data.Length;
                 request.Accept = accept;
-                //request.Timeout = 15000; 
+                
                 using (Stream stream = request.GetRequestStream())
                 {
                     stream.Write(data, 0, data.Length);
@@ -103,12 +102,7 @@ namespace ValidateCertificate
                 {
                     return null;
                 }
-
-                // For a strange reason I cannot acess the aia.AccessDescription[].
-                // Hope it will be fixed in the next version (1.5).
-                // AuthorityInformationAccess aia = AuthorityInformationAccess.GetInstance(obj);
-
-                // Switched to manual parse
+ 
                 Asn1Sequence s = (Asn1Sequence)obj;
                 IEnumerator elements = s.GetEnumerator();
 
@@ -117,7 +111,7 @@ namespace ValidateCertificate
                     Asn1Sequence element = (Asn1Sequence)elements.Current;
                     DerObjectIdentifier oid = (DerObjectIdentifier)element[0];
 
-                    if (oid.Id.Equals("1.3.6.1.5.5.7.48.1")) // Is Ocsp?
+                    if (oid.Id.Equals("1.3.6.1.5.5.7.48.1"))  
                     {
                         Asn1TaggedObject taggedObject = (Asn1TaggedObject)element[1];
                         GeneralName gn = (GeneralName)GeneralName.GetInstance(taggedObject);
@@ -127,7 +121,7 @@ namespace ValidateCertificate
             }
             catch (Exception e)
             {
-                //throw new Exception("Error parsing AIA.", e);
+                 
                 Console.WriteLine("Error parsing AIA." + e.Message);
             }
 
@@ -277,9 +271,9 @@ namespace ValidateCertificate
             Asn1OctetString asn1 = new DerOctetString(new DerOctetString(new byte[] { 1, 3, 6, 1, 5, 5, 7, 48, 1, 1 }));
 
             values.Add(OcspObjectIdentifiers.PkixOcsp, new X509Extension(false, asn1));
-#pragma warning disable CS0612 // Type or member is obsolete
+#pragma warning disable CS0612  
             ocspRequestGenerator.SetRequestExtensions(new X509Extensions(oids, values));
-#pragma warning restore CS0612 // Type or member is obsolete
+#pragma warning restore CS0612  
 
             return ocspRequestGenerator.Generate();
         }

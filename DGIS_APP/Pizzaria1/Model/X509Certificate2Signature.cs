@@ -1,12 +1,7 @@
 ﻿using iText.Signatures;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-using WinniesMessageBox;
 
 namespace MyApp
 {
@@ -30,13 +25,11 @@ namespace MyApp
                 else if (certificate.PrivateKey is DSACryptoServiceProvider)
                     encryptionAlgorithm = "DSA";
                 else
-                    message = "certificate not valid";
-                   // throw new ArgumentException("Unknown encryption algorithm " + certificate.PrivateKey);
+                    message = "certificate not valid"; 
             }
             catch(Exception)
             {
-                message = "Token not found";
-                //MyMessageBox.ShowDialog("Token not found!");
+                message = "Token not found"; 
             }
         }
 

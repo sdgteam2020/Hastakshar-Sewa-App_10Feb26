@@ -1,7 +1,6 @@
 ﻿
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -10,8 +9,7 @@ using System.Xml;
 using WinniesMessageBox;
 
 namespace SignService
-{
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IService1" in both code and config file together.
+{ 
     [ServiceContract]
     public interface IService1
     {
@@ -48,7 +46,7 @@ namespace SignService
         [WebInvoke(Method = "POST", UriTemplate = "/ValidatePersID", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<List<PersIdValidation>> ValidatePersID(string inputPersID);
 
-        // Add to Fetch personal details with checking the CRL and OCSP from digital certificate
+        
         [OperationContract]
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenOCSPCrlDetails?IsCheckCrl={IsCheckCrl}&ThumbPrint={ThumbPrint}")]
         Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl,string ThumbPrint);
@@ -56,8 +54,7 @@ namespace SignService
         [OperationContract]
         [WebInvoke(Method = "POST", UriTemplate = "/ValidatePersID2FA", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<Boolean> ValidatePersID2FA(string inputPersID);
-
-        // Add to Sign PDF
+         
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignBulkAsync")]
         Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData);  // Add to Sign PDF
@@ -69,9 +66,7 @@ namespace SignService
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignVerifyAsync")]
         ResponseMessage DigitalSignVerifyAsync(DigitalSignData reqData);
-
-
-        // Add to Sign byte PDF
+         
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/ByteDigitalSignAsync")]
         Task<ResponseMessage> ByteDigitalSignAsync(List<DigitalSignData> reqData);
@@ -296,7 +291,7 @@ namespace SignService
         public string FilePath { get; set; }
         
     }
-    // Use a data contract as illustrated in the sample below to add composite types to service operations.
+    
     [DataContract]
     public class CompositeType
     {
@@ -371,7 +366,7 @@ namespace SignService
         [DataMember] public string NormalizedInputMac { get; set; }
 
         [DataMember] public string MachineName { get; set; }
-        [DataMember] public string DeviceMac { get; set; }  // primary mac (or matched mac)
+        [DataMember] public string DeviceMac { get; set; }   
 
         [DataMember] public bool IsMatch { get; set; }
     }

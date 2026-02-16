@@ -1,5 +1,4 @@
-﻿//  using iTextSharp.text.pdf;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using SignService;
 using SignService.Helpers;
 using System;
@@ -69,12 +68,7 @@ namespace DGISApp
                 }
             }
 
-            bool isValid = meetsLengthRequirements
-                        //&& hasUpperCaseLetter
-                        //&& hasLowerCaseLetter
-                        //&& hasDecimalDigit
-                        //&& hasSpecialChar
-                        ;
+            bool isValid = meetsLengthRequirements;
             return isValid;
 
         }
@@ -101,8 +95,8 @@ namespace DGISApp
             string DownloadPath = "";
             try
             {
-              if(RDefault.IsChecked==true)
-              {
+                if (RDefault.IsChecked == true)
+                {
                     if (textpassword.Password.ToString() == "")
                     {
                         MyMessageBox.ShowDialog("Please Enter the Password used during file Encrption.");
@@ -110,7 +104,7 @@ namespace DGISApp
                     }
 
 
-               }
+                }
 
                 if (RDefault.IsChecked == true)
                 {
@@ -142,51 +136,32 @@ namespace DGISApp
                     }
                 }
 
-                     if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
+                if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
+                {
+                    droppedFilePaths = e.Data.GetData(DataFormats.FileDrop, true) as string[];
+                    try
+                    {
+                        int processedFiles = 0;
+                        int totalFiles = droppedFilePaths.Count();
+                        foreach (var path in droppedFilePaths)
                         {
-                            droppedFilePaths = e.Data.GetData(DataFormats.FileDrop, true) as string[];
-                            try
+                            ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
+                            DownloadPath = System.IO.Path.GetDirectoryName(path);
+
+                            FileInfo fi = new FileInfo(path);
+                            if (fi.Length <= 524288000)
                             {
-                                int processedFiles = 0;
-                                int totalFiles = droppedFilePaths.Count();
-                                foreach (var path in droppedFilePaths)
-                                {
-                                    ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
-                                    DownloadPath = System.IO.Path.GetDirectoryName(path);
 
-                                    FileInfo fi = new FileInfo(path);
-                              if (fi.Length <= 524288000)
-                             {
 
-                              
-                                 if (fi.Extension != ".mil")
-                               // if (!IsFileEncrypted)
+                                if (fi.Extension != ".mil")
+
                                 {
                                     MyMessageBox.ShowDialog("File Extesion Not Support.");
                                     break;
                                 }
                                 byte[] fullBytes = null;
-                                int headerLength=0;
-                                //if (RDefault.IsChecked == true)
-                                //{
-                                //    /////////// Remove header before decrypt///////////////////
-                                //    //byte[] expectedHeader = Encoding.UTF8.GetBytes("ASDC_AESGCM256");
-                                //   // headerLength = expectedHeader.Length;
+                                int headerLength = 0;
 
-                                //    fullBytes = File.ReadAllBytes(path);
-
-                                //    // Verify header first
-                                //    byte[] fileHeader = fullBytes.Take(headerLength).ToArray();
-                                //    bool isFileEncrypted = expectedHeader.SequenceEqual(fileHeader);
-
-                                //    if (!isFileEncrypted)
-                                //    {
-                                //        MyMessageBox.ShowDialog("File is not Encrypted / Invalid File.");
-                                //        return;
-                                //    }
-                                //}
-                               ////////////////////////////////
-                                //byte[] bytes1 = AesGcm256.SimpleDecryptWithPassword(encryptedBytes, textpassword.Password);
 
                                 if (fi.Extension == ".mil")
                                 {
@@ -201,16 +176,15 @@ namespace DGISApp
                                     char dd = '_';
                                     int levelOfEncryption = fi.FullName.Count(s => s == dd);
                                     if (RDefault.IsChecked == true)
-                                    { 
-                                        // Skip header and pass only encrypted content for decryption
-                                       // byte[] encryptedBytes = fullBytes.Skip(headerLength).ToArray();
+                                    {
+
                                         new Thread(() =>
                                         {
 
                                             this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                             this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
 
-                                            byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString()); //decryptdata(bytes1, myAes.Key, myAes.IV, myAes.KeySize);
+                                            byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString());
                                             if (roundtrip == null)
                                             {
                                                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
@@ -232,15 +206,12 @@ namespace DGISApp
                                                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
                                                 this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
 
-                                                //this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Congratulations ! \n\n Document is successfully decrypted. \n" + DownloadPath)));
-
                                             }
 
                                             processedFiles++;
 
                                             if (processedFiles == totalFiles)
                                             {
-                                                // All files processed, show congratulatory message
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
 
@@ -274,7 +245,7 @@ namespace DGISApp
 
                                             if (fcollection.Count == 0)
                                             {
-                                                //return false;
+
                                             }
                                             else
                                             {
@@ -308,7 +279,7 @@ namespace DGISApp
                                             }
                                             else if (processedFiles == totalFiles)
                                             {
-                                                // All files processed, show congratulatory message
+
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
 
@@ -340,23 +311,23 @@ namespace DGISApp
                             {
                                 MyMessageBox.ShowDialog("File size is too large! Max size is 500 MB");
                             }
-                            }
-                            }
-                            catch (Exception)
-                            {
-                                MyMessageBox.ShowDialog("Invaild File....");
-                            }
-
-
                         }
+                    }
+                    catch (Exception)
+                    {
+                        MyMessageBox.ShowDialog("Invaild File....");
+                    }
 
-                        else
-                        {
-                            textpassword.Clear();
-                            MyMessageBox.ShowDialog("Password Length should be between 4 to 16 Characters.");
-                        }
-                    
-                
+
+                }
+
+                else
+                {
+                    textpassword.Clear();
+                    MyMessageBox.ShowDialog("Password Length should be between 4 to 16 Characters.");
+                }
+
+
             }
             catch (Exception ex)
             {
@@ -385,7 +356,7 @@ namespace DGISApp
 
             Encrypt.IsChecked = false;
             textpassword.IsEnabled = true;
-            lblpassword.Text = "Please Enter Decryption Password :"; 
+            lblpassword.Text = "Please Enter Decryption Password :";
         }
 
         private void Encrypt_Click(object sender, RoutedEventArgs e)
@@ -402,7 +373,7 @@ namespace DGISApp
             lblpassword.Text = "Please Insert Token:";
 
         }
-        private async void  btnOpenFiles_Click(object sender, RoutedEventArgs e)
+        private async void btnOpenFiles_Click(object sender, RoutedEventArgs e)
         {
             string DownloadPath = "";
             try
@@ -413,16 +384,16 @@ namespace DGISApp
                     byte[] Mykey = null;
                     if (string.IsNullOrWhiteSpace(Password) || Password.Length < AesGcm256.MinPasswordLength)
                         throw new ArgumentException(String.Format("Please enter password with atleast {0} characters as per ACSP-2017.", AesGcm256.MinPasswordLength));
-               
-                byte[] Hashbytes = Encoding.Unicode.GetBytes(Password);
-                SHA256Managed hashstring = new SHA256Managed();
-                Mykey = hashstring.ComputeHash(Hashbytes);
+
+                    byte[] Hashbytes = Encoding.Unicode.GetBytes(Password);
+                    SHA256Managed hashstring = new SHA256Managed();
+                    Mykey = hashstring.ComputeHash(Hashbytes);
 
 
-                byte[] MyIV = Encoding.ASCII.GetBytes(Password.PadRight(16, ' '));
+                    byte[] MyIV = Encoding.ASCII.GetBytes(Password.PadRight(16, ' '));
 
-                myAes.Key = Mykey;
-                myAes.IV = MyIV;
+                    myAes.Key = Mykey;
+                    myAes.IV = MyIV;
                 }
                 if (RDefault.IsChecked == true)
                 {
@@ -437,7 +408,6 @@ namespace DGISApp
                         openFileDialog.Multiselect = true;
                         openFileDialog.Title = "Select File To Decryption";
                         openFileDialog.Filter = "mil files (*.mil)|*.mil";
-                        //openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                         if (ConfigurationManager.AppSettings["LastSelectedLocation"] == "")
                         {
                             openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -460,24 +430,6 @@ namespace DGISApp
 
                                     FileInfo fi = new FileInfo(path);
 
-                                    /////////// Remove header before decrypt///////////////////
-                                    //byte[] expectedHeader = Encoding.UTF8.GetBytes("ASDC_AESGCM256");
-                                    //int headerLength = expectedHeader.Length;
-
-                                    //byte[] fullBytes = File.ReadAllBytes(path);
-
-                                    //// Verify header first
-                                    //byte[] fileHeader = fullBytes.Take(headerLength).ToArray();
-                                    //bool isFileEncrypted = expectedHeader.SequenceEqual(fileHeader);
-
-                                    //if (!isFileEncrypted)
-                                    //{
-                                    //    MyMessageBox.ShowDialog("File is not encrypted or has invalid format.");
-                                    //    return;
-                                    //}
-
-                                    ////////////////////////////////
-
                                     if (fi.Length <= 524288000)
                                     {
                                         FileStream stream1 = File.OpenRead(path);
@@ -485,7 +437,7 @@ namespace DGISApp
                                         stream1.Read(bytes1, 0, bytes1.Length);
 
                                         stream1.Close();
-                                        // byte[] encryptedBytes = fullBytes.Skip(headerLength).ToArray();
+
 
                                         new Thread(() =>
                                         {
@@ -513,14 +465,14 @@ namespace DGISApp
 
                                                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
                                                 this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                //this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Congratulations ! \n\n Document is successfully Decrypted. \n" + DownloadPath)));
+
                                             }
 
                                             processedFiles++;
 
                                             if (processedFiles == totalFiles)
                                             {
-                                                // All files processed, show congratulatory message
+
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
 
@@ -565,7 +517,7 @@ namespace DGISApp
                     openFileDialog.Multiselect = true;
                     openFileDialog.Title = "Select File To Decryption";
                     openFileDialog.Filter = "mil files (*.mil)|*.mil";
-                    //openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
                     if (ConfigurationManager.AppSettings["LastSelectedLocation"] == "")
                     {
                         openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -604,7 +556,7 @@ namespace DGISApp
 
                                     if (fcollection.Count == 0)
                                     {
-                                        //return false;
+
                                     }
                                     else
                                     {
@@ -648,7 +600,7 @@ namespace DGISApp
                                     }
                                     else if (processedFiles == totalFiles)
                                     {
-                                        // All files processed, show congratulatory message
+
                                         var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                         {
 

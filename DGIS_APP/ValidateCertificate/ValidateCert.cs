@@ -1,17 +1,9 @@
-﻿using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
+﻿using Org.BouncyCastle.X509;
 using System;
 using System.IO;
 using System.Net;
-using System.Net.Security;
-//using System.Collections.Generic;
-//using System.Linq;
-using System.Security.Cryptography;
+using System.Net.Security; 
 using System.Security.Cryptography.X509Certificates;
-
-//using System.Security.Cryptography.Xml;
-
-using System.Text;
 using System.Threading.Tasks;
 
 
@@ -50,9 +42,8 @@ namespace ValidateCertificate
                     {
                         cp.ReadCertificate(certificate2.RawData)
                     };
-                }
-               
-                // Check for certificate expiration asynchronously
+                } 
+
                 bool isNotExpired = await Task.Run(() => DateTime.Now <= certificate.NotAfter);
 
                 if (!isNotExpired) { throw new Exception("Token is expired. Pl contact issuer!"); }
@@ -81,10 +72,7 @@ namespace ValidateCertificate
 
                     OCSPMsg = "OCSP Not Checked";
                     OCSPValid = true;
-                }
-
-
-                // Check the chain of trust asynchronously
+                } 
 
                 if (IsCheckCrl)
                 {
@@ -98,26 +86,24 @@ namespace ValidateCertificate
                     if (!isChainValid) 
                     {
                         ChainTrust = false;
-                       // throw new Exception("Chain of Trust is not valid. Pl contact issuer!"); 
+                       
                     }
-                }
-                // If all checks pass, return true
-                //if (ChainTrust && isNotExpired ) //old code for chainValidation 
+                } 
+
                 if (CrlValid)
                 {
                     validationErrorMessage = null;
                     return (true, "Token is Valid.",CrlMsg,OCSPMsg,CrlValid,OCSPValid);
                 }
                 else
-                {
-                    // Return an appropriate error message
+                { 
                     validationErrorMessage = "Crl Check failed.";
                     return (false , validationErrorMessage, CrlMsg, OCSPMsg, CrlValid, OCSPValid);
                 }
             }
             catch (Exception ex)
             {
-                // Handle any exceptions that occur during certificate validation
+                 
                 validationErrorMessage = ex.Message;
                 return (false, validationErrorMessage, CrlMsg, OCSPMsg, CrlValid, OCSPValid);
             }
@@ -166,7 +152,7 @@ namespace ValidateCertificate
         {
             try
             {
-                // Since OcspClient.Query is not async, use Task.Run to execute it on a separate thread.
+               
                 var ocspResult = await Task.Run(() =>
                 {
                     OcspClient obj = new OcspClient();

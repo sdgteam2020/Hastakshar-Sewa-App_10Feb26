@@ -9,7 +9,7 @@ namespace SignService.Security
     {
         private static readonly string FilePath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                         "DGIS", "device.dat");  // ✅ ProgramData
+                         "DGIS", "device.dat");  
 
         public static void Save(string deviceId, string deviceKey)
         {
@@ -18,7 +18,7 @@ namespace SignService.Security
             string plain = $"{deviceId}\n{deviceKey}";
             byte[] bytes = Encoding.UTF8.GetBytes(plain);
 
-            // ✅ LocalMachine = usable for all users on same PC
+          
             byte[] encrypted = ProtectedData.Protect(bytes, null, DataProtectionScope.LocalMachine);
 
             File.WriteAllBytes(FilePath, encrypted);
@@ -31,7 +31,7 @@ namespace SignService.Security
 
             byte[] encrypted = File.ReadAllBytes(FilePath);
 
-            // ✅ Must match Save scope
+             
             byte[] bytes = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.LocalMachine);
 
             string plain = Encoding.UTF8.GetString(bytes);
@@ -50,7 +50,7 @@ namespace SignService.Security
                 return existing.Value;
 
             string deviceId = Environment.MachineName;
-            string deviceKey = Guid.NewGuid().ToString("N"); // keep as-is
+            string deviceKey = Guid.NewGuid().ToString("N"); 
 
             Save(deviceId, deviceKey);
             return (deviceId, deviceKey);

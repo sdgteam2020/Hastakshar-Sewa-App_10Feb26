@@ -21,9 +21,6 @@ using WinniesMessageBox;
 
 namespace DGISApp
 {
-    /// <summary>
-    /// Interaction logic for EncryptionAndDecryption.xaml
-    /// </summary>
     public partial class SymmetricEncrypt : UserControl
     {
         string[] droppedFilePaths = null;
@@ -49,7 +46,6 @@ namespace DGISApp
 
             try
             {
-                // ✅ HASH MODE: no password checks
                 if (Hash.IsChecked == true)
                 {
                     if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
@@ -167,18 +163,15 @@ namespace DGISApp
             return encrypteddata;
         }
 
-        //code to encrypt data
-
         public void fileEncrypt(string[] files)
         {
 
             string DownloadPath = "";
-            int totalFiles = files.Count(); // Assuming files is a collection of file paths
+            int totalFiles = files.Count();
             int processedFiles = 0;
 
             foreach (var path in files)
             {
-                // Update the LastSelectedLocation in the AppSettings
 
                 ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
                 DownloadPath = System.IO.Path.GetDirectoryName(path);
@@ -186,9 +179,6 @@ namespace DGISApp
                 FileInfo fi = new FileInfo(path);
                 if (fi.Length <= 524288000)
                 {
-                    // Check if the file is already encrypted
-
-
                     byte[] expectedHeader = System.Text.Encoding.UTF8.GetBytes("ASDC_AESGCM256");
                     byte[] fileHeader = new byte[expectedHeader.Length];
 
@@ -210,11 +200,6 @@ namespace DGISApp
                         break;
                     }
 
-                    //if (!R_Default && !ValidateRsaPublicKey(textpassword.Password.ToString()))
-                    //{
-                    //    MyMessageBox.ShowDialog("Public Key is Invalid.");
-                    //    break;
-                    //}
                     FileStream stream = File.OpenRead(path);
                     byte[] bytes = new byte[stream.Length];
                     stream.Read(bytes, 0, bytes.Length);
@@ -229,7 +214,7 @@ namespace DGISApp
                     {
                         this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                         this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
-                        // Encrypt the file content
+
                         byte[] magicHeader = Encoding.UTF8.GetBytes("ASDC_AESGCM256");
                         bool encryptResult = false;
                         if (R_Default)
@@ -237,10 +222,9 @@ namespace DGISApp
 
 
                             byte[] encrypted = AesGcm256.SimpleEncryptWithPassword(bytes, textpassword.Password.ToString());
-                            // Save the encrypted content to a new file
+
                             using (Stream file = File.OpenWrite(DownloadPath + "\\" + fi.Name + "_AES_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + ".mil"))
                             {
-                                //file.Write(magicHeader, 0, magicHeader.Length);
                                 file.Write(encrypted, 0, encrypted.Length);
                             }
                         }
@@ -266,7 +250,7 @@ namespace DGISApp
                                 this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Invalid Public Key!")));
                                 return;
                             }
-                            // All files processed, show congratulatory message
+
                             var result = this.Dispatcher.Invoke(new Func<string>(() =>
                             {
 
@@ -307,7 +291,7 @@ namespace DGISApp
             lblStep4.Content = "Step 4: Click OK to acknowledge or Open Path to open folder containing encrypted file(s).";
             lblStep5.Content = "Step 5. Share file with .mil extn to the recipient.";
             lblNote.Content = "Note : File encrypted using Hastakshar SEWA can be decrypted by this App only and Original file is not changed.";
-            
+
             txtDefaultPasswarnning.Visibility = Visibility.Visible;
             txtDefaultPasswarnning.Content = "Password Length should be between 4 to 16 Characters";
             txtDefaultPass.Visibility = Visibility.Visible;
@@ -339,7 +323,7 @@ namespace DGISApp
             txtDefaultPasswarnning.Content = "Please Enter Recipient's Public Key";
             RDefault.IsChecked = false;
             RArmyNo.Visibility = Visibility.Visible;
-            //RName.Visibility = Visibility.Visible;
+
             btnGetPublicKey.Visibility = Visibility.Visible;
             textpassword.Visibility = Visibility.Visible;
             HintAssist.SetHint(textpassword, "Enter Recipient's Public Key");
@@ -348,11 +332,7 @@ namespace DGISApp
             RArmyNo.IsChecked = false;
             RName.IsChecked = false;
 
-            // Keep Name for future, but disable for now (so code remains)
-            //RName.Visibility = Visibility.Visible;
-            //RName.IsEnabled = false;
-
-            RArmyNo.IsChecked = false; // default Army No
+            RArmyNo.IsChecked = false;
             txtSearch.Visibility = Visibility.Hidden;
             txtSearch.Text = "";
             ShowSuggestions(false);
@@ -365,15 +345,14 @@ namespace DGISApp
             lblStep2.Content = "Step 2: System will calculate SHA-256 hash.";
             lblStep3.Content = "Step 3: Copy/verify hash output as required.";
             lblStep4.Content = "Step 4: Share hash for integrity verification.";
-            lblStep5.Content = ""; // optional
+            lblStep5.Content = "";
             lblNote.Content = "Note : Hash is one-way. It is used to verify file integrity (tamper detection).";
 
-            // In Hash mode: no password needed
+
             txtDefaultPass.Text = "Select file(s) to generate SHA-256 hash :";
             txtDefaultPasswarnning.Content = "";
             txtDefaultPasswarnning.Visibility = Visibility.Collapsed;
 
-            // Hide encryption-only controls
             Encrypt.IsChecked = false;
             RDefault.IsChecked = false;
 
@@ -413,17 +392,16 @@ namespace DGISApp
                 txtSearch.Visibility = Visibility.Visible;
                 lstSuggestions.Visibility = Visibility.Visible;
                 txtDefaultPasswarnning.Content = "Please Search Name";
-                // txtDefaultPasswarnning.Visibility = Visibility.Hidden;
                 textpassword.Visibility = Visibility.Hidden;
             }
         }
         public class SuggestionItem
         {
             public string Text { get; set; }
-            public string Value { get; set; }  // Unique identifier (ID)
+            public string Value { get; set; }
             public override string ToString()
             {
-                return Text; // Ensures ListBox displays only the Text
+                return Text;
             }
 
         }
@@ -444,7 +422,7 @@ namespace DGISApp
 
         private async void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
-            textpassword.Password = "";            
+            textpassword.Password = "";
 
             string query = (txtSearch.Text ?? "").Trim().ToLower();
 
@@ -454,7 +432,6 @@ namespace DGISApp
                 return;
             }
 
-            // ✅ Only ArmyNo allowed right now (Name code kept for future)
             if (RArmyNo.IsChecked != true)
             {
                 ShowSuggestions(false);
@@ -466,8 +443,8 @@ namespace DGISApp
             if (RArmyNo.IsChecked == true)
                 datatopost.ArmyNo = query;
             else
-                datatopost.Name = query; // future support kept
-              
+                datatopost.Name = query;
+
             var filteredList = await new ApiClient().PostRequestAsync("api/transaction/search", datatopost);
 
             if (filteredList != null)
@@ -498,9 +475,7 @@ namespace DGISApp
             else
             {
                 ShowSuggestions(false);
-                // keep your behavior if you want:
-                // MessageBox.Show("Not Found Record");
-                // txtSearch.Text = "";
+
             }
         }
 
@@ -521,10 +496,7 @@ namespace DGISApp
                 var PublicKey = await service1.GetPublicKey();
                 if (PublicKey.Status == "200" && PublicKey.TokenValid == true)
                 {
-                    // Define local file path
 
-
-                    //string filePath = "PublicKeyData.xml";
                     string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                     string Appfolder = System.IO.Path.Combine(path, "DGIS");
                     Directory.CreateDirectory(Appfolder);
@@ -532,10 +504,8 @@ namespace DGISApp
                     FileInfo fi = new FileInfo(filePath);
                     List<XmlDataForPublicKey> xmlDataForPublicKeys = new List<XmlDataForPublicKey>();
                     XmlDataForPublicKey xmlDataForPublicKey = new XmlDataForPublicKey();
-                    //Extracting Personal No from unique token 
 
                     string[] SubjectSplit = PublicKey.subject.Split(',');
-                    // string PersNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
 
                     for (int i = 0; i < SubjectSplit.Length; i++)
                     {
@@ -548,13 +518,12 @@ namespace DGISApp
                     xmlDataForPublicKey.ValidFrom = PublicKey.ValidFrom;
                     xmlDataForPublicKey.ValidTo = PublicKey.ValidTo;
 
-                    // xmlDataForPublicKey.Public_Key = PublicKey.Public_Key;
                     xmlDataForPublicKey.Status = false;
 
 
 
                     xmlDataForPublicKeys.Add(xmlDataForPublicKey);
-                    // Read and deserialize XML data
+
                     if (File.Exists(filePath) && fi.Length > 5)
                     {
                         bool exists = CheckSerialNoExists(filePath, xmlDataForPublicKey.SerialNo);
@@ -568,10 +537,6 @@ namespace DGISApp
                     {
                         SaveToXml(xmlDataForPublicKey, filePath);
                     }
-
-                    // Serialize object to XML and save to file
-
-                    //Clipboard.SetText(PublicKey.Public_Key);
 
 
                     textpassword.Password = PublicKey.Public_Key;
@@ -614,12 +579,12 @@ namespace DGISApp
             {
                 if (!File.Exists(filePath))
                 {
-                    // Create new XML document with root and first entry
+
                     using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
                     using (XmlWriter writer = XmlWriter.Create(fileStream, new XmlWriterSettings { Indent = true }))
                     {
                         writer.WriteStartDocument();
-                        writer.WriteStartElement("PublicKeysData"); // Root Node
+                        writer.WriteStartElement("PublicKeysData");
                         serializer.WriteObject(writer, data);
                         writer.WriteEndElement();
                         writer.WriteEndDocument();
@@ -627,7 +592,7 @@ namespace DGISApp
                 }
                 else
                 {
-                    // Load existing XML, add new entry, and save back
+
                     XmlDocument doc = new XmlDocument();
                     doc.Load(filePath);
 
@@ -651,12 +616,12 @@ namespace DGISApp
             }
             catch (Exception ex)
             {
-                // Create new XML document with root and first entry
+
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
                 using (XmlWriter writer = XmlWriter.Create(fileStream, new XmlWriterSettings { Indent = true }))
                 {
                     writer.WriteStartDocument();
-                    writer.WriteStartElement("PublicKeysData"); // Root Node
+                    writer.WriteStartElement("PublicKeysData");
                     serializer.WriteObject(writer, data);
                     writer.WriteEndElement();
                     writer.WriteEndDocument();
@@ -667,7 +632,7 @@ namespace DGISApp
         {
             try
             {
-                // ✅ HASH MODE: no password checks
+
                 if (Hash.IsChecked == true)
                 {
                     OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -686,9 +651,6 @@ namespace DGISApp
                     return;
                 }
 
-                //RArmyNo.IsChecked = false;
-                //RName.IsChecked = false;
-                //textpassword.Visibility = Visibility.Visible;
                 if (textpassword.Password.ToString() == "")
                 {
                     if (RDefault.IsChecked == true)
@@ -714,7 +676,7 @@ namespace DGISApp
                     OpenFileDialog openFileDialog = new OpenFileDialog();
                     openFileDialog.Title = "Select File for Enryption";
                     openFileDialog.Multiselect = true;
-                    //openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
                     if (ConfigurationManager.AppSettings["LastSelectedLocation"] == "")
                     {
                         openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -755,7 +717,7 @@ namespace DGISApp
                     OpenFileDialog openFileDialog = new OpenFileDialog();
                     openFileDialog.Title = "Select File for Enryption";
                     openFileDialog.Multiselect = true;
-                    //openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
                     if (ConfigurationManager.AppSettings["LastSelectedLocation"] == "")
                     {
                         openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -795,7 +757,7 @@ namespace DGISApp
         }
         private void ShowSuggestions(bool show)
         {
-            // Popup may not exist in old view mode; safe guard
+
             if (popSuggestions != null)
                 popSuggestions.IsOpen = show;
         }
@@ -804,7 +766,6 @@ namespace DGISApp
         {
             if (selectedItem == null) return;
 
-            // Avoid re-triggering TextChanged while setting text
             txtSearch.TextChanged -= txtSearch_TextChanged;
             txtSearch.Text = selectedItem.Text;
             txtSearch.CaretIndex = txtSearch.Text.Length;
@@ -812,11 +773,9 @@ namespace DGISApp
 
             ShowSuggestions(false);
 
-            // Put public key into password box
             textpassword.MaxLength = 5000;
             textpassword.Password = selectedItem.Value;
 
-            // keep previous behavior: key goes to textpassword
             textpassword.Visibility = Visibility.Visible;
         }
 
@@ -857,7 +816,6 @@ namespace DGISApp
 
         private void txtSearch_LostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
         {
-            // close when leaving search/suggestions
             if (lstSuggestions == null || !lstSuggestions.IsKeyboardFocusWithin)
                 ShowSuggestions(false);
         }
@@ -878,7 +836,7 @@ namespace DGISApp
                     hasher = SHA384.Create();
                 else if (algorithm == "SHA512")
                     hasher = SHA512.Create();
-                else // default SHA256
+                else
                     hasher = SHA256.Create();
 
                 using (hasher)
@@ -896,7 +854,7 @@ namespace DGISApp
             int totalFiles = files.Length;
             int processedFiles = 0;
 
-            // UI lock
+
             this.Dispatcher.Invoke(() => BusyBar.IsBusy = true);
             this.Dispatcher.Invoke(() => DropList.IsEnabled = false);
 
@@ -916,9 +874,6 @@ namespace DGISApp
 
                         FileInfo fi = new FileInfo(path);
 
-                        // optional: don't hash .mil if you want (you can remove this)
-                        // if (fi.Extension.Equals(".mil", StringComparison.OrdinalIgnoreCase))
-                        //     continue;
 
                         string hash = ComputeFileHash(path, "SHA256");
 
@@ -927,7 +882,6 @@ namespace DGISApp
                         sb.AppendLine("----------------------------------------");
                         sb.AppendLine();
 
-                        // OPTIONAL: also write a sidecar .hash.txt next to the file
                         string outPath = Path.Combine(fi.DirectoryName, fi.Name + $"_{DateTime.Now.ToString("ddMMM")}_{DateTime.Now.Millisecond}" + ".hash.txt");
                         File.WriteAllText(outPath, $"SHA256:{hash}{Environment.NewLine}{fi.FullName}");
 
@@ -945,7 +899,6 @@ namespace DGISApp
                             return;
                         }
 
-                        // show in message box (if you expect long output, consider a dialog window)
                         MyMessageBox.ShowDialog(sb.ToString());
                     });
                 }

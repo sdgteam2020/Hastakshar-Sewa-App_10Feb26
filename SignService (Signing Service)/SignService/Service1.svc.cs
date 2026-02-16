@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -32,7 +31,7 @@ using static iText.Signatures.PdfSigner;
 
 namespace SignService
 {
-   public class Service1 : IService1
+    public class Service1 : IService1
     {
         public static string PrevThumbNail = "";
         public string GetData(string element)
@@ -48,12 +47,12 @@ namespace SignService
             XmlDocument xml1 = SignXML(xml, certificate);
             return string.Format("You entered: 0");
         }
-      
+
         public async Task<XmlElement> SignXml(XmlElement value)
         {
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -85,7 +84,7 @@ namespace SignService
                         xml.LoadXml(value.OuterXml);
                         int count = 0;
                         var signatureNode = xml.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
-                        // Count the number of Signature elements
+
 
                         XmlDocument xmlDoc = new XmlDocument();
                         count = signatureNode.Count + 1;
@@ -100,7 +99,7 @@ namespace SignService
 
                         xml1 = SignXML(xmlDoc, certificate);
 
-                      
+
 
 
 
@@ -113,7 +112,7 @@ namespace SignService
                         return xml.DocumentElement;
                     }
                 }
-              
+
             }
             catch (Exception ex)
             {
@@ -121,7 +120,7 @@ namespace SignService
                 xml.LoadXml(ex.Message);
                 ErrorLog.LogErrorToFile(ex);
                 return xml.DocumentElement;
-                
+
             }
         }
         public static XmlDocument SignXML(XmlDocument doc, X509Certificate2 cert)
@@ -144,31 +143,29 @@ namespace SignService
                 signed.KeyInfo = keyInfo;
                 signed.ComputeSignature();
                 XmlElement xmlSig = signed.GetXml();
-               
+
 
                 doc.DocumentElement.AppendChild(doc.ImportNode(xmlSig, true));
                 return doc;
             }
             catch (Exception ex)
             {
-                // Get the root element
+
                 XmlNode rootElement = doc.SelectSingleNode("/SignXmlRequest/XmlData/RootElement");
                 XmlElement Exception = doc.CreateElement("Exception");
                 Exception.InnerText = ex.Message.ToString();
-                // Add the new element to the root element
+
                 if ("Hi" != null)
                 {
                     rootElement.AppendChild(Exception);
                 }
                 ErrorLog.LogErrorToFile(ex);
-                // Convert the modified XML document back to an XML string
-                return doc;
-                //return modifiedXmlDoc;
 
-               
+                return doc;
+
             }
         }
-       
+
         public CompositeType GetDataUsingDataContract(CompositeType composite)
         {
             if (composite == null)
@@ -182,14 +179,14 @@ namespace SignService
             return composite;
         }
 
-      
+
         public async Task<List<TokenDetails>> FetchPersID()
         {
-            
+
             List<TokenDetails> TokenDetailList = new List<TokenDetails>();
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
                 if (fcollection.Count == 0)
                 {
                     var TokenDetails = new TokenDetails
@@ -216,16 +213,14 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
 
-                    //Extracting Personal No from unique token 
                     string[] SubjectSplit = cert1.Subject.Split(',');
-                   // string PersNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
                     string PersNo = "";
-                    for (int i=0; i< SubjectSplit.Length;i++)
+                    for (int i = 0; i < SubjectSplit.Length; i++)
                     {
                         if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                        PersNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
+                            PersNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
                     }
-                   
+
 
 
                     bool TokenValidity = false;
@@ -242,14 +237,14 @@ namespace SignService
                     }
 
                     if (!string.IsNullOrEmpty(PersNo))
-                        {
+                    {
                         var TokenDetails = new TokenDetails
                         {
                             API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchPersID",
                             CRL_OCSPCheck = false,
-                            subject = PersNo,//cert1.Subject,
-                            issuer = null, //cert1.Issuer,
-                            Thumbprint = null, //cert1.Thumbprint,
+                            subject = PersNo,
+                            issuer = null,
+                            Thumbprint = null,
                             ValidFrom = cert1.NotBefore.ToString(),
                             ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
@@ -259,12 +254,13 @@ namespace SignService
                         TokenDetailList.Add(TokenDetails);
                         return TokenDetailList.ToList();
                     }
-                    else{
+                    else
+                    {
                         throw new Exception("Personal No is Empty. Pl report and try with different Token");
-                        }
+                    }
 
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -281,14 +277,14 @@ namespace SignService
                 ErrorLog.LogErrorToFile(ex);
                 return TokenDetailList.ToList();
             }
-          
+
         }
 
         public async Task<bool> ValidatePersID2FA(string inputPersID)
         {
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -305,14 +301,11 @@ namespace SignService
                     {
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
-                   
+
                     X509Certificate2 certificate = cert1;
                     try
                     {
-                            // Validate the certificate and process result
-                            string[] SubjectSplit = cert1.Subject.Split(',');
-                           // string response = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
-
+                        string[] SubjectSplit = cert1.Subject.Split(',');
                         string response = "";
                         for (int i = 0; i < SubjectSplit.Length; i++)
                         {
@@ -320,21 +313,20 @@ namespace SignService
                                 response = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
                         }
                         if (inputPersID == response)
+                        {
+                            if (VerifyCertificatePassword(cert1))
                             {
-                                if (VerifyCertificatePassword(cert1))
-                                {
-                                    return true;
-                                }
-                                else
-                                {
-                                    return false;
-                                }
+                                return true;
                             }
                             else
                             {
-                                return false;    
+                                return false;
                             }
-                        //}
+                        }
+                        else
+                        {
+                            return false;
+                        }
                     }
                     catch (CryptographicException)
                     {
@@ -369,7 +361,6 @@ namespace SignService
             }
             catch (Exception)
             {
-                //Console.Write(ex.Message);
                 return false;
             }
         }
@@ -382,16 +373,16 @@ namespace SignService
 
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
                     var validation = new PersIdValidation
                     {
                         vaildId = false,
-                        Expired=false,
-                        Status="404",
-                        Remark="Token Not Found !"
+                        Expired = false,
+                        Status = "404",
+                        Remark = "Token Not Found !"
                     };
                     PersIdValid.Add(validation);
                     return PersIdValid.ToList();
@@ -408,7 +399,7 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
                     X509Certificate2 certificate = cert1;
-                    
+
                     string result = "Success";
 
                     if (result == "Success")
@@ -416,7 +407,6 @@ namespace SignService
 
                     {
                         string[] SubjectSplit = cert1.Subject.Split(',');
-                      //  string response = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
                         string response = "";
                         for (int i = 0; i < SubjectSplit.Length; i++)
                         {
@@ -425,7 +415,7 @@ namespace SignService
                         }
                         bool TokenExpity = false;
                         string StatusMsg = "200";
-                       
+
                         if (DateTime.Now > cert1.NotAfter)
                         {
                             TokenExpity = true;
@@ -433,7 +423,7 @@ namespace SignService
                         }
 
                         if (inputPersID == response)
-                        {    
+                        {
                             var validation = new PersIdValidation
                             {
                                 vaildId = true,
@@ -485,13 +475,13 @@ namespace SignService
             }
         }
 
-      
+
         public async Task<List<TokenDetails>> FetchUniqueTokenDetails()
         {
             List<TokenDetails> TokenDetailList = new List<TokenDetails>();
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -501,7 +491,7 @@ namespace SignService
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
-                        TokenValid= false,
+                        TokenValid = false,
                     };
                     TokenDetailList.Add(TokenDetails);
                     return TokenDetailList.ToList();
@@ -539,7 +529,7 @@ namespace SignService
                         ValidTo = cert1.NotAfter.ToString(),
                         Status = "200",
                         Remarks = "Unique Cert details of inserted Token",
-                        TokenValid= TokenValidity
+                        TokenValid = TokenValidity
                     };
                     TokenDetailList.Add(TokenDetails);
                     return TokenDetailList.ToList();
@@ -554,7 +544,7 @@ namespace SignService
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
-                    TokenValid=false
+                    TokenValid = false
                 };
                 ErrorLog.LogErrorToFile(ex);
                 TokenDetailList.Add(TokenDetails);
@@ -563,13 +553,13 @@ namespace SignService
 
         }
 
-     
+
         public async Task<List<TokenDetails>> FetchTokenDetails()
         {
             List<TokenDetails> TokenDetailList = new List<TokenDetails>();
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count > 0)
                 {
@@ -613,7 +603,7 @@ namespace SignService
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
-                        TokenValid=false
+                        TokenValid = false
                     };
                     TokenDetailList.Add(detail);
                     return TokenDetailList.ToList();
@@ -628,9 +618,9 @@ namespace SignService
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
-                    TokenValid=false
+                    TokenValid = false
                 };
-               
+
                 TokenDetailList.Add(TokenDetails);
                 ErrorLog.LogErrorToFile(ex);
                 return TokenDetailList.ToList();
@@ -638,7 +628,7 @@ namespace SignService
 
         }
 
-        public async Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl,string ThumbPrint)
+        public async Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl, string ThumbPrint)
         {
             string MsgCrlOCSP = "";
             bool BlnCrlOCSP = true;
@@ -647,23 +637,23 @@ namespace SignService
             {
                 X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
                 X509Certificate2Collection fcollection = new X509Certificate2Collection();
-                
+
 
                 if (ThumbPrint == "")
                 {
-                    fcollection =await helper.GetCertificates();
+                    fcollection = await helper.GetCertificates();
                 }
                 else
                 {
                     X509Certificate2Collection fcol = new X509Certificate2Collection();
-                    fcol =await helper.GetCertificates();
-                    
+                    fcol = await helper.GetCertificates();
+
                     X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
                     if (selectedCertificate != null)
                     {
                         fcollection.Add(selectedCertificate);
                     }
-                    
+
                 }
                 //store.Close();
 
@@ -674,7 +664,7 @@ namespace SignService
                     {
                         API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
                         CRL_OCSPCheck = BlnCrlOCSP,
-                        CRL_OCSPMsg= MsgCrlOCSP,
+                        CRL_OCSPMsg = MsgCrlOCSP,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
                         TokenValid = false
@@ -697,7 +687,7 @@ namespace SignService
 
                             if (selectedCertificates.Count > 0)
                             {
-                                 cert1 = selectedCertificates[0];
+                                cert1 = selectedCertificates[0];
                             }
                             else
                             {
@@ -762,7 +752,7 @@ namespace SignService
                     }
 
 
-                    var (ValidateCertificateAsyncOutput,validationMsg,CrlMsg,OCSPMsg,CrlValid,OCSPValid)  = await ValidateCertificate.ValidateCert.ValidateCertificateAsync(cert1,IsCheckCrl);
+                    var (ValidateCertificateAsyncOutput, validationMsg, CrlMsg, OCSPMsg, CrlValid, OCSPValid) = await ValidateCertificate.ValidateCert.ValidateCertificateAsync(cert1, IsCheckCrl);
 
 
                     if (CrlValid == true || OCSPValid == true)
@@ -783,19 +773,19 @@ namespace SignService
                             BlnCrlOCSP = false;
                         }
 
-                       
+
                     }
                     else
                     {
                         MsgCrlOCSP = "Crl or OCSP is Revoked";
                         BlnCrlOCSP = false;
                     }
-                    
+
                     if (ValidateCertificateAsyncOutput == true)
                     {
                         var TokenDetails = new TokenDetails
                         {
-                           
+
                             API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
                             CRL_OCSPCheck = BlnCrlOCSP,
                             CRL_OCSPMsg = MsgCrlOCSP,
@@ -806,7 +796,7 @@ namespace SignService
                             ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
                             Remarks = "Unique Cert details of inserted Token",
-                            TokenValid=true,
+                            TokenValid = true,
                         };
                         TokenDetailList.Add(TokenDetails);
                     }
@@ -850,27 +840,25 @@ namespace SignService
                 return TokenDetailList.ToList();
             }
         }
-      
+
         private static void ExportAllCert()
         {
             X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
 
             store.Open(OpenFlags.ReadOnly);
 
-            // Get all certificates from the store
             X509Certificate2Collection certificates = store.Certificates;
 
             string exportPath = @"D:\Certificates";
-            // Export each certificate to a file
+
             foreach (X509Certificate2 certificate in certificates)
             {
-                // Export the certificate to a byte array
+
                 byte[] certBytes = certificate.Export(X509ContentType.Cert);
 
-                // Create a file path for the exported certificate
+
                 string filePath = Path.Combine(exportPath, $"{certificate.Thumbprint}.cer");
 
-                // Write the certificate bytes to the file
                 File.WriteAllBytes(filePath, certBytes);
             }
             store.Close();
@@ -931,8 +919,7 @@ namespace SignService
 
             if (apiResponse != null)
             {
-                // string ResponseContent = await response.Content.ReadAsStringAsync();
-                //ResponseBulkSign apiResponse = JsonConvert.DeserializeObject<ResponseBulkSign>(ResponseContent);
+
                 string resultstring = "";
                 int count = 0;
                 int Signed = 0;
@@ -987,7 +974,7 @@ namespace SignService
 
                     }
                 }
-               
+
             }
             else
             {
@@ -996,11 +983,7 @@ namespace SignService
             }
             return responseMessage;
         }
-        /// <summary>
-        //Command For Api And Application
-        /// </summary>
-        /// <param name="reqData"></param>
-        /// <returns></returns>
+
         public async Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData)
         {
             string message = null;
@@ -1016,8 +999,8 @@ namespace SignService
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];   // can be null
-            string referer = headers?["Referer"];  // can be null
+            string origin = headers?["Origin"];
+            string referer = headers?["Referer"];
 
             try
             {
@@ -1026,7 +1009,7 @@ namespace SignService
                 X509Certificate2Collection certCollection = new X509Certificate2Collection();
 
                 X509Certificate2Collection fcol = new X509Certificate2Collection();
-                fcol =await helper.GetCertificates();
+                fcol = await helper.GetCertificates();
 
                 if (fcol.Count == 0)
                 {
@@ -1039,13 +1022,13 @@ namespace SignService
                 X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
                 certCollection.Add(selectedCertificate);
 
-                
+
 
                 if (certCollection.Count == 0)
                 {
                     ResponseMsg.Message = "Thumbprint not matched !";
                     ResponseMsg.Valid = false;
-                    ResponseMsgbullst.ResponseMessage=ResponseMsg;
+                    ResponseMsgbullst.ResponseMessage = ResponseMsg;
                     return ResponseMsgbullst;
                 }
 
@@ -1070,7 +1053,7 @@ namespace SignService
 
                 int Xaxis = reqData.First().XCoordinate;
                 int Yaxis = reqData.First().YCoordinate;
-                string CustomText= reqData.First().CustomText;
+                string CustomText = reqData.First().CustomText;
                 if (reqData.First().Page != 0)
                 {
                     Pageno = reqData.First().Page;
@@ -1080,7 +1063,7 @@ namespace SignService
                     Pageno = 1;
                 }
 
-                saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");//for all signed document same date time in case of bulk sign
+                saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");
                 var PublicKey = await GetPublicKey();
                 byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
                 saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
@@ -1094,7 +1077,7 @@ namespace SignService
                 nextfile:
                     string fileforloop = filename;
                     ResponseMessage ResponseMsg1 = new ResponseMessage();
-                    
+
                     if (NewFileName != "")
                     {
                         fileforloop = NewFileName;
@@ -1136,9 +1119,7 @@ namespace SignService
                                     }
 
                                     string[] SubjectSplit = cert1.Subject.Split(',');
-                                    //string StrName = SubjectSplit[0].ToString().Replace("CN=", "").Trim();
-                                    //string StrICNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                    //string StrRank = SubjectSplit[2].ToString().Replace("T=", "").Trim();
+
                                     string StrName = "";
                                     string StrICNo = "";
                                     string StrRank = "";
@@ -1151,9 +1132,9 @@ namespace SignService
                                         if (SubjectSplit[i].Contains("T="))
                                             StrRank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
                                     }
-                                    saveDigitalSignInfo.SerialNo = StrICNo;                                   
+                                    saveDigitalSignInfo.SerialNo = StrICNo;
                                     saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
-                                                                     
+
 
 
                                     iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(fileforloop));
@@ -1173,21 +1154,21 @@ namespace SignService
                                         {
                                             signer = new PdfSigner(reader, fileStream, new StampingProperties());
                                         }
-                                        else 
+                                        else
                                         {
                                             HelperCert helperCert = new HelperCert();
                                             var getXYaxis = helperCert.GetSignatureCordinate(fileforloop);
-                                            if(getXYaxis!=null)
+                                            if (getXYaxis != null)
                                             {
-                                                if(sigNames.Count%2==0)
+                                                if (sigNames.Count % 2 == 0)
                                                 {
-                                                    Yaxis = getXYaxis[sigNames.Count-1].YCoordinate + 50;
+                                                    Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
                                                     Xaxis = getXYaxis[0].XCoordinate;
                                                 }
                                                 else
                                                 {
                                                     Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
-                                                    Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate+200;
+                                                    Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate + 200;
                                                     if (Xaxis > 300)
                                                     {
                                                         Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
@@ -1203,9 +1184,9 @@ namespace SignService
                                             .SetReuseAppearance(false);
                                         iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(Xaxis, Yaxis, 180, 50);
                                         if (Xaxis == 0 && Yaxis == 0)
-                                        { 
-                                               rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 50);
-                                          
+                                        {
+                                            rect = new iText.Kernel.Geom.Rectangle(220, 15, 180, 50);
+
                                         }
                                         appearance
                                             .SetPageRect(rect)
@@ -1217,7 +1198,7 @@ namespace SignService
                                             SingedFiles = SingedFiles + 1;
                                             ResponseMsg1.Message = Convert.ToString(SingedFiles) + " files Signed out of " + Convert.ToString(totalFiles) + " !";
                                             ResponseMsg1.Valid = true;
-                                            ResponseMsgbullst.ResponseMessage=ResponseMsg1;
+                                            ResponseMsgbullst.ResponseMessage = ResponseMsg1;
                                             isAnyFileSigned = true;
                                         }
                                         catch
@@ -1230,26 +1211,25 @@ namespace SignService
                                             DigitalSignData filedata = new DigitalSignData();
                                             filedata.pdfpath = FileFullName;
                                             delData.Add(filedata);
-                                            ResponseMsg1.Message =  Path.GetFileName(fileforloop)+" !";
+                                            ResponseMsg1.Message = Path.GetFileName(fileforloop) + " !";
                                             ResponseMsg1.Valid = true;
                                             ResponseMsglist.Add(ResponseMsg1);
                                         }
-                                       
+
                                         reader.Close();
-                                        
+
                                     }
                                     catch
                                     {
-                                       reader.Close();
+                                        reader.Close();
                                         if (fileStream != null)
                                         {
                                             fileStream.Close();
                                         }
                                         DigitalSignData filedata = new DigitalSignData();
-                                       filedata.pdfpath = FileFullName;
-                                       delData.Add(filedata);
-                                       //ResponseMsg.Message = "No Docu Sign !";
-                                       //ResponseMsg.Valid = false;
+                                        filedata.pdfpath = FileFullName;
+                                        delData.Add(filedata);
+
                                     }
                                 });
                             }
@@ -1273,7 +1253,7 @@ namespace SignService
                             helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
 
                         }
-                          
+
                         goto nextfile;
                     }
                 }
@@ -1281,7 +1261,7 @@ namespace SignService
                 try
                 {
                     foreach (var file in delData)
-                    { 
+                    {
                         if (file.pdfpath != "")
                         {
                             FileInfo fi = new FileInfo(file.pdfpath);
@@ -1292,12 +1272,12 @@ namespace SignService
                         }
                     }
                 }
-                catch(Exception ex)  
+                catch (Exception ex)
                 {
                     ErrorLog.LogErrorToFile(ex);
                 }
-                ResponseMsgbullst.ResponseMessagelst=ResponseMsglist;
-                if(isAnyFileSigned) await SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
+                ResponseMsgbullst.ResponseMessagelst = ResponseMsglist;
+                if (isAnyFileSigned) await SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
                 return ResponseMsgbullst;
             }
             catch (Exception ex)
@@ -1305,11 +1285,11 @@ namespace SignService
                 ResponseMsg.Message = "Error Occured in Signing Document " + ex.Message;
                 ResponseMsg.Valid = false;
                 ErrorLog.LogErrorToFile(ex);
-                ResponseMsgbullst.ResponseMessage=ResponseMsg;
+                ResponseMsgbullst.ResponseMessage = ResponseMsg;
                 return ResponseMsgbullst;
             }
         }
-       
+
         public async Task<ResponseMessage> ByteDigitalSignAsync(List<DigitalSignData> reqData)
         {
             string message = null;
@@ -1317,8 +1297,8 @@ namespace SignService
             ResponseMessage ResponseMsg = new ResponseMessage();
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];   // can be null
-            string referer = headers?["Referer"];  // can be null
+            string origin = headers?["Origin"];
+            string referer = headers?["Referer"];
             try
             {
                 string ThumbPrint = reqData.First().Thumbprint;
@@ -1326,7 +1306,7 @@ namespace SignService
                 X509Certificate2Collection certCollection = new X509Certificate2Collection();
 
                 X509Certificate2Collection fcol = new X509Certificate2Collection();
-                fcol =await helper.GetCertificates();
+                fcol = await helper.GetCertificates();
 
                 X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
 
@@ -1360,14 +1340,14 @@ namespace SignService
                 int Xaxis = reqData.First().XCoordinate;
                 int Yaxis = reqData.First().YCoordinate;
                 string pathss = reqData.First().pdfpath;
-                string CustomText=reqData.First().CustomText;
+                string CustomText = reqData.First().CustomText;
                 ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
                 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
                 WebClient client = new WebClient();
                 byte[] pdfBytes = client.DownloadData(pathss);
-                //byte[] pdfBytes = Convert.FromBase64String(reqData.First().Byte_pdf);
 
-                saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");//for all signed document same date time in case of bulk sign
+
+                saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");
                 var PublicKey = await GetPublicKey();
                 byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
                 saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
@@ -1424,25 +1404,19 @@ namespace SignService
                                         if (SubjectSplit[i].Contains("T="))
                                             StrRank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
                                     }
-                                    //string StrName = SubjectSplit[0].ToString().Replace("CN=", "").Trim();
-                                    //string StrICNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                    //string StrRank = SubjectSplit[2].ToString().Replace("T=", "").Trim();
-
                                     inputPdfStream.Position = 0;
 
                                     saveDigitalSignInfo.SerialNo = StrICNo;
-                                    
-
 
                                     iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(inputPdfStream));
                                     SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                     String StrSignature = "";
-                                    if(CustomText!="")
-                                    StrSignature = CustomText + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                                    if (CustomText != "")
+                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
                                     else
-                                    StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                                        StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
 
                                     try
                                     {
@@ -1511,19 +1485,19 @@ namespace SignService
 
         public async Task<bool> HasInternetConnectionAsyncTest()
         {
-            try 
+            try
             {
-              return  await helper.HasInternetConnectionAsyncTest();
+                return await helper.HasInternetConnectionAsyncTest();
             }
             catch (Exception ex)
             {
                 ErrorLog.LogErrorToFile(ex);
-                return false; // Return false if there's an issue with the HTTP request
+                return false;
             }
         }
 
-      
-     
+
+
         public string SignHash(string message)
         {
             string status = null;
@@ -1551,8 +1525,7 @@ namespace SignService
                     }
                     catch (CryptographicException)
                     {
-                        // Handle any exception when accessing the private key
-                        // You can log the error or skip this certificate
+
                     }
                 }
                 store.Close();
@@ -1574,27 +1547,23 @@ namespace SignService
                     }
                     X509Certificate2 certificate = cert1;
                     Console.WriteLine("Public Key: {0}{1}", cert1.PublicKey.Key.ToXmlString(false), Environment.NewLine);
-                   
-                        RSACryptoServiceProvider csp = (RSACryptoServiceProvider)certificate.PrivateKey;
 
-                        byte[] data = new ASCIIEncoding().GetBytes(message);
-                        byte[] hash = new SHA1Managed().ComputeHash(data);
+                    RSACryptoServiceProvider csp = (RSACryptoServiceProvider)certificate.PrivateKey;
+
+                    byte[] data = new ASCIIEncoding().GetBytes(message);
+                    byte[] hash = new SHA1Managed().ComputeHash(data);
 
                     string response = Convert.ToBase64String(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA-256")));
 
                     return response;
-                    //}
-                    //else
-                    //{
-                    //    return result;
-                    //}
+
                 }
             }
 
             catch (ArgumentOutOfRangeException ex)
             {
                 ErrorLog.LogErrorToFile(ex);
-                return ex.Message;  //"Certificate not Found. Please connect the token and try agian";
+                return ex.Message;
             }
         }
         #region Xml Signature Verification
@@ -1611,7 +1580,7 @@ namespace SignService
                 doc.LoadXml(data.OuterXml);
                 string plainText = doc.InnerXml;
 
-               // string ss = data.OuterXml.Replace(" />", "/>");
+
                 xmlDoc.LoadXml(plainText);
                 string digital = "DigitalSignature";
                 int signatureCount = CountSignatureElements(xmlDoc);
@@ -1638,7 +1607,7 @@ namespace SignService
                 {
                     digitalVerifyDetails.IsVerified = false;
                     digitalVerifyDetails.SignatureRemarks = "Xml Not Signature";
-                    digitalVerifyDetails.IsDigest = false;//"Signature element not found in the document.";
+                    digitalVerifyDetails.IsDigest = false;
                     digitalVerifyDetails.DigestRemarks = "Reference digest is Invalid";
                     signers.Add(digitalVerifyDetails);
                 }
@@ -1647,7 +1616,7 @@ namespace SignService
             {
                 digitalVerifyDetails.IsVerified = false;
                 digitalVerifyDetails.SignatureRemarks = "Invalid";
-                digitalVerifyDetails.IsDigest = false;//"Signature element not found in the document.";
+                digitalVerifyDetails.IsDigest = false;
                 digitalVerifyDetails.DigestRemarks = "digest is Invalid";
 
                 ErrorLog.LogErrorToFile(ex);
@@ -1656,14 +1625,12 @@ namespace SignService
         }
         public static int CountSignatureElements(XmlDocument xmlDoc)
         {
-            // Create a namespace manager and add the XMLDSIG namespace
+
             XmlNamespaceManager nsMgr = new XmlNamespaceManager(xmlDoc.NameTable);
             nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
-            // Select all <Signature> elements in the XML
             XmlNodeList signatureNodes = xmlDoc.SelectNodes("//ds:Signature", nsMgr);
 
-            // Return the count of <Signature> elements
             return signatureNodes.Count;
         }
         public DigitalVerifyDetails DigitalVerify(XmlElement data, int count)
@@ -1672,7 +1639,6 @@ namespace SignService
             try
             {
 
-                // Load the signed XML document
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.PreserveWhitespace = true;
                 string ss = data.OuterXml.Replace(" />", "/>");
@@ -1681,14 +1647,12 @@ namespace SignService
                 XmlDocument xmldigest = new XmlDocument();
                 xmldigest.PreserveWhitespace = true;
                 xmldigest.LoadXml(data.OuterXml);
-                // Find the <Signature> element and remove it
+
                 XmlNamespaceManager nsMgr = new XmlNamespaceManager(xmlDoc.NameTable);
                 nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
-                // Find the <Signature> element (with namespace) and remove it
-                // XmlNode signatureNode = xmlDoc1.SelectSingleNode("//ds:Signature", nsMgr);
                 XmlNodeList signatureNode = xmldigest.SelectNodes("//ds:Signature", nsMgr);
-                // Check if the <Signature> node exists
+
                 if (signatureNode != null)
                 {
                     int lastsigncount = 1;
@@ -1701,15 +1665,12 @@ namespace SignService
                         }
                         lastsigncount++;
                     }
-                    // Remove the <Signature> node from its parent
-                    //signatureNode.ParentNode.RemoveChild(signatureNode);
 
                 }
-                // Create an XmlNamespaceManager for managing namespaces in XPath queries
+
                 XmlNamespaceManager nsManager = new XmlNamespaceManager(xmlDoc.NameTable);
                 nsManager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
-                // Find the Signature element
                 XmlNodeList signatureElement1 = xmlDoc.SelectNodes("//ds:Signature", nsManager);
                 XmlElement signatureElement = null;
                 int countsign = 1;
@@ -1726,24 +1687,20 @@ namespace SignService
 
                 }
 
-                //XmlElement signatureElement = xmlDoc.SelectSingleNode("//ds:Signature", nsManager) as XmlElement;
                 if (signatureElement == null)
                 {
-                    ret.IsVerified = false;//"Signature element not found in the document.";
+                    ret.IsVerified = false;
                     ret.SignatureRemarks = "Signature " + count + " element not found in the document";
                 }
 
-                // Create a SignedXml object
                 SignedXml signedXml = new SignedXml(xmlDoc);
 
-                // Load the signature element into the SignedXml object
                 signedXml.LoadXml(signatureElement);
 
-                // Check overall signature validity (optional)
                 bool isSignatureValid = signedXml.CheckSignature();
                 if (isSignatureValid)
                 {
-                    ret.IsVerified = isSignatureValid;//"Signature element not found in the document.";
+                    ret.IsVerified = isSignatureValid;
                     ret.SignatureRemarks = "Signature " + count + " is Verifed";
                     List<X509Certificate2> certificates = new List<X509Certificate2>();
                     XmlNodeList certificateNodes = xmlDoc.GetElementsByTagName("X509Certificate");
@@ -1776,32 +1733,27 @@ namespace SignService
                 }
                 else
                 {
-                    ret.IsVerified = isSignatureValid;//"Signature element not found in the document.";
+                    ret.IsVerified = isSignatureValid;
                     ret.SignatureRemarks = "Signature " + count + " is Not Verifed: ";
                 }
-                // Now handle references with missing or blank URI
+
                 foreach (Reference reference in signedXml.SignedInfo.References)
                 {
-                    // Check if the URI is blank
+
                     if (string.IsNullOrEmpty(reference.Uri))
                     {
-                        // Console.WriteLine("Blank Reference.Uri, assuming the entire document is signed.");
 
-                        // Canonicalize the entire document (or relevant root element)
                         XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
-                        transform.LoadInput(xmlDoc); // Canonicalize the root element (entire document)
+                        transform.LoadInput(xmlDoc);
 
-                        // Get canonicalized data as a byte array
-                        byte[] canonicalizedData = GetCanonicalizedBytes(xmldigest);//(byte[])transform.GetOutput(typeof(byte[]));
+                        byte[] canonicalizedData = GetCanonicalizedBytes(xmldigest);
 
-                        // Compute the digest using the specified digest method (e.g., SHA-256)
                         byte[] computedDigest;
                         using (System.Security.Cryptography.HashAlgorithm hashAlg = System.Security.Cryptography.HashAlgorithm.Create(reference.DigestMethod))
                         {
                             computedDigest = hashAlg.ComputeHash(canonicalizedData);
                         }
 
-                        // Compare the computed digest with the digest value from the XML signature
                         bool digestValid = CompareByteArrays(computedDigest, reference.DigestValue);
                         if (digestValid == true)
                         {
@@ -1814,13 +1766,13 @@ namespace SignService
                             ret.DigestRemarks = "Reference " + count + " digest is Invalid because the computed digest differs from the digest in the XML";
                         }
                     }
-                   
+
                 }
 
             }
             catch (Exception ex)
             {
-                ret.IsVerified = false;//"Signature element not found in the document.";
+                ret.IsVerified = false;
                 if (ex.Message == "Invalid length for a Base-64 char array or string.")
                     ret.SignatureRemarks = "Signature X509Certificate Invalid";
                 else
@@ -1832,13 +1784,12 @@ namespace SignService
         }
         public static byte[] GetCanonicalizedBytes(XmlDocument xmlDoc)
         {
-            // Create a new XmlDsigC14NTransform for canonicalization
+
             XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
 
-            // Load the XML data into the transform
+
             transform.LoadInput(xmlDoc);
 
-            // Get the canonicalized output as a byte array
             using (Stream stream = (Stream)transform.GetOutput(typeof(Stream)))
             {
                 using (MemoryStream ms = new MemoryStream())
@@ -1848,7 +1799,7 @@ namespace SignService
                 }
             }
         }
-        // Helper method to compare two byte arrays
+
         private static bool CompareByteArrays(byte[] a, byte[] b)
         {
             if (a.Length != b.Length) return false;
@@ -1867,7 +1818,7 @@ namespace SignService
             TokenDetails TokenDetailList = new TokenDetails();
             try
             {
-                X509Certificate2Collection fcollection =await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -1879,7 +1830,7 @@ namespace SignService
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!"
 
                     };
-                   
+
 
                     return TokenDetails;
                 }
@@ -1895,9 +1846,8 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
 
-                    //Extracting Personal No from unique token 
                     string[] SubjectSplit = cert1.Subject.Split(',');
-                   // string PersNo = SubjectSplit[1].ToString().Replace("SERIALNUMBER=", "").Trim();
+
                     string PersNo = "";
                     for (int i = 0; i < SubjectSplit.Length; i++)
                     {
@@ -1915,7 +1865,6 @@ namespace SignService
                     else
                     {
 
-                        //TokenValidity = true;
                         TokenValidity = false;
                         Remark = "Token is expired. Pl contact issuer!";
                     }
@@ -1924,25 +1873,24 @@ namespace SignService
                     if (!string.IsNullOrEmpty(PersNo))
                     {
                         RSA rsa = cert1.GetRSAPublicKey();
-                        string xmlPublicKey = rsa.ToXmlString(false);  // false means public key only (no private key)
+                        string xmlPublicKey = rsa.ToXmlString(false);
                         var TokenDetails = new TokenDetails
                         {
 
                             API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/GetPublicKey",
                             CRL_OCSPCheck = false,
                             subject = cert1.Subject,
-                            issuer = null, //cert1.Issuer,
+                            issuer = null,
                             Thumbprint = cert1.Thumbprint,
                             ValidFrom = cert1.NotBefore.ToString(),
                             ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
                             Remarks = Remark,
                             TokenValid = TokenValidity,
-                            Public_Key = xmlPublicKey,//Convert.ToBase64String(cert1.GetPublicKey()),
+                            Public_Key = xmlPublicKey,
 
-                            //Private_Key= cert1.GetRSAPrivateKey()
                         };
-                       // TokenDetailList.Add(TokenDetails);
+
                         return TokenDetails;
                     }
                     else
@@ -1963,7 +1911,7 @@ namespace SignService
                     Remarks = "Exception Occured-" + ex.Message.ToString()
 
                 };
-                //okenDetailList.Add(TokenDetails);
+
                 ErrorLog.LogErrorToFile(ex);
                 return TokenDetails;
             }
@@ -1971,23 +1919,23 @@ namespace SignService
 
         public string Getpdffile()
         {
-            //string FileName = System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DGIS_Help.pdf";
+
             if (CustomSignCordinate.PdfFile != null)
             {
-               
-                    if (File.Exists(CustomSignCordinate.PdfFile))
-                    {
-                        FileInfo fi = new FileInfo(CustomSignCordinate.PdfFile);
-                        byte[] pdfBytes = File.ReadAllBytes(CustomSignCordinate.PdfFile); // Read bytes
-                        string base64String = Convert.ToBase64String(pdfBytes); // Convert to Base64
 
-                        return base64String;
-                    }
-                
+                if (File.Exists(CustomSignCordinate.PdfFile))
+                {
+                    FileInfo fi = new FileInfo(CustomSignCordinate.PdfFile);
+                    byte[] pdfBytes = File.ReadAllBytes(CustomSignCordinate.PdfFile);
+                    string base64String = Convert.ToBase64String(pdfBytes);
+
+                    return base64String;
+                }
+
             }
-           
-             
-           
+
+
+
             return null;
         }
 
@@ -1997,8 +1945,8 @@ namespace SignService
             CustomSignCordinate.X = customSignCordinate.X;
             CustomSignCordinate.Y = customSignCordinate.Y;
             CustomSignCordinate.PageNo = customSignCordinate.PageNo;
-            
-            if(customSignCordinate.X>0)
+
+            if (customSignCordinate.X > 0)
             {
                 return 1;
             }
@@ -2023,7 +1971,7 @@ namespace SignService
             }
             else if (!string.IsNullOrEmpty(reqData.First().FilePath))
             {
-                files = new string[] { reqData.First().FilePath }; // Convert to string array
+                files = new string[] { reqData.First().FilePath };
                 Download = Path.GetDirectoryName(reqData.First().FilePath);
             }
             else
@@ -2032,9 +1980,9 @@ namespace SignService
                 responseMessage.Valid = false;
                 return responseMessage;
             }
- 
+
             int totalFiles = files.Count();
-          
+
             int processedFiles = 0;
             foreach (string filename in files)
             {
@@ -2043,7 +1991,7 @@ namespace SignService
 
                 FileInfo fi = new FileInfo(fileforloop);
 
-                // Check if the file is already encrypted
+
                 if (fi.Extension == ".mil")
                 {
                     responseMessage.Message = "File is already encrypted.";
@@ -2055,15 +2003,15 @@ namespace SignService
                 byte[] magicHeader = Encoding.UTF8.GetBytes("ASDC_AESGCM256");
                 string Output = Download + "\\" + fi.Name + "_RSA_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + ".mil";
                 if (!string.IsNullOrWhiteSpace(reqData.First().Publickey))
-                   EncryptFile(fileforloop, Output, reqData.First().Publickey, magicHeader);
+                    EncryptFile(fileforloop, Output, reqData.First().Publickey, magicHeader);
 
                 processedFiles++;
 
-                
+
             }
             if (processedFiles == totalFiles)
             {
-                //  "Congratulations!\n\nDocument is successfully Encrypted.\n" + Output
+
                 responseMessage.Message = "Congratulations! Document is successfully Encrypted.";
                 responseMessage.Valid = true;
 
@@ -2079,7 +2027,7 @@ namespace SignService
         public async Task<ResponseMessage> AsymmetricDencryption(List<AsymmetricEncryptionData> reqData)
         {
             ResponseMessage responseMessage = new ResponseMessage();
-            // string[] files = Directory.GetFiles(reqData.First().FolderLoc);
+
             string[] files = null;
             string Download = "";
             if (!string.IsNullOrEmpty(reqData.First().FolderLoc))
@@ -2089,7 +2037,7 @@ namespace SignService
             }
             else if (!string.IsNullOrEmpty(reqData.First().FilePath))
             {
-                files = new string[] { reqData.First().FilePath }; // Convert to string array
+                files = new string[] { reqData.First().FilePath };
                 Download = Path.GetDirectoryName(reqData.First().FilePath);
             }
             else
@@ -2099,11 +2047,11 @@ namespace SignService
                 return responseMessage;
             }
 
-           
+
             int totalFiles = files.Count();
-           
+
             int processedFiles = 0;
-            bool ret1=false;
+            bool ret1 = false;
             X509Certificate2Collection fcollection = await helper.GetCertificates();
             X509Certificate2 cert1 = null;
             if (fcollection.Count == 1)
@@ -2121,7 +2069,7 @@ namespace SignService
 
                 FileInfo fi = new FileInfo(fileforloop);
 
-                // Check if the file is already encrypted
+
                 if (fi.Extension != ".mil")
                 {
                     responseMessage.Message = "File is not encrypted.";
@@ -2129,7 +2077,7 @@ namespace SignService
                     processedFiles++;
                     continue;
                 }
-              
+
                 if (fcollection.Count == 0)
                 {
                     responseMessage.Message = "Token Not Found.";
@@ -2146,11 +2094,11 @@ namespace SignService
                         ret1 = Service1.DecryptFile(fileforloop, filePath, cert1);
 
                     }
-                   
+
                     if (!ret1)
                     {
-                        
-                         
+
+
                         responseMessage.Message = "Wrong Token Inserted Does Not Match Private Key.";
                         responseMessage.Valid = false;
                         return responseMessage;
@@ -2159,13 +2107,13 @@ namespace SignService
                     {
                         processedFiles++;
                     }
-                 
+
 
                 }
             }
             if (processedFiles == totalFiles)
             {
-                // All files processed, show congratulatory message
+
                 responseMessage.Message = "Congratulations! Document is successfully Decrypted.\n";
                 responseMessage.Valid = true;
                 return responseMessage;
@@ -2200,41 +2148,33 @@ namespace SignService
                     aes.GenerateKey();
                     aes.GenerateIV();
 
-                    // Encrypt the file data using AES
                     byte[] encryptedData;
                     using (MemoryStream ms = new MemoryStream())
                     using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
                     {
 
-                        //cs.Write(magicHeader, 0, magicHeader.Length);
                         cs.Write(fileData, 0, fileData.Length);
                         cs.FlushFinalBlock();
                         encryptedData = ms.ToArray();
                     }
-                    //  var ss = cert.GetRSAPublicKey();
 
-                    //  RSA rsa1 = cert.GetRSAPublicKey();
-                    // string xmlPublicKey = rsa1.ToXmlString(false);
 
                     RSA rsa = RSA.Create();
                     rsa.FromXmlString(rsaKeyXml);
-                    // Encrypt the AES key using RSA
-                    // using (RSA rsa = cert.GetRSAPublicKey())
-                    {
-                        byte[] encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
-                        byte[] encryptedIV = rsa.Encrypt(aes.IV, RSAEncryptionPadding.Pkcs1);
 
-                        // Save encrypted AES key, IV, and file data
-                        using (FileStream fs = new FileStream(outputFile, FileMode.Create))
-                        using (BinaryWriter writer = new BinaryWriter(fs))
-                        {
-                            writer.Write(encryptedKey.Length);
-                            writer.Write(encryptedKey);
-                            writer.Write(encryptedIV.Length);
-                            writer.Write(encryptedIV);
-                            writer.Write(encryptedData.Length);
-                            writer.Write(encryptedData);
-                        }
+                    byte[] encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
+                    byte[] encryptedIV = rsa.Encrypt(aes.IV, RSAEncryptionPadding.Pkcs1);
+
+                    // Save encrypted AES key, IV, and file data
+                    using (FileStream fs = new FileStream(outputFile, FileMode.Create))
+                    using (BinaryWriter writer = new BinaryWriter(fs))
+                    {
+                        writer.Write(encryptedKey.Length);
+                        writer.Write(encryptedKey);
+                        writer.Write(encryptedIV.Length);
+                        writer.Write(encryptedIV);
+                        writer.Write(encryptedData.Length);
+                        writer.Write(encryptedData);
                     }
                 }
                 return true;
@@ -2256,7 +2196,6 @@ namespace SignService
                 using (FileStream fs = new FileStream(encryptedFile, FileMode.Open))
                 using (BinaryReader reader = new BinaryReader(fs))
                 {
-                    // Read encrypted AES key and IV
                     int keyLength = reader.ReadInt32();
                     byte[] encryptedKey = reader.ReadBytes(keyLength);
 
@@ -2266,7 +2205,7 @@ namespace SignService
                     int dataLength = reader.ReadInt32();
                     byte[] encryptedData = reader.ReadBytes(dataLength);
 
-                    using (RSA rsa = privateCert.GetRSAPrivateKey())  // Use a different private key
+                    using (RSA rsa = privateCert.GetRSAPrivateKey())
                     {
                         if (rsa == null)
                         {
@@ -2281,7 +2220,6 @@ namespace SignService
                             aes.Key = aesKey;
                             aes.IV = aesIV;
 
-                            // Decrypt the file data using AES
                             using (MemoryStream ms = new MemoryStream())
                             using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
                             {
@@ -2293,7 +2231,6 @@ namespace SignService
                     }
                 }
 
-                // Save decrypted data to file
                 File.WriteAllBytes(outputFile, decryptedData);
                 return true;
             }
@@ -2335,12 +2272,7 @@ namespace SignService
                 }
             }
 
-            bool isValid = meetsLengthRequirements
-                        //&& hasUpperCaseLetter
-                        //&& hasLowerCaseLetter
-                        //&& hasDecimalDigit
-                        //&& hasSpecialChar
-                        ;
+            bool isValid = meetsLengthRequirements;
             return isValid;
 
         }
@@ -2351,7 +2283,7 @@ namespace SignService
 
             try
             {
-               
+
                 if (reqData.Password.ToString() == "")
                 {
                     responseMessage.Message = "Please Enter Password for Encryption.";
@@ -2368,7 +2300,7 @@ namespace SignService
                 }
                 else if (!string.IsNullOrEmpty(reqData.FilePath))
                 {
-                    files = new string[] { reqData.FilePath }; // Convert to string array
+                    files = new string[] { reqData.FilePath };
                     Download = Path.GetDirectoryName(reqData.FilePath);
                 }
                 else
@@ -2382,16 +2314,15 @@ namespace SignService
                 {
 
                     string DownloadPath = "";
-                    int totalFiles = files.Count(); // Assuming files is a collection of file paths
+                    int totalFiles = files.Count();
                     int processedFiles = 0;
 
                     foreach (var path in files)
                     {
-                       
+
                         DownloadPath = System.IO.Path.GetDirectoryName(path);
                         FileInfo fi = new FileInfo(path);
 
-                        // Check if the file is already encrypted
                         if (fi.Extension == ".mil")
                         {
                             responseMessage.Message = "File is already encrypted.";
@@ -2407,11 +2338,11 @@ namespace SignService
                         stream.Close();
 
                         string rsaKeyXml = reqData.Password;
-                       
+
                         string Output = DownloadPath + "\\" + fi.Name + "_AES_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + ".mil";
 
                         byte[] encrypted = AesGcm256.SimpleEncryptWithPassword(bytes, reqData.Password.ToString());
-                        // Save the encrypted content to a new file
+
                         using (Stream file = File.OpenWrite(DownloadPath + "\\" + fi.Name + "_AES_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + ".mil"))
                         {
                             file.Write(encrypted, 0, encrypted.Length);
@@ -2421,7 +2352,7 @@ namespace SignService
                     }
                     if (processedFiles == totalFiles)
                     {
-                        //  "Congratulations!\n\nDocument is successfully Encrypted.\n" + Output
+
                         responseMessage.Message = "Congratulations! Document is successfully Encrypted.";
                         responseMessage.Valid = true;
 
@@ -2440,7 +2371,7 @@ namespace SignService
                 }
                 return responseMessage;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 responseMessage.Message = ex.Message;
                 responseMessage.Valid = false;
@@ -2455,13 +2386,13 @@ namespace SignService
             Aes myAes = Aes.Create();
             try
             {
-             if (reqData.Password.ToString() == "")
-             {
-                responseMessage.Message = "Please Enter Password for Encryption.";
-                responseMessage.Valid = false;
-                return responseMessage;
+                if (reqData.Password.ToString() == "")
+                {
+                    responseMessage.Message = "Please Enter Password for Encryption.";
+                    responseMessage.Valid = false;
+                    return responseMessage;
 
-             }
+                }
                 string[] files = null;
                 string Download = "";
                 if (!string.IsNullOrEmpty(reqData.FolderLoc))
@@ -2471,7 +2402,7 @@ namespace SignService
                 }
                 else if (!string.IsNullOrEmpty(reqData.FilePath))
                 {
-                    files = new string[] { reqData.FilePath }; // Convert to string array
+                    files = new string[] { reqData.FilePath };
                     Download = Path.GetDirectoryName(reqData.FilePath);
                 }
                 else
@@ -2506,9 +2437,9 @@ namespace SignService
                     int totalFiles = files.Count();
                     foreach (var path in files)
                     {
-                     
+
                         Download = System.IO.Path.GetDirectoryName(path);
-                        
+
                         FileInfo fi = new FileInfo(path);
                         if (fi.Extension == ".mil")
                         {
@@ -2520,59 +2451,59 @@ namespace SignService
 
                             char dd = '_';
                             int levelOfEncryption = fi.FullName.Count(s => s == dd);
-                            
-                               
-                                  
-                                    byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, reqData.Password.ToString()); //decryptdata(bytes1, myAes.Key, myAes.IV, myAes.KeySize);
-                                    if (roundtrip == null)
-                                    {
-
-                                        responseMessage.Message = "Password incorrect !";
-                                        responseMessage.Valid = false;
-                                        return responseMessage;
-
-                                    }
-                                    else
-                                    {
-                                        string filePath = Download + "\\" + fi.Name.Split('.')[0] + "_DEC_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + "." + betweenStrings(fi.Name, ".", "_");
 
 
-                                        using (Stream file = File.OpenWrite(filePath))
-                                        {
 
-                                            file.Write(roundtrip, 0, roundtrip.Length);
-                                        }
+                            byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, reqData.Password.ToString());
+                            if (roundtrip == null)
+                            {
 
-                                        processedFiles++;
-                                    }
+                                responseMessage.Message = "Password incorrect !";
+                                responseMessage.Valid = false;
+                                return responseMessage;
 
-                                    
+                            }
+                            else
+                            {
+                                string filePath = Download + "\\" + fi.Name.Split('.')[0] + "_DEC_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + "." + betweenStrings(fi.Name, ".", "_");
 
-                                 
-                               
 
-                           
+                                using (Stream file = File.OpenWrite(filePath))
+                                {
+
+                                    file.Write(roundtrip, 0, roundtrip.Length);
+                                }
+
+                                processedFiles++;
+                            }
+
+
+
+
+
+
+
                         }
                         else
                         {
                             processedFiles++;
                         }
 
-                        }
-                        if (processedFiles == totalFiles)
-                        {
-                            //  "Congratulations!\n\nDocument is successfully Encrypted.\n" + Output
-                            responseMessage.Message = "Congratulations! Document is successfully Encrypted.";
-                            responseMessage.Valid = true;
+                    }
+                    if (processedFiles == totalFiles)
+                    {
 
-                        }
-                        else
-                        {
-                        
-                            responseMessage.Message = "An error occurred.";
-                            responseMessage.Valid = false;
-                        
-                        }
+                        responseMessage.Message = "Congratulations! Document is successfully Encrypted.";
+                        responseMessage.Valid = true;
+
+                    }
+                    else
+                    {
+
+                        responseMessage.Message = "An error occurred.";
+                        responseMessage.Valid = false;
+
+                    }
                     return responseMessage;
                 }
                 else
@@ -2580,7 +2511,7 @@ namespace SignService
                     responseMessage.Message = "Password Length should be between 4 to 16 Characters.";
                     responseMessage.Valid = false;
                     return responseMessage;
-                  
+
                 }
             }
             catch (Exception ex)
@@ -2599,44 +2530,25 @@ namespace SignService
 
                 if (Data.Datetime == true || Data.IpAddress == true || Data.CustomText != "")
                 {
-
-
-                    // openFileDialog.Filter = "files (*.pdf;*.PDF;*.docx;*.DOCX;*.doc;*.DOC)|*.pdf;*.PDF;*.docx;*.DOCX,*.doc; *.DOC";
-
-                    ///openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-                  return await upload(Data);
-
-
+                    return await upload(Data);
                 }
-
                 else
                 {
                     responseMessage.Message = "Please send atleast one value for Watermarking";
                     responseMessage.Valid = false;
                     return responseMessage;
-                   
-
                 }
-
-
-
             }
-
             catch (Exception ex)
-
             {
-
                 ErrorLog.LogErrorToFile(ex);
                 responseMessage.Message = ex.Message;
                 responseMessage.Valid = false;
                 return responseMessage;
-
-              
             }
         }
-       public async Task<ResponseMessage> upload(DtoWaterMarkData Data)
-       {
+        public async Task<ResponseMessage> upload(DtoWaterMarkData Data)
+        {
             await System.Threading.Tasks.Task.Yield();
             ResponseMessage responseMessage = new ResponseMessage();
             string DownloadPath = "";
@@ -2654,7 +2566,7 @@ namespace SignService
             }
             else if (!string.IsNullOrEmpty(Data.FilePath))
             {
-                files = new string[] { Data.FilePath }; // Convert to string array
+                files = new string[] { Data.FilePath };
                 Download = Path.GetDirectoryName(Data.FilePath);
             }
             else
@@ -2668,41 +2580,22 @@ namespace SignService
 
             string WaterMarkingText = Data.CustomText;
 
-
-
-            // Split the input string by comma and store the result in a string array
-
             string[] stringArray = Data.CustomText.Split(',');
-
-
 
             int j = 0;
 
             foreach (var path in files)
             {
-
             nextfile:
-
                 string fileforloop = path;
-
                 DownloadPath = Path.GetDirectoryName(path);
-
-
-
                 if (NewFileName != "")
-
                 {
-
                     fileforloop = NewFileName;
-
                 }
-
                 else
-
                 {
-
                     fileforloop = path;
-
                 }
                 if (fileforloop == null || fileforloop.Length == 0)
                 {
@@ -2710,23 +2603,13 @@ namespace SignService
                     responseMessage.Valid = false;
                     return responseMessage;
                 }
-               
 
                 FileInfo fi = new FileInfo(fileforloop);
-               
-
                 if (fi.Extension == ".pdf")
                 {
-
-
-
                     foreach (string item in stringArray)
                     {
-
                         WaterMarkingText = item;
-
-
-
                         WatermarkedPDFFileName = DownloadPath + "\\" + fi.Name.Substring(0, fi.Name.Length - fi.Extension.Length) + "_WM_" + WaterMarkingText + "_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + ".pdf";
 
                         PdfDocument pdfDoc = new PdfDocument(new PdfReader(fi.FullName), new PdfWriter(WatermarkedPDFFileName));
@@ -2734,47 +2617,38 @@ namespace SignService
                         PdfCanvas under = new PdfCanvas(pdfDoc.GetFirstPage().NewContentStreamBefore(), new PdfResources(), pdfDoc);
 
                         PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_ROMAN));
-
-
-
                         iText.Layout.Element.Paragraph paragraph = new iText.Layout.Element.Paragraph("This watermark is added UNDER the existing content")
-
                                 .SetFont(font)
-
                                 .SetBold()
-
                                 .SetFontColor(ColorConstants.RED)
-
                                 .SetFontSize(48);
 
-
-
-                        // Print each element of the string array
-
-
-
-
-
-
-
-                        for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
-
-                        {
-
-                            PdfCanvas over = new PdfCanvas(pdfDoc.GetPage(i));
-
+                        for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++) 
+                        { 
+                            PdfCanvas over = new PdfCanvas(pdfDoc.GetPage(i)); 
                             if (Data.Datetime == true && Data.IpAddress == false)
-                            {
-
-                                paragraph = new iText.Layout.Element.Paragraph(DateTime.Now.ToString() + "\n" +  WaterMarkingText)
-
-                                    .SetFont(font)
-
-                                  .SetFontColor(ColorConstants.RED)
-
-                                  .SetFontSize(68);
-
-                                over.SaveState();
+                            { 
+                                paragraph = new iText.Layout.Element.Paragraph(DateTime.Now.ToString() + "\n" + WaterMarkingText) 
+                                    .SetFont(font) 
+                                  .SetFontColor(ColorConstants.RED) 
+                                  .SetFontSize(68); 
+                                over.SaveState(); 
+                                PdfExtGState gs3 = new PdfExtGState(); 
+                                gs3.SetFillOpacity(0.5f); 
+                                over.SetExtGState(gs3); 
+                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize()) 
+                                        .ShowTextAligned(paragraph, 297, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45); 
+                                canvasWatermark.Close(); 
+                            } 
+                            else if (Data.IpAddress == true && Data.Datetime == false) 
+                            { 
+                                System.Net.IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList; 
+                                string ip = a[0].ToString(); 
+                                paragraph = new iText.Layout.Element.Paragraph(ip + "\n" + WaterMarkingText) 
+                                   .SetFont(font) 
+                                  .SetFontColor(ColorConstants.RED) 
+                                  .SetFontSize(68); 
+                                over.SaveState(); 
 
                                 PdfExtGState gs3 = new PdfExtGState();
 
@@ -2782,130 +2656,51 @@ namespace SignService
 
                                 over.SetExtGState(gs3);
 
-                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize())
+                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize()) 
+                                        .ShowTextAligned(paragraph, 297, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45); 
+                                canvasWatermark.Close();
 
+                            } 
+                            else if (Data.Datetime == true && Data.IpAddress == true) 
+                            { 
+                                System.Net.IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList; 
+                                string ip = a[0].ToString(); 
+                                paragraph = new iText.Layout.Element.Paragraph(DateTime.Now.ToString() + "\n" + ip + "\n" + WaterMarkingText) 
+                                  .SetFont(font) 
+                                  .SetFontColor(ColorConstants.RED) 
+                                  .SetFontSize(68); 
+                                over.SaveState(); 
+                                PdfExtGState gs3 = new PdfExtGState(); 
+                                gs3.SetFillOpacity(0.5f); 
+                                over.SetExtGState(gs3); 
+                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize()) 
+                                        .ShowTextAligned(paragraph, 200, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45); 
+                                canvasWatermark.Close(); 
+                            } 
+                            else 
+                            { 
+                                paragraph = new iText.Layout.Element.Paragraph(WaterMarkingText) 
+                                      .SetFont(font) 
+                                      .SetFontColor(ColorConstants.RED) 
+                                      .SetFontSize(68); 
+                                over.SaveState(); 
+
+                                PdfExtGState gs3 = new PdfExtGState(); 
+                                gs3.SetFillOpacity(0.5f); 
+                                over.SetExtGState(gs3); 
+
+                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize()) 
                                         .ShowTextAligned(paragraph, 297, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45);
 
-                                canvasWatermark.Close();
-
-                            }
-
-
-
-                            else if (Data.IpAddress == true && Data.Datetime == false)
-
-                            {
-
-                                System.Net.IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
-
-                                string ip = a[0].ToString();
-
-                                paragraph = new iText.Layout.Element.Paragraph(ip + "\n" +  WaterMarkingText)
-
-                                   .SetFont(font)
-
-                                  .SetFontColor(ColorConstants.RED)
-
-                                  .SetFontSize(68);
-
-                                over.SaveState();
-
-                                PdfExtGState gs3 = new PdfExtGState();
-
-                                gs3.SetFillOpacity(0.5f);
-
-                                over.SetExtGState(gs3);
-
-                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize())
-
-                                        .ShowTextAligned(paragraph, 297, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45);
-
-                                canvasWatermark.Close();
-
-                            }
-
-
-
-                            else if (Data.Datetime == true && Data.IpAddress== true)
-
-                            {
-
-                                System.Net.IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
-
-                                string ip = a[0].ToString();
-
-                                paragraph = new iText.Layout.Element.Paragraph(DateTime.Now.ToString() + "\n" + ip + "\n" +  WaterMarkingText)
-
-                                  .SetFont(font)
-
-                                  .SetFontColor(ColorConstants.RED)
-
-                                  .SetFontSize(68);
-
-                                over.SaveState();
-
-                                PdfExtGState gs3 = new PdfExtGState();
-
-                                gs3.SetFillOpacity(0.5f);
-
-                                over.SetExtGState(gs3);
-
-                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize())
-
-                                        .ShowTextAligned(paragraph, 200, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45);
-
-                                canvasWatermark.Close();
-
-                            }
-
-                            else
-
-                            {
-
-                                paragraph = new iText.Layout.Element.Paragraph(WaterMarkingText)
-
-                                      .SetFont(font)
-
-                                      .SetFontColor(ColorConstants.RED)
-
-                                      .SetFontSize(68);
-
-                                over.SaveState();
-
-                                PdfExtGState gs3 = new PdfExtGState();
-
-                                gs3.SetFillOpacity(0.5f);
-
-                                over.SetExtGState(gs3);
-
-                                iText.Layout.Canvas canvasWatermark = new iText.Layout.Canvas(over, pdfDoc.GetDefaultPageSize())
-
-                                        .ShowTextAligned(paragraph, 297, 450, 1, iText.Layout.Properties.TextAlignment.CENTER, iText.Layout.Properties.VerticalAlignment.TOP, 45);
-
-                                canvasWatermark.Close();
-
-                            }
-
-                            over.RestoreState();
-
-                        }
-
-                        pdfDoc.Close();
-
-                        NewFileName = "";
-
-                    }
-
-
-
-
-
-                    j = j + 1;
-
-                    //MyMessageBox.ShowDialog("Congratulations ! \n\n Document is successfully WaterMarked.\n" + download);
-
-                }
-
+                                canvasWatermark.Close(); 
+                            } 
+                            over.RestoreState(); 
+                        } 
+                        pdfDoc.Close(); 
+                        NewFileName = ""; 
+                    } 
+                    j = j + 1;   
+                } 
                 else if (Path.GetExtension(path) == ".docx" || Path.GetExtension(path) == ".doc")
                 {
 
@@ -2915,63 +2710,37 @@ namespace SignService
 
                     if (NewFileName.Length > 255)
                     {
-                        responseMessage.Message = "FileName too long!.";
-                        //MyMessageBox.ShowDialog("FileName too long!");
+                        responseMessage.Message = "FileName too long!."; 
                         goto nextfile;
 
                     }
                     else
                     {
                         helper.ConvertPDF(path, NewFileName, WdSaveFormat.wdFormatPDF);
-                    }
-
-
-
-                    goto nextfile;
-
-                }
-
-                else
-
+                    } 
+                    goto nextfile; 
+                } 
+                else 
                 {
                     responseMessage.Message = "Please select only PDF/Doc document for WaterMarking.";
                     responseMessage.Valid = false;
-                    return responseMessage;
-                   // MyMessageBox.ShowDialog("Please select only PDF/Doc document for WaterMarking.");
+                    return responseMessage;  
+                } 
+            } 
 
-                }
-
-            }
-
-            if (j == files.Length)
-
-            {
-
-                string Result = "0";
-
-
-
-
+            if (j == files.Length) 
+            { 
+                string Result = "0"; 
                 responseMessage.Message = "Congratulations ! \n\n Document is successfully WaterMarked.";
                 responseMessage.Valid = true;
-                return responseMessage;
-
-               // Result = MyMessageBox.ShowDialog("Congratulations ! \n\n Document is successfully WaterMarked.\n" + DownloadPath, MyMessageBox.Buttons.OK_OpenFile);
-
-
-
+                return responseMessage;  
             }
-            else
-
+            else 
             {
                 responseMessage.Message = "some document not successfully WaterMarked.";
                 responseMessage.Valid = false;
-                return responseMessage;
-              
-            }
-          
-            responseMessage.Valid = false;
-            return responseMessage;
+                return responseMessage; 
+            }  
         }
 
         public ResponseMessage DigitalSignVerifyAsync(DigitalSignData Data)
@@ -2993,7 +2762,7 @@ namespace SignService
             }
             else if (!string.IsNullOrEmpty(Data.pdfpath))
             {
-                files = new string[] { Data.pdfpath }; // Convert to string array
+                files = new string[] { Data.pdfpath };  
                 Download = Path.GetDirectoryName(Data.pdfpath);
             }
             else
@@ -3008,7 +2777,7 @@ namespace SignService
                 int numinvalid = 0;
                 string fileExtension = Path.GetExtension(filename).ToLower();
                 PdfDocument pdfDocument = new PdfDocument(new PdfReader(filename));
-                // Checks that signature is genuine and the document was not modified.
+                
                 bool genuineAndWasNotModified = false;
 
                 SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
@@ -3017,13 +2786,13 @@ namespace SignService
                 {
                     responseMessage.Message = "Digital Signature not found.";
                     responseMessage.Valid = false;
-                    //return responseMessage;
+                  
                     numinvalid = numinvalid + 1;
                     continue;
                 }
                 else
                 {
-                 
+
                     foreach (string sigName in sigNames)
                     {
                         try
@@ -3060,22 +2829,21 @@ namespace SignService
                             {
                                 responseMessage.Message = "The revision of the document that was covered by this signature has not been altered; however, there have been subsequent changes in the document.";
                                 responseMessage.Valid = false;
-                                
+
                                 pdfDocument.Close();
-                              
+
                             }
                             else
                             {
                                 responseMessage.Message = "The Signer's identity is invalid because it has expired or is not yet valid.";
                                 responseMessage.Valid = false;
                                 pdfDocument.Close();
-                               
+
                             }
                         }
                         catch (Exception)
                         {
-                            // ignoring exceptions,
-                            // we are only interested in signatures that are passing the check successfully
+                            
                         }
                     }
                     if (numValid == sigNames.Count)
@@ -3085,7 +2853,7 @@ namespace SignService
                             responseMessage.Message = "Congratulations ! \\n\\n \" + sigNames.Count + \" Digital Signature(s) is/are successfully verified. \\n However, there have been subsequent changes in the document.";
                             responseMessage.Valid = false;
                             pdfDocument.Close();
-                            
+
                         }
                         else
                         {
@@ -3097,7 +2865,7 @@ namespace SignService
                     else
                     {
                         if (numinvalid > 0)
-                        {  
+                        {
                             responseMessage.Message = "One or More Digital Signature Tampered.";
                             responseMessage.Valid = false;
                             pdfDocument.Close();
@@ -3111,18 +2879,13 @@ namespace SignService
 
         #endregion
 
-        /// <summary>
-        /// Method to save digital signed data to analytics database
-        /// </summary>
-        /// <param name="saveDigitalSignInfo"></param>
-        /// <returns></returns>
+       
         public async Task<bool> SaveDigitalSignedDataToAnalytics(DTOSaveDigitalSignInfo saveDigitalSignInfo)
         {
             var ips = Dns.GetHostAddresses(Dns.GetHostName());
             saveDigitalSignInfo.IpAddress = ips.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.ToString()
                                            ?? "Unknown";
-
-            // Send DTO directly (NO StringContent)
+             
             var result = await new ApiClient().PostRequestAsync<bool>(
                 "api/DigitalSign/SaveDigitalSign",
                 saveDigitalSignInfo
@@ -3213,8 +2976,7 @@ namespace SignService
                         IsMatch = false
                     };
                 }
-
-                // OPTION A (default): compare with primary MAC only
+                 
                 var deviceMac = GetPrimaryMacAddress();
                 var deviceNorm = NormalizeMac(deviceMac);
 
@@ -3234,15 +2996,7 @@ namespace SignService
                 }
 
                 bool match = string.Equals(inputNorm, deviceNorm, StringComparison.OrdinalIgnoreCase);
-
-                // OPTION B (recommended in many servers): match against ALL active physical adapters
-                // Uncomment this if you want to allow any active NIC MAC as valid:
-                /*
-                var allMacs = GetAllActivePhysicalMacsNormalized();
-                match = allMacs.Contains(inputNorm, StringComparer.OrdinalIgnoreCase);
-                deviceMac = match ? FormatMacFromNormalized(inputNorm) : GetPrimaryMacAddress();
-                */
-
+                 
                 SetHttpStatusSafe(match ? HttpStatusCode.OK : HttpStatusCode.Unauthorized);
 
                 return new MacVerifyResponse
@@ -3272,11 +3026,10 @@ namespace SignService
                 };
             }
         }
-
-        // ===== helper methods =====
+         
         private static void SetHttpStatusSafe(HttpStatusCode code)
         {
-            // Prevent NullReferenceException when called from SOAP or non-WebHttp endpoints
+             
             var ctx = WebOperationContext.Current;
             if (ctx?.OutgoingResponse != null)
                 ctx.OutgoingResponse.StatusCode = code;
@@ -3285,18 +3038,18 @@ namespace SignService
         {
             if (string.IsNullOrWhiteSpace(mac)) return null;
 
-            // remove separators and non-hex
+            
             var cleaned = Regex.Replace(mac, "[^0-9a-fA-F]", "");
             if (cleaned.Length != 12) return null;
 
-            // ensure hex only
+            
             if (!Regex.IsMatch(cleaned, "^[0-9a-fA-F]{12}$")) return null;
 
-            return cleaned.ToUpperInvariant(); // normalized = 12 hex chars
+            return cleaned.ToUpperInvariant();  
         }
         private static string GetPrimaryMacAddress()
         {
-            // Prefer: Up + Physical NIC + has gateway (usually the real active NIC)
+             
             var nics = NetworkInterface.GetAllNetworkInterfaces()
                 .Where(n =>
                     n.OperationalStatus == OperationalStatus.Up &&
@@ -3343,8 +3096,7 @@ namespace SignService
         }
 
         private static string FormatMac(PhysicalAddress pa)
-        {
-            // "AA-BB-CC-DD-EE-FF"
+        { 
             var bytes = pa.GetAddressBytes();
             return string.Join("-", bytes.Select(b => b.ToString("X2")));
         }

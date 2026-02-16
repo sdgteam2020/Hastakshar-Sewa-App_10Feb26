@@ -11,10 +11,9 @@ namespace SignService.Helpers
 {
     public static class HugeFileSignatureService
     {
-        private const int BufferSize = 16 * 1024 * 1024; // 16 MB for efficient memory usage
+        private const int BufferSize = 16 * 1024 * 1024; 
         private const int ParallelChunks = 8;
-
-        // Optimized method to sign large files in parallel
+ 
         public static async Task<string> SignPortableAsync(
             string filePath,
             X509Certificate2 cert,
@@ -26,8 +25,7 @@ namespace SignService.Helpers
                 if (rsa == null) throw new InvalidOperationException("Certificate is not RSA.");
 
                 var totalBytes = new FileInfo(filePath).Length;
-
-                // Parallelize the hashing
+                 
                 var hash = await HashFileInParallel(filePath, progress, totalBytes, (chunkHashes) =>
                 {
                     using (var sha256 = SHA256.Create())
@@ -40,13 +38,11 @@ namespace SignService.Helpers
                         return sha256.Hash;
                     }
                 });
-
-                // Sign the final hash
+                 
                 var signature = rsa.SignHash(hash, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                 var chain = BuildCertChain(cert);
-
-                // Build signature JSON
+                 
                 var sigObj = new PortableSig
                 {
                     FileName = Path.GetFileName(filePath),
@@ -68,14 +64,11 @@ namespace SignService.Helpers
                     JsonConvert.SerializeObject(sigObj, Formatting.Indented),
                     Encoding.UTF8));
 
-                progress?.Invoke(100); // finish
+                progress?.Invoke(100);  
                 return outPath;
             }
         }
-
-
-
-        // Method to compute the hash of the file in parallel chunks
+         
         private static async Task<byte[]> HashFileInParallel(string filePath, Action<double> progress, long totalBytes, Func<IEnumerable<byte[]>, byte[]> combineHashes)
         {
             var tasks = new List<Task<byte[]>>();
@@ -92,8 +85,7 @@ namespace SignService.Helpers
             var chunkHashes = await Task.WhenAll(tasks);
             return combineHashes(chunkHashes);
         }
-
-        // Helper to hash a specific chunk of the file with buffered reading
+         
         private static byte[] HashFileChunk(string filePath, long offset, long size, Action<double> progress, long totalBytes)
         {
             using (var sha256 = SHA256.Create())
@@ -108,8 +100,7 @@ namespace SignService.Helpers
                 {
                     sha256.TransformBlock(buffer, 0, bytesToRead, null, 0);
                     bytesRead += bytesToRead;
-
-                    // Report progress
+                     
                     progress?.Invoke((double)(offset + bytesRead) / totalBytes * 100);
                 }
 
@@ -117,8 +108,7 @@ namespace SignService.Helpers
                 return sha256.Hash;
             }
         }
-
-        // Optimized verification method for large files
+ 
         public static async Task<bool> VerifyPortableAsync(string filePath, string sigJsonPath, Action<double> progress)
         {
             var sigObj = JsonConvert.DeserializeObject<PortableSig>(await Task.Run(() => File.ReadAllText(sigJsonPath, Encoding.UTF8)));
@@ -131,8 +121,7 @@ namespace SignService.Helpers
             using (var rsa = new X509Certificate2(Convert.FromBase64String(sigObj.CertificateChainBase64[0])).GetRSAPublicKey())
             {
                 var totalBytes = new FileInfo(filePath).Length;
-
-                // Parallelize the hash computation
+                 
                 var hash = await HashFileInParallel(filePath, progress, totalBytes, (chunkHashes) =>
                 {
                     using (var sha256 = SHA256.Create())
@@ -154,7 +143,7 @@ namespace SignService.Helpers
         {
             using (var chain = new X509Chain())
             {
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck; // offline friendly
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;  
                 chain.Build(leaf);
                 var list = new List<string>();
                 foreach (var element in chain.ChainElements)

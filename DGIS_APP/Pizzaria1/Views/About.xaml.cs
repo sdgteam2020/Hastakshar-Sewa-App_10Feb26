@@ -1,43 +1,22 @@
-﻿//using AutoUpdaterDotNET;
-using SignService;
+﻿using SignService;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Deployment.Application;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Permissions;
-using System.Security.Policy;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Xml;
 using WinniesMessageBox;
- 
+
 namespace DGISApp
 {
-    /// <summary>
-    /// Interação lógica para UserControlInicio.xam
-    /// </summary>
+ 
     public partial class About : UserControl
     {
         [DllImport("wininet.dll")] 
@@ -49,7 +28,7 @@ namespace DGISApp
         {
            
             InitializeComponent();
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (Debugger.IsAttached)
             {
                 lblVer.Text = "Debug Mode";
                
@@ -57,10 +36,8 @@ namespace DGISApp
                 
             }
             else
-            {
-                //lblVer.Text = $"Current Version : " + ad.CurrentVersion.ToString();
-                lblVer.Text = $"Current Version : " + GetCurrentVesrion();
-               // _ = GetUpdateAsync();
+            { 
+                lblVer.Text = $"Current Version : " + GetCurrentVesrion(); 
             }
 
 
@@ -70,8 +47,7 @@ namespace DGISApp
         {
             Assembly assembly = Assembly.GetEntryAssembly();
            
-            Version version = Version.Parse(assembly.GetName().Version.ToString());
-            //Version version = Version.Parse(ConfigurationManager.AppSettings["Version"].ToString());
+            Version version = Version.Parse(assembly.GetName().Version.ToString()); 
             return version;
         }
 
@@ -135,30 +111,25 @@ namespace DGISApp
         public string DownloadZipFromUrl(string url)
         {
             try
-            {
-                // Get the system's temp folder path
+            { 
                 string tempPath = System.IO.Path.GetTempPath();
-
-                // Create a file name for the downloaded ZIP file
+                 
                 string fileName = System.IO.Path.GetFileName(url);
                 if (string.IsNullOrWhiteSpace(fileName))
                 {
-                    fileName = "DownloadedZipFile.zip"; // Default file name
+                    fileName = "DownloadedZipFile.zip";  
                 }
 
                 string filePath = System.IO.Path.Combine(tempPath, fileName);
-
-                // Download the ZIP file from the URL and save it to the temp folder
+                 
                 using (WebClient client = new WebClient())
                 {
                     client.DownloadFile(new Uri(url), filePath);
                 }
-
-                // Return the path where the file was saved
-                // Unzip the file
+                 
                 string filePath1 = System.IO.Path.Combine(tempPath, "DGISApp" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
                 ZipFile.ExtractToDirectory(filePath, filePath1);
-                // Start the process
+                
                 using (Process process = Process.Start(System.IO.Path.Combine(filePath1, "DGISApp\\setup.exe")))
                 {
                     foreach (var process1 in Process.GetProcessesByName("DGISAPP"))
@@ -166,20 +137,19 @@ namespace DGISApp
                         process1.Kill();
                         process1.WaitForExit();
                     }
-                    // Read the output
+                     
                     string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();  // Wait for the process to complete
-
-                   // Console.WriteLine("Output: " + output);
+                    process.WaitForExit();  
+                     
                 }
 
                 return filePath;
-                ///
+                
             }
             catch (Exception ex)
             {
                 ErrorLog.LogErrorToFile(ex);
-                // Handle exceptions and return the error message
+                 
                 return $"Error downloading the file: {ex.Message}";
                
             }
@@ -190,7 +160,7 @@ namespace DGISApp
             Service1 service1 = new Service1();
             if (!await service1.HasInternetConnectionAsyncTest())
             {
-               // _ = GetUpdateAsync();
+                
                 MyMessageBox.ShowDialog("Your System is Offline Mode. Please Download from ADN ("+ ConfigurationManager.AppSettings["UrlForDGISDownloadFromADN"] + ") the Hastakshar SEWA ZIP file, extract its contents, and run setup.exe to complete the update.");
             }
             else
@@ -221,7 +191,7 @@ namespace DGISApp
                             DownloadZipFromUrl(UpdatePackageUrl);
 
                         }
-                        // Optionally, ask the user if they want to download the update
+                        
 
                     }
                     else

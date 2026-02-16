@@ -14,9 +14,7 @@ using System.ServiceModel.Dispatcher;
 using System.Windows;
 using WinniesMessageBox;
 namespace DGISApp
-{
-
-    //[PrincipalPermissionAttribute(SecurityAction.Demand, Role = @"BUILTIN\Administrators")]
+{ 
     public partial class App : Application
     {
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
@@ -26,18 +24,15 @@ namespace DGISApp
         private async void Application_Startup(object sender, StartupEventArgs e)
         {
             try
-            {
-                // ===== IGNORE CERT (DEV/LAB ONLY) =====
+            { 
                 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
                 System.Net.ServicePointManager.ServerCertificateValidationCallback =
                     (sender2, cert, chain, errors) => true;
-                // ===============================================
+                
                 MainWindow wnd = new MainWindow();
                 bool isNewInstance = true;
-                // MyMessageBox.ShowDialog("Error");
-
-                // Check if another instance of the application is already running
+                 
                 Process currentProcess = Process.GetCurrentProcess();
                 Process[] processes = Process.GetProcessesByName(currentProcess.ProcessName);
 
@@ -47,14 +42,12 @@ namespace DGISApp
                     {
                         process.Kill();
                         process.WaitForExit();
-                        isNewInstance = true;
-                        //isNewInstance = false;
+                        isNewInstance = true; 
                         break;
                     }
                 }
                 if (isNewInstance)
-                {
-                    // Create device.dat on first run, reuse if already exists
+                { 
                     var creds = DeviceCredentialStore.GetOrCreate();
 
                     this.host = new ServiceHost(typeof(SignService.Service1));
@@ -83,10 +76,10 @@ namespace DGISApp
                 if (Convert.ToInt32(ConfigurationManager.AppSettings["IsOldDGISExits"]) <= 10)
                 {
                     string clickOncePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Apps\2.0";
-                    string appName = "dgis"; // Replace with your application's name
+                    string appName = "dgis";  
 
                     int IsDeleteOldDgisApp = 0;
-                    // Search for the application directory
+                     
                     foreach (var directory in Directory.GetDirectories(clickOncePath, "*", SearchOption.AllDirectories))
                     {
                         if (directory.Contains(appName))
@@ -106,23 +99,22 @@ namespace DGISApp
             }
             catch (Exception ex)
             {
-                //MessageBox.Show(ex.Message);
+                 
                 ErrorLog.LogErrorToFile(ex);
             }
 
         }
         private void RemoveOldDGISStartMenu1()
         {
-            //C: \Users\asdc\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+             
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string filePath = Path.Combine(appDataPath, @"Microsoft\Windows\Start Menu\Programs\Startup\DGIS App.appref-ms");
-            //MessageBox.Show(filePath);
+             
             if (File.Exists(filePath))
             {
 
                 try
-                {
-                    // Command to delete the file using CMD
+                { 
                     string command = $"/C del \"{filePath}\"";
 
                     ProcessStartInfo psi = new ProcessStartInfo
@@ -168,13 +160,12 @@ namespace DGISApp
 
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string filePath = Path.Combine(appDataPath, @"Microsoft\Windows\Start Menu\Programs\DGIS\1\DGIS App.appref-ms");
-            //MessageBox.Show(filePath);
+             
             if (File.Exists(filePath))
             {
 
                 try
-                {
-                    // Command to delete the file using CMD
+                { 
                     string command = $"/C del \"{filePath}\"";
 
                     ProcessStartInfo psi = new ProcessStartInfo
@@ -370,8 +361,7 @@ namespace DGISApp
         /// modified or extended.</param>
         public void ApplyDispatchBehavior(ServiceEndpoint endpoint,
                                           EndpointDispatcher endpointDispatcher)
-        {
-            // add inspector which detects cross origin requests
+        { 
             endpointDispatcher.DispatchRuntime.MessageInspectors.Add(
                                                    new MessageInspector(endpoint));
         }
@@ -433,9 +423,7 @@ namespace DGISApp
                 if (!string.IsNullOrEmpty(origin))
                 {
                     stateMsg = new StateMessage();
-                    // if a cors options request (preflight) is detected, 
-                    // we create our own reply message and don't invoke any 
-                    // operation at all.
+                   
                     if (requestProperty.Method == "OPTIONS")
                     {
                         stateMsg.Message = Message.CreateMessage(request.Version, null);
@@ -480,13 +468,12 @@ namespace DGISApp
                     reply.Properties.Add(HttpResponseMessageProperty.Name,
                                          responseProperty);
                 }
-
-                // Access-Control-Allow-Origin should be added for all cors responses
+                 
                 responseProperty.Headers.Set("Access-Control-Allow-Origin", "*");
 
                 if (stateMsg.Message != null)
                 {
-                    // the following headers should only be added for OPTIONS requests
+                     
                     responseProperty.Headers.Set("Access-Control-Allow-Methods",
                                                  "POST, OPTIONS, GET");
                     responseProperty.Headers.Set("Access-Control-Allow-Headers",
