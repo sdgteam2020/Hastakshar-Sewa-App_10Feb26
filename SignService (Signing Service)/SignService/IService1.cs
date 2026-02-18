@@ -118,12 +118,12 @@ namespace SignService
 
         [OperationContract]
         [WebInvoke(
-               Method = "GET",
+               Method = "POST",
                ResponseFormat = WebMessageFormat.Json,
                BodyStyle = WebMessageBodyStyle.Bare,
-               UriTemplate = "/VerifyMac/{mac}"
+               UriTemplate = "/VerifyMac"
            )]
-        Task<MacVerifyResponse> VerifyMac(string mac);
+        Task<MacVerifyResponse> VerifyMac(DeviceVerifyRequest mac);
 
     }
     public class DigitalVerifyDetails
@@ -359,22 +359,35 @@ namespace SignService
     }
 
     [DataContract]
-    public class MacVerifyResponse
+    public sealed class DeviceVerifyRequest
+    {
+        [DataMember] public string Mac { get; set; }
+        [DataMember] public string UserName { get; set; }
+        [DataMember] public string IpAddress { get; set; }
+    }
+
+    [DataContract]
+    public sealed class MacVerifyResponse
     {
         [DataMember] public bool Status { get; set; }
         [DataMember] public string Message { get; set; }
 
+        // Input
         [DataMember] public string InputMac { get; set; }
-        [DataMember] public string NormalizedInputMac { get; set; }
+        [DataMember] public string InputUserName { get; set; }
+        [DataMember] public string InputIpAddress { get; set; }
 
-        [DataMember] public bool IsMatch { get; set; }
-
+        // Device (actual)
         [DataMember] public string MachineName { get; set; }
-        [DataMember] public string DeviceMac { get; set; }   
+        [DataMember] public string DeviceMac { get; set; }
+        [DataMember] public string DeviceUserName { get; set; }
+        [DataMember] public string DeviceIpAddress { get; set; }
 
-        [DataMember] public string WindowsUserName { get; set; }
-        [DataMember] public string ClientIpAddress { get; set; }
-
+        // Match
+        [DataMember] public bool IsMacMatch { get; set; }
+        [DataMember] public bool IsUserMatch { get; set; }
+        [DataMember] public bool IsIpMatch { get; set; }
+        [DataMember] public bool IsAllMatch { get; set; }
     }
 
 }
