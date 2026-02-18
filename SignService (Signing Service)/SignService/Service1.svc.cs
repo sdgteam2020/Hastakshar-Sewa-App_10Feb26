@@ -19,10 +19,14 @@ using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
+using System.Security.Principal;
+using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using System.Xml;
 using ValidateCertificate;
 using WinniesMessageBox;
@@ -2901,6 +2905,8 @@ namespace SignService
             {
                 var mac = GetPrimaryMacAddress();
                 var machine = Environment.MachineName;
+                var user = GetWindowsUserNameSafe();
+                var ip = GetClientIpAddressSafe();
 
                 if (string.IsNullOrWhiteSpace(mac))
                 {
@@ -2911,7 +2917,9 @@ namespace SignService
                         Status = false,
                         Message = "MAC address not found (no active physical adapter detected).",
                         MachineName = machine,
-                        MacAddress = null
+                        MacAddress = null,
+                        WindowsUserName = user,
+                        ClientIpAddress = ip
                     };
                 }
 
@@ -2922,7 +2930,9 @@ namespace SignService
                     Status = true,
                     Message = "MAC address fetched successfully.",
                     MachineName = machine,
-                    MacAddress = mac
+                    MacAddress = mac,
+                    WindowsUserName = user,
+                    ClientIpAddress = ip
                 };
             }
             catch (Exception ex)
@@ -2934,7 +2944,9 @@ namespace SignService
                     Status = false,
                     Message = "Failed to read MAC address. " + ex.Message,
                     MachineName = Environment.MachineName,
-                    MacAddress = null
+                    MacAddress = null,
+                    WindowsUserName = GetWindowsUserNameSafe(),
+                    ClientIpAddress = GetClientIpAddressSafe()
                 };
             }
         }
@@ -3099,6 +3111,36 @@ namespace SignService
         { 
             var bytes = pa.GetAddressBytes();
             return string.Join("-", bytes.Select(b => b.ToString("X2")));
+        }
+
+        private static string GetWindowsUserNameSafe()
+        {
+            try
+            {
+                 
+                var name = WindowsIdentity.GetCurrent()?.Name;
+                if (!string.IsNullOrWhiteSpace(name)) return name;
+                 
+                return Environment.UserName;
+            }
+            catch
+            {
+                return Environment.UserName;
+            }
+        }
+
+        private static string GetClientIpAddressSafe()
+        {
+            try
+            {
+                IPAddress[] a = Dns.GetHostByName(Dns.GetHostName()).AddressList;
+                string ip = a[0].ToString();
+                return ip;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
 
