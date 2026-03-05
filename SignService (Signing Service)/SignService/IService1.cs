@@ -57,7 +57,7 @@ namespace SignService
          
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignBulkAsync")]
-        Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData);  // Add to Sign PDF
+        Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData);   
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignAsync")]
@@ -372,18 +372,18 @@ namespace SignService
         [DataMember] public bool Status { get; set; }
         [DataMember] public string Message { get; set; }
 
-        // Input
+        
         [DataMember] public string InputMac { get; set; }
         [DataMember] public string InputUserName { get; set; }
         [DataMember] public string InputIpAddress { get; set; }
 
-        // Device (actual)
+         
         [DataMember] public string MachineName { get; set; }
         [DataMember] public string DeviceMac { get; set; }
         [DataMember] public string DeviceUserName { get; set; }
         [DataMember] public string DeviceIpAddress { get; set; }
 
-        // Match
+      
         [DataMember] public bool IsMacMatch { get; set; }
         [DataMember] public bool IsUserMatch { get; set; }
         [DataMember] public bool IsIpMatch { get; set; }

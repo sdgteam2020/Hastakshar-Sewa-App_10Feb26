@@ -159,11 +159,9 @@ namespace SignService.Security
         public async Task<T> PostJsonAsync<T>(string endpoint, object postData, string deviceId, string deviceKey, CancellationToken ct = default)
         {
             await EnsureTokenAsync(deviceId, deviceKey, ct);
-
-            // 1st attempt
+             
             var result = await PostOnceAsync<T>(endpoint, postData, ct);
-
-            // If token invalid/expired, retry once after forcing refresh
+             
             if (result.isUnauthorized)
             {
                 await ForceRefreshTokenAsync(deviceId, deviceKey, ct);

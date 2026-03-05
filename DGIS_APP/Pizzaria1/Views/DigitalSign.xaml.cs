@@ -503,7 +503,7 @@ namespace DGISApp
                 {
                     if (ChkBulkSign.IsChecked == true)
                     {
-                        // For bulk signing, select a directory
+                        
                         System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
                         folderBrowserDialog.Description = "Select a folder containing PDF or DOC files";
 
@@ -806,8 +806,8 @@ namespace DGISApp
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];   // can be null
-            string referer = headers?["Referer"];  // can be null
+            string origin = headers?["Origin"];    
+            string referer = headers?["Referer"];  
             try
             {
 
@@ -1100,7 +1100,7 @@ namespace DGISApp
                                                             if (Xaxis > 400)
                                                             {
                                                                 Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
-                                                                Xaxis = 15;// getXYaxis[0].XCoordinate;
+                                                                Xaxis = 15; 
                                                             }
                                                         }
                                                     }
@@ -1721,7 +1721,7 @@ namespace DGISApp
                 if (!string.IsNullOrEmpty(sigPath))
                 {
                     saveDigitalSignInfo = new DTOSaveDigitalSignInfo();
-                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");//for all signed document same date time in case of bulk sign
+                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss"); 
                     var PublicKey = await new Service1().GetPublicKey();
                     byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
                     saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);

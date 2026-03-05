@@ -24,8 +24,7 @@ namespace SignService.Helpers
                 Application wordApp = new Application();
                 Document wordDoc = null;
                 wordDoc = wordApp.Documents.Open(inputpath);
-            
-                // Save as PDF
+             
                 wordDoc.SaveAs2(outputPath, WdSaveFormat.wdFormatPDF);
                 wordDoc.Close();    
             }
@@ -41,8 +40,7 @@ namespace SignService.Helpers
             {
                 using (var httpClient = new HttpClient())
                 {
-                    httpClient.Timeout = TimeSpan.FromSeconds(2); // Adjust the timeout as needed
-                    //var request = new HttpRequestMessage(HttpMethod.Head, "https://google.com");
+                    httpClient.Timeout = TimeSpan.FromSeconds(2);  
                     var request = new HttpRequestMessage(HttpMethod.Head, ConfigurationManager.AppSettings["HasInternetConnection"]);
                     var response = await httpClient.SendAsync(request);
 
@@ -52,12 +50,12 @@ namespace SignService.Helpers
             catch (Exception ex)
             {
                 ErrorLog.LogErrorToFile(ex);
-                return false; // Return false if there's an issue with the HTTP request
+                return false;  
             }
         }
         public static async Task<X509Certificate2Collection> GetCertificates()
         {
-            //X509Certificate2 cert1 = null;
+             
             X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             X509Certificate2Collection fcollection = new X509Certificate2Collection();
 
@@ -81,8 +79,7 @@ namespace SignService.Helpers
                         }
                         catch (CryptographicException)
                         {
-                            // Handle any exception when accessing the private key
-                            // You can log the error or skip this certificate
+                             
                         }
                     }
                     store.Close();

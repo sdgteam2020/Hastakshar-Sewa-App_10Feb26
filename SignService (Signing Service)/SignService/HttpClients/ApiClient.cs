@@ -8,6 +8,7 @@ namespace SignService.HttpClients
     public class ApiClient
     {
         private static readonly string _baseUrl = "https://localhost:7018/";
+        //private static readonly string _baseUrl = "https://192.168.10.41";
         //private static readonly string _baseUrl = "https://192.168.10.251";
         private static readonly DeviceJwtHttpClient _client = new DeviceJwtHttpClient(_baseUrl);
 

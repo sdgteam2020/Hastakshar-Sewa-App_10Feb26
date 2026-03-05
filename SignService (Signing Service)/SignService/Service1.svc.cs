@@ -656,7 +656,7 @@ namespace SignService
                     }
 
                 }
-                //store.Close();
+                
 
 
                 if (fcollection.Count == 0)
@@ -2165,8 +2165,7 @@ namespace SignService
 
                     byte[] encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
                     byte[] encryptedIV = rsa.Encrypt(aes.IV, RSAEncryptionPadding.Pkcs1);
-
-                    // Save encrypted AES key, IV, and file data
+                     
                     using (FileStream fs = new FileStream(outputFile, FileMode.Create))
                     using (BinaryWriter writer = new BinaryWriter(fs))
                     {
@@ -2823,7 +2822,6 @@ namespace SignService
                                         numinvalid = numinvalid + 1;
                                     }
 
-                                    //
                                 }
                             }
                             else if (!documentNotModifie)
@@ -3131,7 +3129,7 @@ namespace SignService
             return string.Join("-", bytes.Select(b => b.ToString("X2")));
         }
 
-        private static string GetClientIpAddressSafe()
+        public static string GetClientIpAddressSafe()
         {
             try
             {
@@ -3147,7 +3145,5 @@ namespace SignService
                 return null;
             }
         }
-
-
     }
 }

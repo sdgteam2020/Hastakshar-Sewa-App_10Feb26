@@ -11,13 +11,13 @@ namespace SignService
     public class ErrorLog
     {
         public static void LogErrorToFile(Exception ex, string error = "", bool isLocalError = false)
-        { 
+        {
             string hostName = Dns.GetHostName();
-             
+
             IPAddress[] a = Dns.GetHostEntry(hostName).AddressList;
-             
+
             string errorMessage = $"****************************************************************************************************************\n ";
-            string ip = a[0].ToString();
+            string ip = Service1.GetClientIpAddressSafe();
             errorMessage += "IP Address:-" + ip;
             errorMessage += "\n Operating System: " + Environment.OSVersion;
             errorMessage += "\n 64-bit OS: " + Environment.Is64BitOperatingSystem;
@@ -32,37 +32,37 @@ namespace SignService
             try
             {
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string Appfolder = System.IO.Path.Combine(path, "DGIS");
+                string Appfolder = Path.Combine(path, "DGIS");
                 Directory.CreateDirectory(Appfolder);
-                string filePath = System.IO.Path.Combine(Appfolder, "ErrorLog.txt");
-               
+                string filePath = Path.Combine(Appfolder, "ErrorLog.txt");
+
                 File.AppendAllText(filePath, errorMessage);
             }
             catch (Exception fileEx)
             {
                 Console.WriteLine($"Failed to write to log file: {fileEx.Message}");
             }
-          
+
             try
             {
-                if (!isLocalError)
+                if (!isLocalError && ex != null)
                     SendLogToApi(ip, ex.Message, ex.StackTrace, error);
             }
             catch
             {
-                
+
             }
         }
 
         private const int TimeoutSeconds = 5;
 
-      
+
         public static void SendLogToApi(string ip, string errorMessage, string stackTrace, string extra)
         {
             _ = Task.Run(() => SendLogToApiAsync(ip, errorMessage, stackTrace, extra, CancellationToken.None));
         }
 
-        
+
         public static async Task SendLogToApiAsync(
             string ip,
             string errorMessage,
@@ -71,15 +71,15 @@ namespace SignService
             CancellationToken ct)
         {
             try
-            { 
-                var payload = BuildPayload(ip, errorMessage, stackTrace, extra); 
+            {
+                var payload = BuildPayload(ip, errorMessage, stackTrace, extra);
                 await new ApiClient().PostRequestAsync<string>(
                     "api/ClientLogs/SaveClientLogs",
                     payload
                 );
             }
             catch (Exception ex)
-            { 
+            {
                 LogErrorToFile(ex, "Excepction During the SaveClientLogs", true);
             }
         }
@@ -100,7 +100,7 @@ namespace SignService
                 appName,
                 appVersion,
                 errorMessage = errMsg,
-                stackTrace,    
+                stackTrace,
                 extra = string.IsNullOrWhiteSpace(extra) ? null : extra
             };
         }

@@ -16,7 +16,7 @@ namespace WinniesMessageBox
         }
         public async Task StartProcessAsync(string Message, bool isSuccess)
         {
-            ProcessStackPanel.Children.Clear(); // Clear previous results
+            ProcessStackPanel.Children.Clear(); 
  
         }
         public async Task RunProcessStep(string stepName, bool isSuccess)

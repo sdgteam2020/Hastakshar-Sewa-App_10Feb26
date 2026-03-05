@@ -46,11 +46,11 @@ dialog {
             text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
-        /* Overlay Effect */
+       
         dialog::backdrop {
             background: rgba(0, 0, 0, 0.5);
         }
-        /* Buttons */
+        
         .dialog-buttons {
             margin-top: 15px;
         }
@@ -92,8 +92,7 @@ dialog {
         <canvas id="pdf-canvas" width="700" height="750"></canvas>
         <canvas id="draw-canvas" width="700" height="750" style="position:absolute; top:0; left:0;"></canvas>
     </div>
-    <!-- Custom Confirmation Dialog -->
-    <!-- Custom Modal Confirmation Dialog -->
+    
     <dialog id="customConfirm">
         <p>Do you want to sign here?</p>
         <div class="dialog-buttons">
@@ -112,24 +111,23 @@ dialog {
 
                 CallApiWithCordinate(-1, -1);
         }, 2000);
-
-        // const file = event.target.files[0];
+         
         let apiUrl = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/Getpdffile";
         $.ajax({
             url: apiUrl,
             method: "GET",
             success: function (response) {
-                let base64String = response; // API returns Base64 string
+                let base64String = response; 
                 let byteArray = convertBase64ToByteArray(base64String);
-                // Convert Byte Array to Blob
+                 
                 let pdfBlob = new Blob([byteArray], { type: "application/pdf" });
-                // Convert Blob to File
+                 
                 let pdfFile = new File([pdfBlob], "downloaded.pdf", { type: "application/pdf" });
                 console.log("File object:", pdfFile);
-                // Simulate file input selection
+                
                 let fileList = new DataTransfer();
                 fileList.items.add(pdfFile);
-                //document.getElementById("upload-pdf").files = fileList.files;
+                 
                 let file = pdfFile;
                 if (file) {
                     const fileReader = new FileReader();
@@ -148,7 +146,7 @@ dialog {
             }
         });
 
-        // Previous Page
+         
         $("#prev-page").on("click", function () {
             if (pageNum > 1) {
                 pageNum--;
@@ -156,7 +154,7 @@ dialog {
             }
         });
 
-        // Next Page
+         
         $("#next-page").on("click", function () {
             if (pdf && pageNum < pdf.numPages) {
                 pageNum++;
@@ -172,7 +170,7 @@ dialog {
                 renderPage(pageNum);
             }).catch(error => console.error("Error loading PDF: ", error.message));
         }
-        let scaleFactor = 1; // Default zoom scale
+        let scaleFactor = 1;  
         function renderPage(num) {
             pdf.getPage(num).then(page => {
                 const viewport = page.getViewport({ scale: scaleFactor });
@@ -181,8 +179,8 @@ dialog {
 
                 pdfCanvas.width = viewport.width;
                 pdfCanvas.height = viewport.height - 20;
-                drawCanvas.width = viewport.width; // Match drawCanvas size
-                drawCanvas.height = viewport.height - 20; // Match drawCanvas size
+                drawCanvas.width = viewport.width;  
+                drawCanvas.height = viewport.height - 20;  
 
                 const renderContext = {
                     canvasContext: context,
@@ -193,18 +191,7 @@ dialog {
                 $("#page-num").html(num);
             });
         }
-        // document.getElementById("zoom-in").addEventListener("click", () => {
-        //     scaleFactor += 0.2; // Increase zoom
-        //     renderPage(pageNum);
-        // });
-
-        // document.getElementById("zoom-out").addEventListener("click", () => {
-        //     if (scaleFactor > 0.4) {
-        //         scaleFactor -= 0.2; // Decrease zoom
-        //         renderPage(pageNum);
-        //     }
-        // });
-        // Drawing on canvas
+         
         const drawCanvas = document.getElementById("draw-canvas");
         const ctx = drawCanvas.getContext("2d");
 
@@ -236,24 +223,11 @@ dialog {
 
         drawCanvas.addEventListener("mouseup", () => {
             const modal = document.getElementById("customConfirm");
-            modal.showModal();  // Open modal
-            //     CallApiWithCordinate(-1, -1);
-            //     let result = confirm("Do you want to sign here?");
-            //     isDrawing = false;
-            //   if (result) {
-            //     checksign==1;
-            //  window.chrome.webview.postMessage("");
-            // CallApiWithCordinate(Math.floor(startX),Math.floor(bottom))
-            // Perform action when OK is clicked
-            //   } else {
-
-            //       // Perform action when Cancel is clicked
-            //   }
-
+            modal.showModal();  
         });
         function handleConfirm(isConfirmed) {
             const modal = document.getElementById("customConfirm");
-            modal.close();  // Close modal
+            modal.close();   
             isDrawing = false;
             if (isConfirmed) {
                 CallApiWithCordinate(Math.floor(startX), Math.floor(bottom))
@@ -263,8 +237,8 @@ dialog {
         }
         function clearCanvas() {
             ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-        }
-        // Convert Base64 to Uint8Array (Byte Array)
+        } 
+
         function convertBase64ToByteArray(base64) {
             let binaryString = atob(base64);
             let byteArray = new Uint8Array(binaryString.length);
@@ -295,9 +269,7 @@ dialog {
 
                 },
                 error: function (error) {
-                    alert(error)
-                    // console.error("Error:", error);
-                    // alert("Failed to send data.");
+                    alert(error)                     
                 }
             });
         }
