@@ -35,6 +35,7 @@ namespace SignService
     public class Service1 : IService1
     {
         public static string PrevThumbNail = "";
+        bool IsLocalToken = true;
         public string GetData(string element)
         {
             X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
@@ -1858,7 +1859,7 @@ namespace SignService
 
                     bool TokenValidity = false;
                     string Remark = "";
-                    if (DateTime.Now <= cert1.NotAfter)
+                    if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                     {
                         TokenValidity = true;
                         Remark = "Personal No of Unique Cert is fetched for the inserted Token";

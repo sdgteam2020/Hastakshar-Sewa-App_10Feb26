@@ -52,6 +52,7 @@ namespace DGISApp
         string crlocspmsg = "";
         string CertThumbPrint = "";
         string UrlApi = ConfigurationManager.AppSettings["UrlApi"].ToString();
+        bool IsLocalToken= bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
         public DigitalSign()
         {
             InitializeComponent();
@@ -884,7 +885,7 @@ namespace DGISApp
 
                     cert1 = certCollection[0];
 
-                    if (DateTime.Now > cert1.NotAfter)
+                    if (DateTime.Now > cert1.NotAfter && !IsLocalToken)
                     {
                         this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Token is expired. Pl contact issuer !")));
                         this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
@@ -1711,7 +1712,7 @@ namespace DGISApp
                     cert = found[0];
                 }
 
-                if (DateTime.Now > cert.NotAfter)
+                if (DateTime.Now > cert.NotAfter && !IsLocalToken)
                 {
                     ShowMsg("Token is expired. Pl contact issuer !");
                     return;

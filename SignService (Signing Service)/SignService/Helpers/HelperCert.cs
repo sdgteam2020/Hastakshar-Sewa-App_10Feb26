@@ -3,6 +3,7 @@ using iText.Forms.Fields;
 using iText.Kernel.Pdf;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ namespace SignService.Helpers
 {
     public class HelperCert
     {
+        bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
         string CertThumbPrint = "";
         public List<DigitalSignData> GetSignatureCordinate(string pdfPath)
         {
@@ -102,7 +104,7 @@ namespace SignService.Helpers
                             {
                                 cert1 = selectedCertificates[0];
                                 string[] SubjectSplit = cert1.Subject.Split(',');
-                                if (DateTime.Now <= cert1.NotAfter)
+                                if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                                 {
                                     CertThumbPrint = cert1.Thumbprint;
                                     responseStatus.Status = "1";

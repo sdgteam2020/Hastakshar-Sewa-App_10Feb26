@@ -1,5 +1,6 @@
 ﻿using Org.BouncyCastle.X509;
 using System;
+using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Security; 
@@ -22,6 +23,7 @@ namespace ValidateCertificate
             bool CrlValid = false;
             bool OCSPValid = false;
             bool ChainTrust = false;
+            bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
             try
             {
                
@@ -46,7 +48,7 @@ namespace ValidateCertificate
 
                 bool isNotExpired = await Task.Run(() => DateTime.Now <= certificate.NotAfter);
 
-                if (!isNotExpired) { throw new Exception("Token is expired. Pl contact issuer!"); }
+                if (!isNotExpired && !IsLocalToken) { throw new Exception("Token is expired. Pl contact issuer!"); }
 
                 
                 if (IsCheckCrl)
