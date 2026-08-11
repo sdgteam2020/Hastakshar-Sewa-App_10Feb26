@@ -6,6 +6,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using System;
 using System.IO;
+using System.Text;
 
 namespace SignService.Helpers
 {
@@ -151,7 +152,7 @@ namespace SignService.Helpers
         public static byte[] SimpleEncryptWithPassword(byte[] secretMessage, string password, byte[] nonSecretPayload = null)
         {
             nonSecretPayload = nonSecretPayload ?? new byte[] { };
-             
+
             if (string.IsNullOrWhiteSpace(password) || password.Length < MinPasswordLength)
                 throw new ArgumentException(String.Format("Must have a password of at least {0} characters!", MinPasswordLength), "password");
 
@@ -159,25 +160,110 @@ namespace SignService.Helpers
                 throw new ArgumentException("Secret Message Required!", "secretMessage");
 
             var generator = new Pkcs5S2ParametersGenerator();
-             
+
             var salt = new byte[SaltBitSize / 8];
             Random.NextBytes(salt);
 
             generator.Init(
               PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()),
               salt,
-              Iterations); 
+              Iterations);
             var key = (KeyParameter)generator.GenerateDerivedMacParameters(KeyBitSize);
-             
+
             var payload = new byte[salt.Length + nonSecretPayload.Length];
             Array.Copy(nonSecretPayload, payload, nonSecretPayload.Length);
             Array.Copy(salt, 0, payload, nonSecretPayload.Length, salt.Length);
 
             return SimpleEncrypt(secretMessage, key.GetKey(), payload);
         }
+        public static byte[] SimpleEncryptWithPasswordForSecureFile(byte[] secretMessage, string password, string macAddress = null, byte[] nonSecretPayload = null)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length < MinPasswordLength)
+                throw new ArgumentException(
+                    $"Must have a password of at least {MinPasswordLength} characters!",
+                    nameof(password));
+
+            if (secretMessage == null || secretMessage.Length == 0)
+                throw new ArgumentException("Secret Message Required!", nameof(secretMessage));
+
+            var generator = new Pkcs5S2ParametersGenerator();
+
+            var salt = new byte[SaltBitSize / 8];
+            Random.NextBytes(salt);
+
+            generator.Init(
+                PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()),
+                salt,
+                Iterations);
+
+            var key = (KeyParameter)generator.GenerateDerivedMacParameters(KeyBitSize);
+
+            // 1. Create metadata
+            string metadata = macAddress;
+
+            byte[] metadataBytes =Encoding.UTF8.GetBytes(metadata);
+
+
+
+            // 2. Encrypt metadata using same key
+            byte[] encryptedMetadata =SimpleEncrypt(metadataBytes,key.GetKey(), salt);
+
+            // 3. Store encrypted metadata length
+            byte[] metadataLength =
+                BitConverter.GetBytes(encryptedMetadata.Length);
+
+            // 4. Create payload
+            byte[] payload =
+                new byte[
+                    metadataLength.Length +
+                    encryptedMetadata.Length +
+                    salt.Length];
+
+
+            int offset = 0;
+
+            Array.Copy(metadataLength,0,payload,offset,metadataLength.Length);
+
+            offset += metadataLength.Length;
+
+
+            Array.Copy(encryptedMetadata,0,payload,offset,encryptedMetadata.Length);
+
+            offset += encryptedMetadata.Length;
+
+
+            Array.Copy(salt,0,payload,offset,salt.Length);
+
+            // 5. Encrypt file
+            return SimpleEncrypt(
+                secretMessage,
+                key.GetKey(),
+                payload);
+            //// 🔹 Convert macAddress to bytes
+            //byte[] macBytes = Encoding.UTF8.GetBytes(macAddress);
+            //byte[] macLengthBytes = BitConverter.GetBytes(macBytes.Length);
+
+            //// 🔹 Build payload
+            //var payload = new byte[
+            //    macLengthBytes.Length +
+            //    macBytes.Length +
+            //    salt.Length];
+
+            //int offset = 0;
+
+            //Array.Copy(macLengthBytes, 0, payload, offset, macLengthBytes.Length);
+            //offset += macLengthBytes.Length;
+
+            //Array.Copy(macBytes, 0, payload, offset, macBytes.Length);
+            //offset += macBytes.Length;
+
+            //Array.Copy(salt, 0, payload, offset, salt.Length);
+
+            //return SimpleEncrypt(secretMessage, key.GetKey(), payload);
+        }
 
         public static byte[] SimpleDecryptWithPassword(byte[] encryptedMessage, string password, int nonSecretPayloadLength = 0)
-        { 
+        {
             if (string.IsNullOrWhiteSpace(password) || password.Length < MinPasswordLength)
                 throw new ArgumentException(String.Format("Must have a password of at least {0} characters!", MinPasswordLength), "password");
 
@@ -185,7 +271,7 @@ namespace SignService.Helpers
                 throw new ArgumentException("Encrypted Message Required!", "encryptedMessage");
 
             var generator = new Pkcs5S2ParametersGenerator();
-             
+
             var salt = new byte[SaltBitSize / 8];
             Array.Copy(encryptedMessage, nonSecretPayloadLength, salt, 0, salt.Length);
 
@@ -193,10 +279,110 @@ namespace SignService.Helpers
               PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()),
               salt,
               Iterations);
-             
+
             var key = (KeyParameter)generator.GenerateDerivedMacParameters(KeyBitSize);
 
             return SimpleDecrypt(encryptedMessage, key.GetKey(), salt.Length + nonSecretPayloadLength);
+        }
+        public static byte[] SimpleDecryptWithPasswordForSecureFile(byte[] encryptedMessage, string password, out string macAddress,int nonSecretPayloadLength = 0)
+        {
+            try
+            {
+                macAddress = null;
+
+                int offset = 0;
+
+                // 1. Read encrypted metadata length
+                int encryptedMacLength =
+                    BitConverter.ToInt32(encryptedMessage, offset);
+
+                offset += 4;
+
+
+                // 2. Read encrypted MAC bytes
+                byte[] encryptedMacBytes =
+                    new byte[encryptedMacLength];
+
+                Array.Copy(
+                    encryptedMessage,
+                    offset,
+                    encryptedMacBytes,
+                    0,
+                    encryptedMacLength);
+
+                offset += encryptedMacLength;
+
+
+
+                // 3. Read salt
+                byte[] salt =
+                    new byte[SaltBitSize / 8];
+
+                Array.Copy(
+                    encryptedMessage,
+                    offset,
+                    salt,
+                    0,
+                    salt.Length);
+
+
+
+                // 4. Generate key
+                var generator =
+                    new Pkcs5S2ParametersGenerator();
+
+                generator.Init(
+                    PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()),
+                    salt,
+                    Iterations);
+
+
+                var key =
+                    (KeyParameter)
+                    generator.GenerateDerivedMacParameters(KeyBitSize);
+
+
+
+                // 5. Decrypt MAC
+                byte[] decryptedMac =
+                    SimpleDecrypt(
+                        encryptedMacBytes,
+                        key.GetKey(),
+                        salt.Length);
+
+
+                if (decryptedMac == null)
+                    return null;
+
+
+                macAddress =
+                    Encoding.UTF8.GetString(decryptedMac);
+
+
+
+                // 6. Full payload length
+                int payloadLength =
+                    4 +
+                    encryptedMacLength +
+                    salt.Length;
+
+
+
+                // 7. Decrypt file
+                return SimpleDecrypt(
+                    encryptedMessage,
+                    key.GetKey(),
+                    payloadLength);
+
+            
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                macAddress = null;
+                return null;
+            }
+
         }
     }
 }

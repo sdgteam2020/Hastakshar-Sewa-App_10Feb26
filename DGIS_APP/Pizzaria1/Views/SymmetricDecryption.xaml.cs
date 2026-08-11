@@ -13,6 +13,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using WinniesMessageBox;
+using Xceed.Document.NET;
 
 namespace DGISApp
 {
@@ -23,7 +24,7 @@ namespace DGISApp
         string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
 
         Aes myAes = Aes.Create();
-        bool ret1 = false;
+        int ret1 = 0;
         public SymmetricDecryption()
         {
             InitializeComponent();
@@ -104,7 +105,7 @@ namespace DGISApp
                     }
 
 
-                }
+              }
 
                 if (RDefault.IsChecked == true)
                 {
@@ -183,7 +184,8 @@ namespace DGISApp
 
                                             this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                             this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
-
+                                           // string mac;
+                                           // byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString(), out mac);
                                             byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString());
                                             if (roundtrip == null)
                                             {
@@ -260,7 +262,10 @@ namespace DGISApp
                                                 }
                                                 if (cert1 != null)
                                                 {
-                                                    ret1 = Service1.DecryptFile(path, filePath, cert1);
+                                                    string macDetails;   // declare variable first
+
+                                                       ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
+                                                    //ret1 = Service1.DecryptFile(path, filePath, cert1);
 
                                                 }
                                             }
@@ -269,14 +274,14 @@ namespace DGISApp
 
 
                                             processedFiles++;
-                                            if (!ret1)
+                                            if (ret1 ==0)
                                             {
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
                                                     return MyMessageBox.Show("Wrong Token Inserted Does Not Match Private Key");
                                                 }));
 
-                                            }
+                                                        }
                                             else if (processedFiles == totalFiles)
                                             {
 
@@ -444,6 +449,8 @@ namespace DGISApp
                                             this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                             this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
 
+                                            //string mac;
+                                            //byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString(), out mac);
 
                                             byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, textpassword.Password.ToString());
 
@@ -571,7 +578,10 @@ namespace DGISApp
                                         }
                                         if (DateTime.Now <= cert1.NotAfter)
                                         {
-                                            ret1 = Service1.DecryptFile(path, filePath, cert1);
+                                            string macDetails;   // declare variable first
+
+                                            ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
+                                            // ret1 = Service1.DecryptFile(path, filePath, cert1);
                                         }
                                         else
                                         {
@@ -590,7 +600,7 @@ namespace DGISApp
 
 
                                     processedFiles++;
-                                    if (!ret1)
+                                    if (ret1==0)
                                     {
                                         var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                         {

@@ -1,4 +1,5 @@
-﻿using SignService;
+﻿using DGISAPP.Views;
+using SignService;
 using SignService.HttpClients;
 using System;
 using System.Configuration;
@@ -282,9 +283,13 @@ namespace DGISApp
                 
                 case 10:
                     GridPrincipal.Children.Clear();
-                    GridPrincipal.Children.Add(new About());
+                    GridPrincipal.Children.Add(new SFTU());
                     break;
                 case 11:
+                    GridPrincipal.Children.Clear();
+                    GridPrincipal.Children.Add(new About());
+                    break;
+                case 12:
 
                     string FileName = System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DGIS_Help.pdf";
 

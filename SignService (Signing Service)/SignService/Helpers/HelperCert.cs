@@ -81,7 +81,7 @@ namespace SignService.Helpers
                 if (fcollection.Count == 0)
                 {
                     responseStatus.Status = "0";
-                    responseStatus.Remark = "Pl insert valid Token !";
+                    responseStatus.Remark = "Token not detected. Please insert the IACA token and try again !";
                     return responseStatus; 
                 }
                 else
@@ -114,7 +114,7 @@ namespace SignService.Helpers
                                 else
                                 { 
                                      responseStatus.Status = "-1";
-                                     responseStatus.Remark = "Token is expired. Pl contact issuer!";
+                                     responseStatus.Remark = "The certificate on the inserted token has expired. Please use a token with a valid certificate and try again !";
                                   
                                     return responseStatus;
                                     

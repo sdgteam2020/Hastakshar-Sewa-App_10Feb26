@@ -1472,7 +1472,7 @@ namespace SignService
                     string base64String = Convert.ToBase64String(byteArray);
                     ResponseMsg.Message = base64String;
                     ResponseMsg.Valid = true;
-                    await SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
+                   // await SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
                     return ResponseMsg;
                 }
             }
@@ -1829,7 +1829,7 @@ namespace SignService
                         API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/GetPublicKey",
                         CRL_OCSPCheck = false,
                         Status = "404",
-                        Remarks = "Certificate not Found. Please insert valid Token and Try agian!"
+                        Remarks = "Token not detected. Please insert the IACA token and try again !"
 
                     };
 
@@ -1868,7 +1868,7 @@ namespace SignService
                     {
 
                         TokenValidity = false;
-                        Remark = "Token is expired. Pl contact issuer!";
+                        Remark = "The certificate on the inserted token has expired. Please use a token with a valid certificate and try again!";
                     }
 
 
@@ -2053,7 +2053,7 @@ namespace SignService
             int totalFiles = files.Count();
 
             int processedFiles = 0;
-            bool ret1 = false;
+            int ret1=0;
             X509Certificate2Collection fcollection = await helper.GetCertificates();
             X509Certificate2 cert1 = null;
             if (fcollection.Count == 1)
@@ -2093,14 +2093,15 @@ namespace SignService
 
                     if (cert1 != null)
                     {
-                        ret1 = Service1.DecryptFile(fileforloop, filePath, cert1);
+                        string macDetails;   // declare variable first
+
+                         ret1 = Service1.DecryptFile(fileforloop, filePath, cert1, out macDetails);
+                       // ret1 = Service1.DecryptFile(fileforloop, filePath, cert1);
 
                     }
-
-                    if (!ret1)
+                   
+                    if (ret1 ==0)
                     {
-
-
                         responseMessage.Message = "Wrong Token Inserted Does Not Match Private Key.";
                         responseMessage.Valid = false;
                         return responseMessage;
@@ -2139,108 +2140,705 @@ namespace SignService
             if (end == "") return (text.Substring(p1));
             else return text.Substring(p1, p2 - p1) + "";
         }
-        public static bool EncryptFile(string inputFile, string outputFile, string rsaKeyXml, byte[] magicHeader)
+        public static bool EncryptFile(string inputFile, string outputFile, string rsaKeyXml, byte[] magicHeader, string macAddress = null)
         {
+            const int BufferSize = 1024 * 1024; // 1 MB buffer
+            bool outputFileStarted = false;
+
             try
             {
-                byte[] fileData = File.ReadAllBytes(inputFile);
+                if (string.IsNullOrWhiteSpace(inputFile))
+                    throw new ArgumentException("Input file path is required.", nameof(inputFile));
 
-                using (Aes aes = Aes.Create())
+                if (string.IsNullOrWhiteSpace(outputFile))
+                    throw new ArgumentException("Output file path is required.", nameof(outputFile));
+
+                if (!File.Exists(inputFile))
+                    throw new FileNotFoundException("Input file was not found.", inputFile);
+
+                string fullInputPath = Path.GetFullPath(inputFile);
+                string fullOutputPath = Path.GetFullPath(outputFile);
+
+                if (string.Equals(
+                    fullInputPath,
+                    fullOutputPath,
+                    StringComparison.OrdinalIgnoreCase))
                 {
-                    aes.GenerateKey();
-                    aes.GenerateIV();
+                    throw new InvalidOperationException(
+                        "Input and output file paths cannot be the same.");
+                }
 
-                    byte[] encryptedData;
-                    using (MemoryStream ms = new MemoryStream())
-                    using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                using (FileStream inputStream = new FileStream(
+                    inputFile,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    BufferSize,
+                    FileOptions.SequentialScan))
+                {
+                    /*
+                     * Your existing encrypted payload stores the original file size
+                     * as Int32. Therefore, this format supports files up to 2 GB.
+                     */
+                    if (inputStream.Length > int.MaxValue)
                     {
-
-                        cs.Write(fileData, 0, fileData.Length);
-                        cs.FlushFinalBlock();
-                        encryptedData = ms.ToArray();
+                        throw new NotSupportedException(
+                            "The current encrypted-file format supports files up to 2 GB.");
                     }
 
-
-                    RSA rsa = RSA.Create();
-                    rsa.FromXmlString(rsaKeyXml);
-
-                    byte[] encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
-                    byte[] encryptedIV = rsa.Encrypt(aes.IV, RSAEncryptionPadding.Pkcs1);
-                     
-                    using (FileStream fs = new FileStream(outputFile, FileMode.Create))
-                    using (BinaryWriter writer = new BinaryWriter(fs))
+                    using (Aes aes = Aes.Create())
                     {
-                        writer.Write(encryptedKey.Length);
-                        writer.Write(encryptedKey);
-                        writer.Write(encryptedIV.Length);
-                        writer.Write(encryptedIV);
-                        writer.Write(encryptedData.Length);
-                        writer.Write(encryptedData);
+                        aes.GenerateKey();
+                        aes.GenerateIV();
+
+                        byte[] encryptedKey;
+                        byte[] encryptedIV;
+
+                        using (RSA rsa = RSA.Create())
+                        {
+                            rsa.FromXmlString(rsaKeyXml);
+
+                            encryptedKey = rsa.Encrypt(
+                                aes.Key,
+                                RSAEncryptionPadding.Pkcs1);
+
+                            encryptedIV = rsa.Encrypt(
+                                aes.IV,
+                                RSAEncryptionPadding.Pkcs1);
+                        }
+
+                        using (FileStream outputStream = new FileStream(
+                            outputFile,
+                            FileMode.Create,
+                            FileAccess.ReadWrite,
+                            FileShare.None,
+                            BufferSize))
+                        {
+                            outputFileStarted = true;
+
+                            using (BinaryWriter outerWriter = new BinaryWriter(
+                                outputStream,
+                                Encoding.UTF8,
+                                true))
+                            {
+                                // Write encrypted AES key.
+                                outerWriter.Write(encryptedKey.Length);
+                                outerWriter.Write(encryptedKey);
+
+                                // Write encrypted AES IV.
+                                outerWriter.Write(encryptedIV.Length);
+                                outerWriter.Write(encryptedIV);
+
+                                /*
+                                 * Reserve four bytes for encrypted-data length.
+                                 * The actual length will be written after encryption.
+                                 */
+                                long encryptedLengthPosition = outputStream.Position;
+                                outerWriter.Write(0);
+                                outerWriter.Flush();
+
+                                long encryptedDataStartPosition = outputStream.Position;
+
+                                using (ICryptoTransform encryptor = aes.CreateEncryptor())
+                                using (CryptoStream cryptoStream = new CryptoStream(
+                                    outputStream,
+                                    encryptor,
+                                    CryptoStreamMode.Write,
+                                    true))
+                                {
+                                    using (BinaryWriter payloadWriter = new BinaryWriter(
+                                        cryptoStream,
+                                        Encoding.UTF8,
+                                        true))
+                                    {
+                                        bool hasMac =
+                                            !string.IsNullOrWhiteSpace(macAddress);
+
+                                        payloadWriter.Write(hasMac);
+
+                                        if (hasMac)
+                                        {
+                                            byte[] macBytes =
+                                                Encoding.UTF8.GetBytes(macAddress);
+
+                                            payloadWriter.Write(macBytes.Length);
+                                            payloadWriter.Write(macBytes);
+                                        }
+
+                                        /*
+                                         * Maintain compatibility with your existing
+                                         * decryption format.
+                                         */
+                                        payloadWriter.Write((int)inputStream.Length);
+
+                                        byte[] buffer = new byte[BufferSize];
+                                        int bytesRead;
+
+                                        while ((bytesRead = inputStream.Read(
+                                            buffer,
+                                            0,
+                                            buffer.Length)) > 0)
+                                        {
+                                            payloadWriter.Write(
+                                                buffer,
+                                                0,
+                                                bytesRead);
+                                        }
+
+                                        payloadWriter.Flush();
+                                    }
+
+                                    cryptoStream.FlushFinalBlock();
+                                }
+
+                                long encryptedDataEndPosition = outputStream.Position;
+
+                                long encryptedDataLength =
+                                    encryptedDataEndPosition -
+                                    encryptedDataStartPosition;
+
+                                if (encryptedDataLength > int.MaxValue)
+                                {
+                                    throw new NotSupportedException(
+                                        "Encrypted data exceeds the supported file-format size.");
+                                }
+
+                                /*
+                                 * Return to the reserved position and write the actual
+                                 * encrypted-data length.
+                                 */
+                                outputStream.Position = encryptedLengthPosition;
+                                outerWriter.Write((int)encryptedDataLength);
+                                outerWriter.Flush();
+
+                                // Return to the end before closing the stream.
+                                outputStream.Position = encryptedDataEndPosition;
+                            }
+                        }
                     }
                 }
+
                 return true;
             }
             catch (Exception ex)
             {
                 ErrorLog.LogErrorToFile(ex);
+
+                // Remove incomplete encrypted output.
+                if (outputFileStarted)
+                {
+                    try
+                    {
+                        if (File.Exists(outputFile))
+                            File.Delete(outputFile);
+                    }
+                    catch
+                    {
+                        // Avoid replacing the original encryption exception.
+                    }
+                }
+
                 return false;
             }
+            //try
+            //{
+            //    byte[] fileData = File.ReadAllBytes(inputFile);
+
+            //    using (Aes aes = Aes.Create())
+            //    {
+            //        aes.GenerateKey();
+            //        aes.GenerateIV();
+
+            //        byte[] encryptedData;
+
+            //        using (MemoryStream ms = new MemoryStream())
+            //        using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+            //        using (BinaryWriter bw = new BinaryWriter(cs, Encoding.UTF8, true))
+            //        {
+            //            bool hasMac = !string.IsNullOrWhiteSpace(macAddress);
+            //            bw.Write(hasMac);
+
+            //            if (hasMac)
+            //            {
+            //                byte[] macBytes = Encoding.UTF8.GetBytes(macAddress);
+            //                bw.Write(macBytes.Length);
+            //                bw.Write(macBytes);
+            //            }
+
+            //            bw.Write(fileData.Length);
+            //            bw.Write(fileData);
+
+            //            bw.Flush();
+            //            cs.FlushFinalBlock();
+
+            //            encryptedData = ms.ToArray();
+            //        }
+
+
+            //        RSA rsa = RSA.Create();
+            //        rsa.FromXmlString(rsaKeyXml);
+
+            //        byte[] encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
+            //        byte[] encryptedIV = rsa.Encrypt(aes.IV, RSAEncryptionPadding.Pkcs1);
+
+            //        // Save encrypted AES key, IV, and file data
+            //        using (FileStream fs = new FileStream(outputFile, FileMode.Create))
+            //        using (BinaryWriter writer = new BinaryWriter(fs))
+            //        {
+            //            writer.Write(encryptedKey.Length);
+            //            writer.Write(encryptedKey);
+            //            writer.Write(encryptedIV.Length);
+            //            writer.Write(encryptedIV);
+            //            writer.Write(encryptedData.Length);
+            //            writer.Write(encryptedData);
+            //        }
+            //    }
+            //    return true;
+            //}
+            //catch (Exception ex)
+            //{
+            //    ErrorLog.LogErrorToFile(ex);
+            //    return false;
+            //}
 
 
         }
-        public static bool DecryptFile(string encryptedFile, string outputFile, X509Certificate2 privateCert)
+        public static int DecryptFile(string encryptedFile, string outputFile, X509Certificate2 privateCert, out string macDetails)
         {
+            const int BufferSize = 1024 * 1024; // 1 MB
+            const long MaximumAllowedFileSize = 500L * 1024L * 1024L;
+
+            macDetails = string.Empty;
+
+            string actualOutputFile = null;
+            bool outputFileStarted = false;
+
             try
             {
-                byte[] decryptedData;
+                if (string.IsNullOrWhiteSpace(encryptedFile))
+                    throw new ArgumentException(
+                        "Encrypted file path is required.",
+                        nameof(encryptedFile));
 
-                using (FileStream fs = new FileStream(encryptedFile, FileMode.Open))
-                using (BinaryReader reader = new BinaryReader(fs))
+                if (string.IsNullOrWhiteSpace(outputFile))
+                    throw new ArgumentException(
+                        "Output file path is required.",
+                        nameof(outputFile));
+
+                if (!File.Exists(encryptedFile))
+                    throw new FileNotFoundException(
+                        "Encrypted file was not found.",
+                        encryptedFile);
+
+                if (privateCert == null)
+                    throw new ArgumentNullException(nameof(privateCert));
+
+                if (!privateCert.HasPrivateKey)
+                    throw new CryptographicException(
+                        "The selected certificate does not contain a private key.");
+
+                using (FileStream encryptedStream = new FileStream(
+                    encryptedFile,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    BufferSize,
+                    FileOptions.SequentialScan))
+                using (BinaryReader headerReader = new BinaryReader(
+                    encryptedStream,
+                    Encoding.UTF8,
+                    true))
                 {
-                    int keyLength = reader.ReadInt32();
-                    byte[] encryptedKey = reader.ReadBytes(keyLength);
+                    /*
+                     * Read RSA-encrypted AES key.
+                     * This is small, normally 256 or 512 bytes.
+                     */
+                    int keyLength = headerReader.ReadInt32();
 
-                    int ivLength = reader.ReadInt32();
-                    byte[] encryptedIV = reader.ReadBytes(ivLength);
+                    ValidateHeaderLength(
+                        keyLength,
+                        "encrypted AES key",
+                        1,
+                        16 * 1024);
 
-                    int dataLength = reader.ReadInt32();
-                    byte[] encryptedData = reader.ReadBytes(dataLength);
+                    byte[] encryptedKey = ReadExactBytes(
+                        headerReader,
+                        keyLength,
+                        "encrypted AES key");
+
+                    /*
+                     * Read RSA-encrypted AES IV.
+                     */
+                    int ivLength = headerReader.ReadInt32();
+
+                    ValidateHeaderLength(
+                        ivLength,
+                        "encrypted AES IV",
+                        1,
+                        16 * 1024);
+
+                    byte[] encryptedIV = ReadExactBytes(
+                        headerReader,
+                        ivLength,
+                        "encrypted AES IV");
+
+                    /*
+                     * Read encrypted payload length.
+                     *
+                     * Do not call ReadBytes(dataLength), because that would load
+                     * the complete 500 MB encrypted file into memory.
+                     */
+                    int encryptedDataLength = headerReader.ReadInt32();
+
+                    if (encryptedDataLength <= 0)
+                    {
+                        throw new InvalidDataException(
+                            "The encrypted payload length is invalid.");
+                    }
+
+                    long remainingEncryptedBytes =
+                        encryptedStream.Length - encryptedStream.Position;
+
+                    if (remainingEncryptedBytes != encryptedDataLength)
+                    {
+                        throw new InvalidDataException(
+                            "The encrypted file is incomplete, corrupted, or has an invalid payload length.");
+                    }
 
                     using (RSA rsa = privateCert.GetRSAPrivateKey())
                     {
                         if (rsa == null)
                         {
-                            throw new Exception("No private key found in the certificate.");
+                            throw new CryptographicException(
+                                "No RSA private key was found in the certificate.");
                         }
 
-                        byte[] aesKey = rsa.Decrypt(encryptedKey, RSAEncryptionPadding.Pkcs1);
-                        byte[] aesIV = rsa.Decrypt(encryptedIV, RSAEncryptionPadding.Pkcs1);
+                        byte[] aesKey = rsa.Decrypt(
+                            encryptedKey,
+                            RSAEncryptionPadding.Pkcs1);
+
+                        byte[] aesIV = rsa.Decrypt(
+                            encryptedIV,
+                            RSAEncryptionPadding.Pkcs1);
 
                         using (Aes aes = Aes.Create())
                         {
                             aes.Key = aesKey;
                             aes.IV = aesIV;
 
-                            using (MemoryStream ms = new MemoryStream())
-                            using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
+                            using (ICryptoTransform decryptor =
+                                aes.CreateDecryptor())
+                            using (CryptoStream cryptoStream = new CryptoStream(
+                                encryptedStream,
+                                decryptor,
+                                CryptoStreamMode.Read,
+                                true))
+                            using (BinaryReader payloadReader = new BinaryReader(
+                                cryptoStream,
+                                Encoding.UTF8,
+                                true))
                             {
-                                cs.Write(encryptedData, 0, encryptedData.Length);
-                                cs.FlushFinalBlock();
-                                decryptedData = ms.ToArray();
+                                /*
+                                 * Read MAC information from the decrypted payload.
+                                 */
+                                bool hasMac = payloadReader.ReadBoolean();
+
+                                if (hasMac)
+                                {
+                                    int macLength = payloadReader.ReadInt32();
+
+                                    ValidateHeaderLength(
+                                        macLength,
+                                        "MAC address",
+                                        1,
+                                        4096);
+
+                                    byte[] macBytes = ReadExactBytes(
+                                        payloadReader,
+                                        macLength,
+                                        "MAC address");
+
+                                    macDetails = Encoding.UTF8.GetString(macBytes);
+
+                                    if (string.IsNullOrWhiteSpace(macDetails))
+                                    {
+                                        throw new InvalidDataException(
+                                            "The encrypted file contains invalid MAC address information.");
+                                    }
+                                }
+
+                                /*
+                                 * Read original unencrypted file size.
+                                 */
+                                int originalFileLength =
+                                    payloadReader.ReadInt32();
+
+                                if (originalFileLength < 0)
+                                {
+                                    throw new InvalidDataException(
+                                        "The original file length is invalid.");
+                                }
+
+                                if (originalFileLength >
+                                    MaximumAllowedFileSize)
+                                {
+                                    throw new InvalidDataException(
+                                        "The decrypted file exceeds the maximum allowed size of 500 MB.");
+                                }
+
+                                    actualOutputFile = outputFile;
+                                
+                                string encryptedFullPath =
+                                    Path.GetFullPath(encryptedFile);
+
+                                string outputFullPath =
+                                    Path.GetFullPath(actualOutputFile);
+
+                                if (string.Equals(
+                                    encryptedFullPath,
+                                    outputFullPath,
+                                    StringComparison.OrdinalIgnoreCase))
+                                {
+                                    throw new InvalidOperationException(
+                                        "The encrypted input file and decrypted output file cannot be the same.");
+                                }
+
+                                string outputDirectory =
+                                    Path.GetDirectoryName(outputFullPath);
+
+                                if (!string.IsNullOrWhiteSpace(outputDirectory) &&
+                                    !Directory.Exists(outputDirectory))
+                                {
+                                    Directory.CreateDirectory(outputDirectory);
+                                }
+
+                                using (FileStream outputStream = new FileStream(
+                                    outputFullPath,
+                                    FileMode.Create,
+                                    FileAccess.Write,
+                                    FileShare.None,
+                                    BufferSize))
+                                {
+                                    outputFileStarted = true;
+
+                                    byte[] buffer = new byte[BufferSize];
+                                    long remainingBytes = originalFileLength;
+
+                                    /*
+                                     * Copy decrypted bytes directly to the output file.
+                                     *
+                                     * Only the 1 MB buffer remains in memory.
+                                     */
+                                    while (remainingBytes > 0)
+                                    {
+                                        int bytesToRead = (int)Math.Min(
+                                            buffer.Length,
+                                            remainingBytes);
+
+                                        int bytesRead = payloadReader.Read(
+                                            buffer,
+                                            0,
+                                            bytesToRead);
+
+                                        if (bytesRead <= 0)
+                                        {
+                                            throw new EndOfStreamException(
+                                                "The encrypted file ended before the complete original file was decrypted.");
+                                        }
+
+                                        outputStream.Write(
+                                            buffer,
+                                            0,
+                                            bytesRead);
+
+                                        remainingBytes -= bytesRead;
+                                    }
+
+                                    /*
+                                     * Read until the end of the CryptoStream.
+                                     * This forces AES padding validation and helps
+                                     * detect tampered or corrupted encrypted files.
+                                     */
+                                    int additionalBytes = payloadReader.Read(
+                                        buffer,
+                                        0,
+                                        buffer.Length);
+
+                                    if (additionalBytes > 0)
+                                    {
+                                        throw new InvalidDataException(
+                                            "Unexpected additional data was found after the decrypted file.");
+                                    }
+
+                                    outputStream.Flush();
+                                }
+
+                                return hasMac ? 4 : 1;
                             }
                         }
                     }
                 }
+            }
+            catch (CryptographicException ex)
+            {
+                DeleteIncompleteOutputFile(
+                    actualOutputFile,
+                    outputFileStarted);
 
-                File.WriteAllBytes(outputFile, decryptedData);
-                return true;
+                ErrorLog.LogErrorToFile(ex);
+
+                // Invalid key, invalid certificate, tampered file,
+                // corrupted AES data, or invalid padding.
+                return 0;
             }
             catch (Exception ex)
             {
+                DeleteIncompleteOutputFile(
+                    actualOutputFile,
+                    outputFileStarted);
+
                 ErrorLog.LogErrorToFile(ex);
-                return false;
+                return 0;
+            }
+            //macDetails = "";
+            //try
+            //{
+            //    byte[] decryptedData;
+
+            //    using (FileStream fs = new FileStream(encryptedFile, FileMode.Open))
+            //    using (BinaryReader reader = new BinaryReader(fs))
+            //    {
+            //        int keyLength = reader.ReadInt32();
+            //        byte[] encryptedKey = reader.ReadBytes(keyLength);
+
+            //        int ivLength = reader.ReadInt32();
+            //        byte[] encryptedIV = reader.ReadBytes(ivLength);
+
+            //        int dataLength = reader.ReadInt32();
+            //        byte[] encryptedData = reader.ReadBytes(dataLength);
+
+            //        using (RSA rsa = privateCert.GetRSAPrivateKey())
+            //        {
+            //            if (rsa == null)
+            //            {
+            //                throw new Exception("No private key found in the certificate.");
+            //            }
+
+            //            byte[] aesKey = rsa.Decrypt(encryptedKey, RSAEncryptionPadding.Pkcs1);
+            //            byte[] aesIV = rsa.Decrypt(encryptedIV, RSAEncryptionPadding.Pkcs1);
+
+            //            using (Aes aes = Aes.Create())
+            //            {
+            //                aes.Key = aesKey;
+            //                aes.IV = aesIV;
+
+            //                string macAddress = null;
+            //                string useraname = null;
+            //                DateTime validityDate= new DateTime();
+
+            //                using (MemoryStream ms = new MemoryStream())
+            //                using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
+            //                {
+            //                    cs.Write(encryptedData, 0, encryptedData.Length);
+            //                    cs.FlushFinalBlock();
+
+            //                    ms.Position = 0;
+
+            //                    using (BinaryReader br = new BinaryReader(ms, Encoding.UTF8))
+            //                    {
+            //                        bool hasMac = br.ReadBoolean();
+            //                        macDetails = "";
+            //                        if (hasMac)
+            //                        {
+            //                            int macLength = br.ReadInt32();
+            //                            byte[] macBytes = br.ReadBytes(macLength);
+            //                            string CanCat_macAddress = Encoding.UTF8.GetString(macBytes);
+            //                            macDetails = CanCat_macAddress;
+
+            //                        }
+
+            //                        int fileLength = br.ReadInt32();
+            //                        decryptedData = br.ReadBytes(fileLength);
+            //                    }
+            //                }
+            //                if (!string.IsNullOrEmpty(macDetails))
+            //                {
 
 
+            //                        string DownloadPath = System.IO.Path.GetDirectoryName(outputFile);
+            //                        FileInfo fi = new FileInfo(outputFile);
+            //                        string fileName = fi.Name.Split('_')[0];
+            //                        outputFile = DownloadPath+"\\"+ fileName+".pdf";
+            //                        File.WriteAllBytes(outputFile, decryptedData);
+            //                        return 4;
+            //                }
+
+            //            }
+            //        }
+            //    }
+
+            //    File.WriteAllBytes(outputFile, decryptedData);
+            //    return 1;
+            //}
+            //catch (Exception ex)
+            //{
+            //    ErrorLog.LogErrorToFile(ex);
+            //    return 0;
+
+
+            //}
+        }
+        private static byte[] ReadExactBytes(
+    BinaryReader reader,
+    int length,
+    string fieldName)
+        {
+            byte[] data = reader.ReadBytes(length);
+
+            if (data.Length != length)
+            {
+                throw new EndOfStreamException(
+                    "The encrypted file ended while reading " +
+                    fieldName + ".");
+            }
+
+            return data;
+        }
+
+        private static void ValidateHeaderLength(
+            int length,
+            string fieldName,
+            int minimumLength,
+            int maximumLength)
+        {
+            if (length < minimumLength ||
+                length > maximumLength)
+            {
+                throw new InvalidDataException(
+                    "The " + fieldName +
+                    " length is invalid.");
+            }
+        }
+
+
+        private static void DeleteIncompleteOutputFile(
+            string outputFile,
+            bool outputFileStarted)
+        {
+            if (!outputFileStarted ||
+                string.IsNullOrWhiteSpace(outputFile))
+            {
+                return;
+            }
+
+            try
+            {
+                if (File.Exists(outputFile))
+                    File.Delete(outputFile);
+            }
+            catch
+            {
+                // Do not replace the original decryption exception.
             }
         }
         public static bool ValidatePassword(string password)
@@ -2453,7 +3051,8 @@ namespace SignService
                             char dd = '_';
                             int levelOfEncryption = fi.FullName.Count(s => s == dd);
 
-
+                            //string mac;
+                            //byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, reqData.Password.ToString(), out mac);
 
                             byte[] roundtrip = AesGcm256.SimpleDecryptWithPassword(bytes1, reqData.Password.ToString());
                             if (roundtrip == null)

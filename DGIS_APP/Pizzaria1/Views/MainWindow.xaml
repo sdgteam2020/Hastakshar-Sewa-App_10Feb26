@@ -95,10 +95,17 @@
                         <TextBlock Text="Encrypt File" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
+              
                 <ListViewItem Height="55">
-                    <StackPanel Orientation="Horizontal" ToolTip="Decrypt a password protected file gen via DGIS App">
+                    <StackPanel Orientation="Horizontal" ToolTip="SFTU transfer system">
                         <materialDesign:PackIcon Kind="LockOpen"  Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Decrypt File" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
+                    </StackPanel>
+                </ListViewItem>
+                <ListViewItem Height="55">
+                    <StackPanel Orientation="Horizontal" ToolTip="Decrypt a password protected file gen via DGIS App">
+                        <materialDesign:PackIcon Kind="LockOutline"  Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <TextBlock Text="Secure File Tfr" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
                 <ListViewItem Height="55">
