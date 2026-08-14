@@ -35,7 +35,7 @@ namespace SignService
     public class Service1 : IService1
     {
         public static string PrevThumbNail = "";
-        bool IsLocalToken = true;
+        bool IsLocalToken = false;
         public string GetData(string element)
         {
             X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);

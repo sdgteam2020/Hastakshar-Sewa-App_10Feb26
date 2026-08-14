@@ -67,7 +67,8 @@ namespace DGISAPP.Views
         bool crloscp = false;
         string crlocspmsg = "";
         string CertThumbPrint = "";
-        
+        string status = "";
+        TokenDetails tokenDetails = new TokenDetails();
         Aes myAes = Aes.Create();
 
 
@@ -603,6 +604,9 @@ namespace DGISAPP.Views
                     break;
                 }
             }
+            CertThumbPrint = "";
+            tokenDetails.Public_Key = null;
+            status = "";
 
         }
 
@@ -1292,18 +1296,22 @@ namespace DGISAPP.Views
                     ShowMsg("Special Characters Not Allow ");
                     return (null, null);
                 }
-
-                HelperCert helperCert = new HelperCert();
-                var result = await helperCert.CheckSomethingAsync();
-
-                if (result.Status == "0" || result.Status == "-1")
+                if (CertThumbPrint == "" && status=="")
                 {
-                    ShowMsg(result.Remark);
+                    HelperCert helperCert = new HelperCert();
+                    var result = await helperCert.CheckSomethingAsync();
+                    status = result.Status;
+                    if (result.Status == "0" || result.Status == "-1")
+                    {
+                        ShowMsg(result.Remark);
+                        return (null, null);
+                    }
+                    CertThumbPrint = result.Remark;
+                }
+                if(CertThumbPrint == "")
+                {
                     return (null, null);
                 }
-
-                CertThumbPrint = result.Remark;
-
                 // CRL check (uses local checkCrlTick)
                 if (checkCrlTick)
                 {
@@ -1352,16 +1360,21 @@ namespace DGISAPP.Views
                      filePath, cert, UpdateProgress, remark);
                 //string sigPath = await HugeFileSignatureService.SignPortableAsync(
                 //    filePath, cert, UpdateProgress, remark);
+               
                 if (!string.IsNullOrEmpty(sigPath))
                 {
                     saveDigitalSignInfo = new DTOSaveDigitalSignInfo();
                     saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");//for all signed document same date time in case of bulk sign
-                    var PublicKey = await new Service1().GetPublicKey();
-                    byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
+                   
+                    if (tokenDetails.Public_Key == null)
+                    {
+                        tokenDetails = await new Service1().GetPublicKey();
+                    }
+                    byte[] textBytes = Encoding.UTF8.GetBytes(tokenDetails.Public_Key);
                     saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
-                    saveDigitalSignInfo.ValidToken = PublicKey.TokenValid;
-                    saveDigitalSignInfo.ValidFrom = PublicKey.ValidFrom;
-                    saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
+                    saveDigitalSignInfo.ValidToken = tokenDetails.TokenValid;
+                    saveDigitalSignInfo.ValidFrom = tokenDetails.ValidFrom;
+                    saveDigitalSignInfo.ValidTo = tokenDetails.ValidTo;
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
                     saveDigitalSignInfo.SerialNo = cert.Subject.Split(',')[1].Replace("SERIALNUMBER=", "").Trim();
