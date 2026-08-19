@@ -42,7 +42,7 @@ namespace SignService.Helpers
                 var signature = rsa.SignHash(hash, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                 var chain = BuildCertChain(cert);
-                 
+
                 var sigObj = new PortableSig
                 {
                     FileName = Path.GetFileName(filePath),
@@ -54,8 +54,9 @@ namespace SignService.Helpers
                     CertificateChainBase64 = chain,
                     Description = description,
                     SignedBy = cert.Subject,
-                    SigningDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss tt")
-                    
+                    SigningDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss tt"),
+                    IsValidNow = cert.NotAfter > DateTime.Now
+
                 };
                 var MacResult = await new Service1().GetMacAddress();
                 if (MacResult.Status == true)
@@ -116,18 +117,38 @@ namespace SignService.Helpers
             }
         }
  
-        public static async Task<bool> VerifyPortableAsync(string filePath, string sigJsonPath, Action<double> progress,string hashValue=null)
+        public static async Task<(bool,string)> VerifyPortableAsync(string filePath, string sigJsonPath, Action<double> progress,string hashValue=null,bool IsLocalToken =false)
         {
             try
             {
                 var sigObj = JsonConvert.DeserializeObject<PortableSig>(await Task.Run(() => File.ReadAllText(sigJsonPath, Encoding.UTF8)));
-
+                if(sigObj != null && hashValue == null)
+                {
+                    hashValue = sigObj.HashHex;
+                }
                 if (!string.Equals(sigObj.HashAlgorithm, "SHA-256", StringComparison.OrdinalIgnoreCase))
                     throw new NotSupportedException("Only SHA-256 supported.");
                 if (!string.Equals(sigObj.SignatureAlgorithm, "RSA-PKCS1-v1_5", StringComparison.OrdinalIgnoreCase))
                     throw new NotSupportedException("Only RSA PKCS#1 v1.5 supported.");
+                var certBytes = Convert.FromBase64String(sigObj.CertificateChainBase64[0]);
+                var certificate = new X509Certificate2(certBytes);
+                DateTime notBefore = certificate.NotBefore;
+                DateTime notAfter = certificate.NotAfter;
+                DateTime now = DateTime.Now;
 
-                using (var rsa = new X509Certificate2(Convert.FromBase64String(sigObj.CertificateChainBase64[0])).GetRSAPublicKey())
+                if (now < notBefore)
+                {
+                    // Certificate is not valid yet
+                    return (false, "Certificate is not valid yet!");
+                }
+
+                if (now > notAfter)
+                {
+                    // Certificate has expired
+                    return (false, "Certificate has expired!");
+                }
+
+                using (var rsa = certificate.GetRSAPublicKey())
                 {
                     var totalBytes = new FileInfo(filePath).Length;
 
@@ -150,19 +171,19 @@ namespace SignService.Helpers
                         if (hashValue != null)
                         {
                             if (hashValue == sigObj.HashHex)
-                                return true;
+                                return (true,"");
                         }
-                        return false;
+                        return (false, "");
                     }
                     else
                     {
-                        return false;
+                        return (false, "");
                     }
                 }
             }
             catch (Exception ex) 
             {
-                return false;
+                return (false, ex.Message);
             }
             
         }
@@ -193,6 +214,7 @@ namespace SignService.Helpers
             public string SignedBy { get; set; }
             public string SigningDate { get; set; }
             public string MacAddress { get; set; }
+            public bool IsValidNow { get; set; }
         }
     }
 }

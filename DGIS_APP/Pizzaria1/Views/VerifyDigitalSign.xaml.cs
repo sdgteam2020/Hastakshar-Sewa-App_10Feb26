@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Windows;
@@ -27,6 +28,7 @@ namespace DGISApp
         private extern static bool InternetGetConnectedState(out int Description, int ReservedValue);
         string[] droppedFilePaths = null;
         public string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
+        bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
         public VerifyDigitalSign()
         {
             InitializeComponent();
@@ -121,12 +123,14 @@ namespace DGISApp
                         progress.Value = 0;
                     }
 
-                    bool ok = await HugeFileSignatureService.VerifyPortableAsync(file, signatureFile, UpdateProgress);
+                    var ok = await HugeFileSignatureService.VerifyPortableAsync(file, signatureFile, UpdateProgress);
 
-                    if (ok)
+                    if (ok.Item1)
                         MyMessageBox.Show("Digital Signature is successfully verified.");
-                    else
+                    else if (ok.Item2 == "")
                         MyMessageBox.Show("Digital Signature verification failed or signature not found.");
+                    else
+                        MyMessageBox.Show(ok.Item2);
                 }
             }
             catch (Exception ex)
@@ -185,8 +189,7 @@ namespace DGISApp
                                 var revocationValid = signature1.IsRevocationValid();
 
 
-
-                                if (pkc[0].IsValidNow)
+                                if (pkc[0].IsValidNow || IsLocalToken)
                                 {
                                     if (signature1 != null)
                                     {
@@ -419,13 +422,33 @@ namespace DGISApp
                             progress.Visibility = Visibility.Hidden;
                             progress.Value = 0;
                         }
+                        //X509Certificate2 cert;
+                        //using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                        //{
+                        //    store.Open(OpenFlags.ReadOnly);
+                        //    var found = store.Certificates.Find(X509FindType.FindByThumbprint, CertThumbPrint, false);
 
-                        bool ok = await HugeFileSignatureService.VerifyPortableAsync(file, signatureFile, UpdateProgress);
+                        //    if (found == null || found.Count == 0)
+                        //    {
+                        //        MyMessageBox.Show("Certificate not found in store.");
+                        //        return;
+                        //    }
+                        //    cert = found[0];
+                        //}
 
-                        if (ok)
+                        //if (DateTime.Now > cert.NotAfter)//&& !IsLocalToken
+                        //{
+                        //    MyMessageBox.Show("Token is expired. Pl contact issuer !");
+                        //    return;
+                        //}
+                        var ok = await HugeFileSignatureService.VerifyPortableAsync(file, signatureFile, UpdateProgress);
+
+                        if (ok.Item1)
                             MyMessageBox.Show("Digital Signature is successfully verified.");
+                        else if (ok.Item2 == "")
+                            MyMessageBox.Show("Digital Signature verification failed due to Digital Signature Tampered or Not Found.");
                         else
-                            MyMessageBox.Show("Digital Signature verification failed or signature not found.");
+                            MyMessageBox.Show(ok.Item2);
                     }
                 }
             }
