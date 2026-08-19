@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.2.32519.379
+# Visual Studio Version 18
+VisualStudioVersion = 18.9.12105.275 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DGISApp", "Pizzaria1\DGISApp.csproj", "{F2571E19-BB3A-46FA-B1A1-15ECD9392887}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "DGIS Setup", "DGIS Setup\DGIS Setup.vdproj", "{2E162CEA-FDE1-431E-A51C-B0BAE9614E5D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CertificateInstaller", "CertificateInstaller\CertificateInstaller.csproj", "{0F5957D8-C0AC-4F49-BD78-6EC0AF991BA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignerServiceCore", "SignerServiceCore\SignerServiceCore.csproj", "{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,14 @@ Global
 		{0F5957D8-C0AC-4F49-BD78-6EC0AF991BA8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0F5957D8-C0AC-4F49-BD78-6EC0AF991BA8}.Release|x64.ActiveCfg = Release|Any CPU
 		{0F5957D8-C0AC-4F49-BD78-6EC0AF991BA8}.Release|x64.Build.0 = Release|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Debug|x64.Build.0 = Debug|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Release|x64.ActiveCfg = Release|Any CPU
+		{D6A1DB7E-C95C-3F32-306B-8592DC661DDB}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
