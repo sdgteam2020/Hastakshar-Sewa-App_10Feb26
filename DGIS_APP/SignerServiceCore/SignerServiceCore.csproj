@@ -2,16 +2,31 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <SelfContained>true</SelfContained>
+
+    <PublishSingleFile>true</PublishSingleFile>
+
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <PublishTrimmed>false</PublishTrimmed>
+
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Certificates\dgisapp.pfx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+
+    <Content Update="appsettings.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+
+    <None Update="Certificates\**\*">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+
   </ItemGroup>
 
 </Project>
