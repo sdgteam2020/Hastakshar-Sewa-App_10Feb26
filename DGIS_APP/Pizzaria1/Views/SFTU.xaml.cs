@@ -67,6 +67,7 @@ namespace DGISAPP.Views
         bool crloscp = false;
         string crlocspmsg = "";
         string CertThumbPrint = "";
+        bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
 
         Aes myAes = Aes.Create();
 
@@ -1342,7 +1343,7 @@ namespace DGISAPP.Views
                     cert = found[0];
                 }
 
-                if (DateTime.Now > cert.NotAfter)
+                if (DateTime.Now > cert.NotAfter && !IsLocalToken)
                 {
                     ShowMsg("The certificate on the inserted token has expired. Please use a token with a valid certificate and try again !");
                     return (null, null);

@@ -22,6 +22,7 @@ namespace DGISApp
     {
         string[] droppedFilePaths = null;
         string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
+        bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
 
         Aes myAes = Aes.Create();
         int ret1 = 0;
@@ -576,7 +577,7 @@ namespace DGISApp
                                         {
                                             cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                                         }
-                                        if (DateTime.Now <= cert1.NotAfter)
+                                        if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                                         {
                                             string macDetails;   // declare variable first
 

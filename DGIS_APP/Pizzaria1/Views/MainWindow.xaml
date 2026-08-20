@@ -64,59 +64,59 @@
                 </ListViewItem>
                 <Separator Margin="0 0 15 0"/>
                 <!--End logo-->
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Navigate back to Home Page">
-                        <materialDesign:PackIcon Kind="Home" Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="Home" Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Home" FontSize="17" VerticalAlignment="Center" Margin="20 0" />
                     </StackPanel>
                 </ListViewItem>
 
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Watermark any PDF/Word Docu with anyCustome Text">
-                        <materialDesign:PackIcon Kind="FlipToBack" Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="FlipToBack" Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="WaterMarking" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Digi Sign any PDF Docu with IA CA Digital Token ">
-                        <materialDesign:PackIcon Kind="Pen" Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="Pen" Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Digital Signing" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Verify Digital Sig file gen via DGIS App">
-                        <materialDesign:PackIcon Kind="Check"  Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="Check"  Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Verify Digital Signature" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Password Protect any file with AES Encryption">
-                        <materialDesign:PackIcon Kind="LockOutline"  Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="LockOutline"  Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Encrypt File" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
               
-                <ListViewItem Height="55">
-                    <StackPanel Orientation="Horizontal" ToolTip="SFTU transfer system">
-                        <materialDesign:PackIcon Kind="LockOpen"  Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                <ListViewItem Height="48">
+                    <StackPanel Orientation="Horizontal" ToolTip="Decrypt a password protected file gen via DGIS App">
+                        <materialDesign:PackIcon Kind="LockOpen"  Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Decrypt File" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
-                <ListViewItem Height="55">
-                    <StackPanel Orientation="Horizontal" ToolTip="Decrypt a password protected file gen via DGIS App">
-                        <materialDesign:PackIcon Kind="LockOutline"  Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                <ListViewItem Height="48">
+                    <StackPanel Orientation="Horizontal" ToolTip="SFTU transfer system">
+                        <materialDesign:PackIcon Kind="LockOutline"  Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Secure File Tfr" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Check Current ver of DGIS App and auto Update">
-                        <materialDesign:PackIcon Kind="Verified" Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="Verified" Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Version" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
-                <ListViewItem Height="55">
+                <ListViewItem Height="48">
                     <StackPanel Orientation="Horizontal" ToolTip="Help of DGIS App">
-                        <materialDesign:PackIcon Kind="Help" Width="30" Height="30" VerticalAlignment="Center" Margin="5"/>
+                        <materialDesign:PackIcon Kind="Help" Width="30" Height="27" VerticalAlignment="Center" Margin="5"/>
                         <TextBlock Text="Help" FontSize="17" VerticalAlignment="Center" Margin="20 0"/>
                     </StackPanel>
                 </ListViewItem>
