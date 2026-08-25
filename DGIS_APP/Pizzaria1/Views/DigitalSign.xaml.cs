@@ -452,7 +452,7 @@ namespace DGISApp
             catch (Exception ex)
             {
 
-                MyMessageBox.ShowDialog("No Docu signed! Reason2:-  " + ex.Message);
+                MyMessageBox.ShowDialog("No Docu signed! \nReason2:-  " + ex.Message);
                 NewFileName = "";
                 this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
@@ -1540,9 +1540,9 @@ namespace DGISApp
 
         private async void btnSelectAnyFile_Click(object sender, RoutedEventArgs e)
         {
-            CertificateData certificateData = null;
-            X509Certificate2 cert1 = null;
-            bool isAnyFileSigned = false;
+            //CertificateData certificateData = null;
+            //X509Certificate2 cert1 = null;
+            //bool isAnyFileSigned = false;
             DTOSaveDigitalSignInfo saveDigitalSignInfo = new DTOSaveDigitalSignInfo();
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
@@ -1582,9 +1582,9 @@ namespace DGISApp
 
         private async void DropListAny_Drop(object sender, DragEventArgs e)
         {
-            CertificateData certificateData = null;
-            X509Certificate2 cert1 = null;
-            bool isAnyFileSigned = false;
+            //CertificateData certificateData = null;
+            //X509Certificate2 cert1 = null;
+            //bool isAnyFileSigned = false;
             DTOSaveDigitalSignInfo saveDigitalSignInfo = new DTOSaveDigitalSignInfo();
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
