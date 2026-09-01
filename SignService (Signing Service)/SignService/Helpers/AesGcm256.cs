@@ -239,27 +239,7 @@ namespace SignService.Helpers
                 secretMessage,
                 key.GetKey(),
                 payload);
-            //// 🔹 Convert macAddress to bytes
-            //byte[] macBytes = Encoding.UTF8.GetBytes(macAddress);
-            //byte[] macLengthBytes = BitConverter.GetBytes(macBytes.Length);
-
-            //// 🔹 Build payload
-            //var payload = new byte[
-            //    macLengthBytes.Length +
-            //    macBytes.Length +
-            //    salt.Length];
-
-            //int offset = 0;
-
-            //Array.Copy(macLengthBytes, 0, payload, offset, macLengthBytes.Length);
-            //offset += macLengthBytes.Length;
-
-            //Array.Copy(macBytes, 0, payload, offset, macBytes.Length);
-            //offset += macBytes.Length;
-
-            //Array.Copy(salt, 0, payload, offset, salt.Length);
-
-            //return SimpleEncrypt(secretMessage, key.GetKey(), payload);
+          
         }
 
         public static byte[] SimpleDecryptWithPassword(byte[] encryptedMessage, string password, int nonSecretPayloadLength = 0)

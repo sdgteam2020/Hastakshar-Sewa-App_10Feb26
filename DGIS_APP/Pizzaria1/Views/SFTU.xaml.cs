@@ -398,6 +398,11 @@ namespace DGISAPP.Views
                         MyMessageBox.ShowDialog("Please Enter Validity");
                         return false;
                     }
+                    if(dpValidity.SelectedDate <= DateTime.Now)
+                    {
+                        MyMessageBox.ShowDialog("Please select a validity date that is today or a future date.");
+                        return false;
+                    }
                    
                 }
                 else
@@ -1556,7 +1561,7 @@ namespace DGISAPP.Views
                                                 this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
-                                                    return MyMessageBox.Show("Verification failed.\n The provided token is invalid, or the file has been modified.\n Please use the correct token and the original, unmodified file.");
+                                                    return MyMessageBox.Show("Verification failed!\n Please check your token and make sure the original file has not been changed.");
                                                 }));
 
                                             }
