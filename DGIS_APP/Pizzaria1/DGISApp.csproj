@@ -382,6 +382,7 @@
     <None Include="DGISApp_3_TemporaryKey.pfx" />
     <None Include="DGISApp_TemporaryKey.pfx" />
     <None Include="DGIS_help.pdf" />
+    <None Include="Publish-SignerServiceCore.cmd" />
     <None Include="Views\Assets\1.webp" />
     <None Include="IAca1-cacert.crt" />
     <None Include="IARootCA.cer" />

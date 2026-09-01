@@ -400,7 +400,12 @@ namespace DGISAPP.Views
                         MyMessageBox.ShowDialog("Please Enter Validity");
                         return false;
                     }
-
+                    if(dpValidity.SelectedDate <= DateTime.Now)
+                    {
+                        MyMessageBox.ShowDialog("Please select a validity date that is today or a future date.");
+                        return false;
+                    }
+                   
                 }
                 else
                 {
@@ -1546,21 +1551,21 @@ namespace DGISAPP.Views
                                         {
                                             string macDetails;   // declare variable first
 
-                                            ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
-                                            // ret1 = Service1.DecryptFile(path, filePath, cert1);
-                                            if (!string.IsNullOrWhiteSpace(macDetails))
-                                                gmacDetails = macDetails;
-                                        }
-                                    }
-
-                                    if (ret1 == 0)
-                                    {
-                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                        var result = this.Dispatcher.Invoke(new Func<string>(() =>
-                                        {
-                                            return MyMessageBox.Show("Verification failed.\n The provided token is invalid, or the file has been modified.\n Please use the correct token and the original, unmodified file.");
-                                        }));
+                                                     ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
+                                                    // ret1 = Service1.DecryptFile(path, filePath, cert1);
+                                                    if (!string.IsNullOrWhiteSpace(macDetails))
+                                                        gmacDetails = macDetails;
+                                                }
+                                            }
+                                           
+                                            if (ret1 == 0)
+                                            {
+                                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                                var result = this.Dispatcher.Invoke(new Func<string>(() =>
+                                                {
+                                                    return MyMessageBox.Show("Verification failed.\n The provided token is invalid, or the file has been modified.\n Please use the correct token and the original, unmodified file.");
+                                                }));
 
                                     }
                                     else
