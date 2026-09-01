@@ -629,8 +629,393 @@ namespace SignService
             }
 
         }
+        public async Task<List<TokenDetailsOcsp>> FetchTokenOCSPDetailsAsync(string ThumbPrint)
+        {
+            string MsgCrlOCSP = "";
+            bool BlnCrlOCSP = false;
+            List<TokenDetailsOcsp> TokenDetailList = new List<TokenDetailsOcsp>();
+            try
+            {
+                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                X509Certificate2Collection fcollection = new X509Certificate2Collection();
 
-        public async Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl, string ThumbPrint)
+
+                if (ThumbPrint == "")
+                {
+                    fcollection = await helper.GetCertificates();
+                }
+                else
+                {
+                    X509Certificate2Collection fcol = new X509Certificate2Collection();
+                    fcol = await helper.GetCertificates();
+
+                    X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
+                    if (selectedCertificate != null)
+                    {
+                        fcollection.Add(selectedCertificate);
+                    }
+
+                }
+                //store.Close();
+
+
+                if (fcollection.Count == 0)
+                {
+                    var TokenDetails = new TokenDetailsOcsp
+                    {
+                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                        OCSPCheck = BlnCrlOCSP,
+                        OCSPMsg = MsgCrlOCSP,
+                        Status = "404",
+                        Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
+                        TokenValid = false
+                    };
+                    TokenDetailList.Add(TokenDetails);
+                    return TokenDetailList.ToList();
+                }
+                else
+                {
+                    X509Certificate2 cert1 = null;
+                    if (fcollection.Count == 1)
+                    {
+                        cert1 = fcollection[0];
+                    }
+                    else if (fcollection.Count > 1)
+                    {
+                        try
+                        {
+                            X509Certificate2Collection selectedCertificates = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection);
+
+                            if (selectedCertificates.Count > 0)
+                            {
+                                cert1 = selectedCertificates[0];
+                            }
+                            else
+                            {
+                                var TokenDetails = new TokenDetailsOcsp
+                                {
+
+                                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                                    OCSPCheck = BlnCrlOCSP,
+                                    OCSPMsg = MsgCrlOCSP,
+                                    subject = null,
+                                    issuer = null,
+                                    Thumbprint = null,
+                                    ValidFrom = null,
+                                    ValidTo = null,
+                                    Status = "200",
+                                    Remarks = "No Certificate Selected !",
+                                    TokenValid = false,
+                                };
+                                TokenDetailList.Add(TokenDetails);
+                                return TokenDetailList.ToList();
+                            }
+                        }
+                        catch
+                        {
+                            var TokenDetails = new TokenDetailsOcsp
+                            {
+
+                                API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                                OCSPCheck = BlnCrlOCSP,
+                                OCSPMsg = MsgCrlOCSP,
+                                subject = null,
+                                issuer = null,
+                                Thumbprint = null,
+                                ValidFrom = null,
+                                ValidTo = null,
+                                Status = "200",
+                                Remarks = "No Certificate Selected !",
+                                TokenValid = false,
+                            };
+                            TokenDetailList.Add(TokenDetails);
+                        }
+                    }
+
+
+
+
+
+                    var (ValidateCertificateAsyncOutput, validationMsg, OCSPMsg, OCSPValid) = await ValidateCertificate.ValidateCert.ValidateCertificateOCSPAsync(cert1);
+
+
+                    if (OCSPValid == true)
+                    {
+                        if (OCSPMsg == "Good")
+                        {
+                            MsgCrlOCSP = "OCSP Verified";
+                            BlnCrlOCSP = true;
+                        }
+                        else if (OCSPMsg == "NotFound")
+                        {
+                            MsgCrlOCSP = "Digital Cert of token cannot be verified with CA due to Network issues";
+                            BlnCrlOCSP = false;
+                        }
+                        else
+                        {
+                            MsgCrlOCSP = "OCSP Not Checked";
+                            BlnCrlOCSP = false;
+                        }
+
+
+                    }
+                    else
+                    {
+                        MsgCrlOCSP = "OCSP is Revoked or " + validationMsg;
+                        BlnCrlOCSP = false;
+                    }
+
+                    if (ValidateCertificateAsyncOutput == true)
+                    {
+                        var TokenDetails = new TokenDetailsOcsp
+                        {
+
+                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                            OCSPCheck = BlnCrlOCSP,
+                            OCSPMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = "Unique Cert details of inserted Token",
+                            TokenValid = true,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    else
+                    {
+                        var TokenDetails = new TokenDetailsOcsp
+                        {
+
+                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                            OCSPCheck = BlnCrlOCSP,
+                            OCSPMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = validationMsg,
+                            TokenValid = false,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    return TokenDetailList.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+
+                var TokenDetails = new TokenDetailsOcsp
+                {
+                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                    OCSPCheck = BlnCrlOCSP,
+                    OCSPMsg = MsgCrlOCSP,
+                    Status = "500",
+                    Remarks = "Exception Occured-" + ex.Message.ToString(),
+                    TokenValid = false
+
+                };
+                TokenDetailList.Add(TokenDetails);
+                ErrorLog.LogErrorToFile(ex);
+                return TokenDetailList.ToList();
+            }
+        }
+        public async Task<List<TokenDetailsCrl>> FetchTokenCrlDetailsAsync(string ThumbPrint)
+        {
+            string MsgCrlOCSP = "";
+            bool BlnCrlOCSP = false;
+            List<TokenDetailsCrl> TokenDetailList = new List<TokenDetailsCrl>();
+            try
+            {
+                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                X509Certificate2Collection fcollection = new X509Certificate2Collection();
+
+
+                if (ThumbPrint == "")
+                {
+                    fcollection = await helper.GetCertificates();
+                }
+                else
+                {
+                    X509Certificate2Collection fcol = new X509Certificate2Collection();
+                    fcol = await helper.GetCertificates();
+
+                    X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
+                    if (selectedCertificate != null)
+                    {
+                        fcollection.Add(selectedCertificate);
+                    }
+
+                }
+                //store.Close();
+
+
+                if (fcollection.Count == 0)
+                {
+                    var TokenDetails = new TokenDetailsCrl
+                    {
+                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                        CrlCheck = BlnCrlOCSP,
+                        CrlMsg = MsgCrlOCSP,
+                        Status = "404",
+                        Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
+                        TokenValid = false
+                    };
+                    TokenDetailList.Add(TokenDetails);
+                    return TokenDetailList.ToList();
+                }
+                else
+                {
+                    X509Certificate2 cert1 = null;
+                    if (fcollection.Count == 1)
+                    {
+                        cert1 = fcollection[0];
+                    }
+                    else if (fcollection.Count > 1)
+                    {
+                        try
+                        {
+                            X509Certificate2Collection selectedCertificates = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection);
+
+                            if (selectedCertificates.Count > 0)
+                            {
+                                cert1 = selectedCertificates[0];
+                            }
+                            else
+                            {
+                                var TokenDetails = new TokenDetailsCrl
+                                {
+
+                                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                                    CrlCheck = BlnCrlOCSP,
+                                    CrlMsg = MsgCrlOCSP,
+                                    subject = null,
+                                    issuer = null,
+                                    Thumbprint = null,
+                                    ValidFrom = null,
+                                    ValidTo = null,
+                                    Status = "200",
+                                    Remarks = "No Certificate Selected !",
+                                    TokenValid = false,
+                                };
+                                TokenDetailList.Add(TokenDetails);
+                                return TokenDetailList.ToList();
+                            }
+                        }
+                        catch
+                        {
+                            var TokenDetails = new TokenDetailsCrl
+                            {
+
+                                API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                                CrlCheck = BlnCrlOCSP,
+                                CrlMsg = MsgCrlOCSP,
+                                subject = null,
+                                issuer = null,
+                                Thumbprint = null,
+                                ValidFrom = null,
+                                ValidTo = null,
+                                Status = "200",
+                                Remarks = "No Certificate Selected !",
+                                TokenValid = false,
+                            };
+                            TokenDetailList.Add(TokenDetails);
+                        }
+                    }
+
+
+
+
+
+                    var (ValidateCertificateAsyncOutput, validationMsg, CrlMsg, CrlValid) = await ValidateCertificate.ValidateCert.ValidateCertificateCrlAsync(cert1);
+
+
+                    if (CrlValid == true)
+                    {
+                        if (CrlValid == true)
+                        {
+                            MsgCrlOCSP = "CRL Verified";
+                            BlnCrlOCSP = true;
+                        }
+
+                        else
+                        {
+                            MsgCrlOCSP = "CRL Not Checked";
+                            BlnCrlOCSP = false;
+                        }
+
+
+                    }
+                    else
+                    {
+                        MsgCrlOCSP = "CRL is Revoked or " + validationMsg;
+                        BlnCrlOCSP = false;
+                    }
+
+                    if (ValidateCertificateAsyncOutput == true)
+                    {
+                        var TokenDetails = new TokenDetailsCrl
+                        {
+
+                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                            CrlCheck = BlnCrlOCSP,
+                            CrlMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = "Unique Cert details of inserted Token",
+                            TokenValid = true,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    else
+                    {
+                        var TokenDetails = new TokenDetailsCrl
+                        {
+
+                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                            CrlCheck = BlnCrlOCSP,
+                            CrlMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = validationMsg,
+                            TokenValid = false,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    return TokenDetailList.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+
+                var TokenDetails = new TokenDetailsCrl
+                {
+                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                    CrlCheck = BlnCrlOCSP,
+                    CrlMsg = MsgCrlOCSP,
+                    Status = "500",
+                    Remarks = "Exception Occured-" + ex.Message.ToString(),
+                    TokenValid = false
+
+                };
+                TokenDetailList.Add(TokenDetails);
+                ErrorLog.LogErrorToFile(ex);
+                return TokenDetailList.ToList();
+            }
+        }
+        public async Task<List<TokenDetails>> FetchTokenOCSPCrlDetails(bool IsCheckCrl, string ThumbPrint)
         {
             string MsgCrlOCSP = "";
             bool BlnCrlOCSP = true;

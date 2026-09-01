@@ -12,7 +12,183 @@ namespace ValidateCertificate
 {
     public static class ValidateCert
     {
-       
+        public static async Task<(bool, string, string, bool)> ValidateCertificateOCSPAsync(X509Certificate2 cert)
+        {
+            string validationErrorMessage = string.Empty;
+            string ChainMsg = string.Empty;
+            string CrlMsg = string.Empty;
+            string OCSPMsg = string.Empty;
+
+
+            bool OCSPValid = false;
+            bool ChainTrust = false;
+            try
+            {
+
+                X509Certificate2 certificate = cert;
+                X509Certificate2 certificate2 = await Task.Run(() => CheckCertificateStatus.GetIssuer(cert));
+                OcspClient obj = new OcspClient();
+                Org.BouncyCastle.X509.X509CertificateParser cp = new Org.BouncyCastle.X509.X509CertificateParser();
+
+                Org.BouncyCastle.X509.X509Certificate[] chain = new[]
+                {
+                    cp.ReadCertificate(cert.RawData)
+                };
+
+                Org.BouncyCastle.X509.X509Certificate[] chain1 = null;
+                if (certificate2 != null)
+                {
+                    chain1 = new[]
+                    {
+                        cp.ReadCertificate(certificate2.RawData)
+                    };
+                }
+
+                // Check for certificate expiration asynchronously
+                bool isNotExpired = await Task.Run(() => DateTime.Now <= certificate.NotAfter);
+
+                if (!isNotExpired) { throw new Exception("Token is expired. Pl contact issuer!"); }
+
+
+                var ocspTask = IsCertificateOCSPAsync(certificate);
+
+                await Task.WhenAll(ocspTask);
+
+
+                var (isRevokedByOCSP, ocspMessage) = ocspTask.Result;
+
+
+                OCSPMsg = ocspMessage;
+                OCSPValid = isRevokedByOCSP;
+
+
+
+                // Check the chain of trust asynchronously
+
+
+                bool isChainValid = await Task.Run(() =>
+                {
+                    X509Chain chain2 = new X509Chain();
+                    chain2.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain2.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    return chain2.Build(certificate);
+                });
+                if (!isChainValid)
+                {
+                    ChainTrust = false;
+                    // throw new Exception("Chain of Trust is not valid. Pl contact issuer!"); 
+                }
+
+                // If all checks pass, return true
+                //if (ChainTrust && isNotExpired ) //old code for chainValidation 
+                if (OCSPValid)
+                {
+                    validationErrorMessage = null;
+                    return (true, "Token is Valid.", OCSPMsg, OCSPValid);
+                }
+                else
+                {
+                    // Return an appropriate error message
+                    validationErrorMessage = "Crl Check failed.";
+                    return (false, validationErrorMessage, OCSPMsg, OCSPValid);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during certificate validation
+                validationErrorMessage = ex.Message;
+                return (false, validationErrorMessage, OCSPMsg, OCSPValid);
+            }
+        }
+        public static async Task<(bool, string, string, bool)> ValidateCertificateCrlAsync(X509Certificate2 cert)
+        {
+            string validationErrorMessage = string.Empty;
+            string CrlMsg = string.Empty;
+
+
+            bool CrlValid = false;
+            bool ChainTrust = false;
+            try
+            {
+
+                X509Certificate2 certificate = cert;
+                X509Certificate2 certificate2 = await Task.Run(() => CheckCertificateStatus.GetIssuer(cert));
+                OcspClient obj = new OcspClient();
+                Org.BouncyCastle.X509.X509CertificateParser cp = new Org.BouncyCastle.X509.X509CertificateParser();
+
+                Org.BouncyCastle.X509.X509Certificate[] chain = new[]
+                {
+                    cp.ReadCertificate(cert.RawData)
+                };
+
+                Org.BouncyCastle.X509.X509Certificate[] chain1 = null;
+                if (certificate2 != null)
+                {
+                    chain1 = new[]
+                    {
+                        cp.ReadCertificate(certificate2.RawData)
+                    };
+                }
+
+                // Check for certificate expiration asynchronously
+                bool isNotExpired = await Task.Run(() => DateTime.Now <= certificate.NotAfter);
+
+                if (!isNotExpired) { throw new Exception("Token is expired. Pl contact issuer!"); }
+
+
+
+                var crlTask = IsCertificateRevokedByCRLAsync(certificate, chain1);
+
+
+                await Task.WhenAll(crlTask);
+
+                var (isRevokedByCRL, crlMessage) = crlTask.Result;
+
+
+                CrlMsg = crlMessage;
+                CrlValid = isRevokedByCRL;
+
+
+
+
+
+                // Check the chain of trust asynchronously
+
+
+                bool isChainValid = await Task.Run(() =>
+                {
+                    X509Chain chain2 = new X509Chain();
+                    chain2.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain2.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    return chain2.Build(certificate);
+                });
+                if (!isChainValid)
+                {
+                    ChainTrust = false;
+                    // throw new Exception("Chain of Trust is not valid. Pl contact issuer!"); 
+                }
+
+                // If all checks pass, return true
+                //if (ChainTrust && isNotExpired ) //old code for chainValidation 
+                if (CrlValid)
+                {
+                    validationErrorMessage = null;
+                    return (true, "Token is Valid.", CrlMsg, CrlValid);
+                }
+                else
+                {
+                    // Return an appropriate error message
+                    validationErrorMessage = "Crl Check failed.";
+                    return (false, validationErrorMessage, CrlMsg, CrlValid);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during certificate validation
+                validationErrorMessage = ex.Message;
+                return (false, validationErrorMessage, CrlMsg, CrlValid);
+            }
+        }
         public static async Task<(bool, string,string,string,bool,bool)> ValidateCertificateAsync(X509Certificate2 cert,bool IsCheckCrl)
         {
             string validationErrorMessage = string.Empty;
