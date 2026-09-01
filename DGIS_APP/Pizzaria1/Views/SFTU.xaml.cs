@@ -61,7 +61,7 @@ namespace DGISAPP.Views
     public partial class SFTU : UserControl
     {
         string[] droppedFilePaths = null;
-       
+
         [DllImport("wininet.dll")]
         private extern static bool InternetGetConnectedState(out int Description, int ReservedValue);
         bool crloscp = false;
@@ -69,6 +69,8 @@ namespace DGISAPP.Views
         string CertThumbPrint = "";
         string status = "";
         TokenDetails tokenDetails = new TokenDetails();
+        bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
+
         Aes myAes = Aes.Create();
 
 
@@ -229,12 +231,12 @@ namespace DGISAPP.Views
                     return;
                 if (Encrypt.IsChecked == true)
                 {
-                    
+
                     if (Encrypt_pass.IsChecked == true)
                     {
                         if (Service1.ValidatePassword(textpassword.Password.ToString()))
                         {
-                           
+
                             string Password = textpassword.Password.ToString();
 
                             byte[] Mykey = null;
@@ -262,9 +264,9 @@ namespace DGISAPP.Views
                                         return;
                                     }
                                 }
-                                    
+
                                 fileEncrypt(droppedFilePaths, macAddress);
-                                
+
                             }
                         }
                         else
@@ -281,7 +283,7 @@ namespace DGISAPP.Views
                         string macAddress = GetCombinedValue();
 
                         if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
-                            {
+                        {
                             foreach (var path in droppedFilePaths)
                             {
                                 if (IsPdfPasswordProtected(path))
@@ -291,7 +293,7 @@ namespace DGISAPP.Views
                                 }
                             }
                             fileEncrypt(droppedFilePaths, macAddress);
-                            }
+                        }
                     }
                 }
                 else
@@ -398,7 +400,7 @@ namespace DGISAPP.Views
                         MyMessageBox.ShowDialog("Please Enter Validity");
                         return false;
                     }
-                   
+
                 }
                 else
                 {
@@ -418,7 +420,7 @@ namespace DGISAPP.Views
         }
         private void resetAllFields()
         {
-            
+
             txtDefaultPass.Text = "Please Enter Password for Encryption :";
 
             textpassword.Password = "";
@@ -429,20 +431,21 @@ namespace DGISAPP.Views
             txtUsername.Text = "";
             chkValidity.IsChecked = false;
             dpValidity.Text = "";
-            
+
         }
         public async void fileEncrypt(string[] files, string macAddress)
         {
 
             string DownloadPath = "";
-            int totalFiles = files.Count(); 
+            int totalFiles = files.Count();
             int processedFiles = 0;
 
             foreach (var path in files)
             {
                 string MacAddress = null;
-                if (!string.IsNullOrEmpty(macAddress)) {
-                     MacAddress = macAddress;
+                if (!string.IsNullOrEmpty(macAddress))
+                {
+                    MacAddress = macAddress;
                 }
                 ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
                 DownloadPath = System.IO.Path.GetDirectoryName(path);
@@ -486,15 +489,15 @@ namespace DGISAPP.Views
                         this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
                         byte[] magicHeader = Encoding.UTF8.GetBytes("ASDC_AESGCM256");
                         bool encryptResult = false;
-                        string signedPath=null;
+                        string signedPath = null;
                         string Output = null;
 
                         bool isDigitalSign = Convert.ToBoolean(MacAddress.Split('|')[3]);
                         if (isDigitalSign)
                         {
-                            var(sigPath, hash) = await GenericSignFileAsyncForSecureFile(path);
-                            signedPath= sigPath;
-                            
+                            var (sigPath, hash) = await GenericSignFileAsyncForSecureFile(path);
+                            signedPath = sigPath;
+
                             //signedPath = await GenericSignFileAsyncForSecureFile(path);
 
                             if (string.IsNullOrEmpty(signedPath))
@@ -535,20 +538,20 @@ namespace DGISAPP.Views
                         {
                             string rsaKeyXml = textpassword.Password.ToString();
 
-                             Output = DownloadPath + "\\" + fi.Name + "_RSA_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + ".mil";
+                            Output = DownloadPath + "\\" + fi.Name + "_RSA_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + ".mil";
 
                             if (!string.IsNullOrWhiteSpace(rsaKeyXml))
                                 encryptResult = Service1.EncryptFile(path, Output, rsaKeyXml, magicHeader, MacAddress);
                         }
 
-                        
 
-                            if (encryptResult)
+
+                        if (encryptResult)
+                        {
+                            string zipPath = CreateZip(path, signedPath, Output);
+
+                            try
                             {
-                                string zipPath = CreateZip(path, signedPath, Output);
-
-                                try
-                                {
 
                                 if (!string.IsNullOrWhiteSpace(signedPath) && File.Exists(signedPath))
                                     File.Delete(signedPath);
@@ -556,14 +559,14 @@ namespace DGISAPP.Views
                                 if (!string.IsNullOrWhiteSpace(Output) && File.Exists(Output))
                                     File.Delete(Output);
                             }
-                                catch (Exception ex)
-                                {
+                            catch (Exception ex)
+                            {
 
-                                    ErrorLog.LogErrorToFile(ex);
-                                }
+                                ErrorLog.LogErrorToFile(ex);
                             }
-                           
-                        
+                        }
+
+
 
                         this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
                         this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
@@ -658,9 +661,9 @@ namespace DGISAPP.Views
             lblStep2.Content = "Step 2: Select or drag & drop the encrypted .mil file.";
             lblStep3.Content = "Step 3: The application will verify the password and decrypt the file.";
             lblStep4.Content = "Step 4: If verification is successful, the extracted file will be saved in the original file location.";
-            lblStep5.Content = ""; 
+            lblStep5.Content = "";
             lblNote.Content = "Note : Extraction will fail if the password is incorrect or the secure file is invalid.";
-            
+
             Encrypt.IsChecked = false;
             EncryptionWrapPanal.Visibility = Visibility.Hidden;
             EncryptionOptionGrid.Visibility = Visibility.Hidden;
@@ -735,13 +738,13 @@ namespace DGISAPP.Views
             textpassword.Password = "";
             HintAssist.SetHint(textpassword, "Please Enter Password");
             txtSearch.Visibility = Visibility.Hidden;
-           
+
 
         }
-       
+
         private void Encrypt_Click_Asymetric(object sender, RoutedEventArgs e)
         {
-            
+
 
             lblFileEncryption.Content = "Asymmetric (Public-Key) Encryption (One to One Sharing)";
             lblStep1.Content = "Step 1: Convey recipient to insert IACA token and click ‘Get Public Key’/ Army No’.";
@@ -786,7 +789,7 @@ namespace DGISAPP.Views
 
 
             Encrypt.IsChecked = false;
-            Export_pass.IsChecked= true;
+            Export_pass.IsChecked = true;
             Export_Asymetric.IsChecked = false;
             txtDefaultPass.Visibility = Visibility.Visible;
             txtDefaultPass.Text = "Please Enter Password for Encryption :";
@@ -805,12 +808,12 @@ namespace DGISAPP.Views
             textpassword.Password = "";
             HintAssist.SetHint(textpassword, "Please Enter Password");
 
-            
-            
+
+
         }
         private void Export_Click_Asymetric(object sender, RoutedEventArgs e)
         {
-            
+
 
             lblFileEncryption.Content = "Asymmetric (Public-Key) Extraction";
             lblStep1.Content = "Step 1: Convey recipient to insert IACA token in PC";
@@ -837,16 +840,16 @@ namespace DGISAPP.Views
             txtDefaultPasswarnning.Visibility = Visibility.Hidden;
             textpassword.MaxLength = 5000;
             textpassword.Password = "";
-            
+
 
         }
         public class SuggestionItem
         {
             public string Text { get; set; }
-            public string Value { get; set; }  
+            public string Value { get; set; }
             public override string ToString()
             {
-                return Text; 
+                return Text;
             }
 
         }
@@ -887,7 +890,7 @@ namespace DGISAPP.Views
             if (RArmyNo.IsChecked == true)
                 datatopost.ArmyNo = query;
             else
-                datatopost.Name = query; 
+                datatopost.Name = query;
 
             var filteredList = await new ApiClient().PostRequestAsync("api/transaction/search", datatopost);
 
@@ -919,7 +922,7 @@ namespace DGISAPP.Views
             else
             {
                 ShowSuggestions(false);
-                
+
             }
         }
 
@@ -1185,10 +1188,10 @@ namespace DGISAPP.Views
                     if (openFileDialog.ShowDialog() == true)
                     {
                         ExportSingleFileAsync(openFileDialog.FileNames);
-                        
+
 
                     }
-                   
+
                 }
             }
             catch (Exception ex)
@@ -1204,7 +1207,7 @@ namespace DGISAPP.Views
                 ErrorLog.LogErrorToFile(ex);
             }
 
-            
+
         }
         private void ShowSuggestions(bool show)
         {
@@ -1264,7 +1267,7 @@ namespace DGISAPP.Views
 
         private void txtSearch_LostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
         {
-            
+
             if (lstSuggestions == null || !lstSuggestions.IsKeyboardFocusWithin)
                 ShowSuggestions(false);
         }
@@ -1349,7 +1352,7 @@ namespace DGISAPP.Views
                     cert = found[0];
                 }
 
-                if (DateTime.Now > cert.NotAfter)
+                if (DateTime.Now > cert.NotAfter && !IsLocalToken)
                 {
                     ShowMsg("The certificate on the inserted token has expired. Please use a token with a valid certificate and try again !");
                     return (null, null);
@@ -1387,7 +1390,7 @@ namespace DGISAPP.Views
                 }
                 if (saveDigitalSignInfo != null)
                 {
-                   // await new Service1().SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
+                    // await new Service1().SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
                 }
                 return (sigPath, hash);
 
@@ -1416,216 +1419,216 @@ namespace DGISAPP.Views
             {
                 try
                 {
-                   
-                    string path = files[0];
-                        ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
-                        string DownloadPath = System.IO.Path.GetDirectoryName(path);
-                        int ret1=0;
 
-                        FileInfo fi = new FileInfo(path);
-                        if (fi.Length <= 524288000)
+                    string path = files[0];
+                    ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
+                    string DownloadPath = System.IO.Path.GetDirectoryName(path);
+                    int ret1 = 0;
+
+                    FileInfo fi = new FileInfo(path);
+                    if (fi.Length <= 524288000)
+                    {
+                        if (fi.Extension == ".mil" || fi.Extension == ".MIL")
                         {
-                            if (fi.Extension == ".mil" || fi.Extension == ".MIL")
+
+                            string gmacDetails = "";
+                            FileStream stream1 = File.OpenRead(path);
+                            byte[] bytes1 = new byte[stream1.Length];
+                            stream1.Read(bytes1, 0, bytes1.Length);
+
+                            stream1.Close();
+
+                            char dd = '_';
+                            int levelOfEncryption = fi.FullName.Count(s => s == dd);
+
+                            string filePath = DownloadPath + "\\" + fi.Name.Split('.')[0];
+
+                            new Thread(async () =>
                             {
 
-                            string gmacDetails="";
-                            FileStream stream1 = File.OpenRead(path);
-                                byte[] bytes1 = new byte[stream1.Length];
-                                stream1.Read(bytes1, 0, bytes1.Length);
-
-                                stream1.Close();
-
-                                char dd = '_';
-                                int levelOfEncryption = fi.FullName.Count(s => s == dd);
-                                
-                                  string filePath = DownloadPath + "\\" + fi.Name.Split('.')[0];
-
-                                    new Thread(async () =>
+                                if (ExportPass)
+                                {
+                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
+                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
+                                    string macAddress = null;
+                                    string useraname = null;
+                                    DateTime? validityDate = null;
+                                    string mac;
+                                    byte[] roundtrip = AesGcm256.SimpleDecryptWithPasswordForSecureFile(bytes1, textpassword.Password.ToString(), out mac);
+                                    if (roundtrip == null)
                                     {
+                                        ret1 = 0;
+                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Password incorrect or File is Tempered !")));
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        string fileName = fi.Name.Split('_')[0];
+                                        filePath = DownloadPath + "\\" + fileName;
 
-                                        if (ExportPass)
+                                        using (Stream file = File.OpenWrite(filePath))
                                         {
-                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
-                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
-                                            string macAddress = null;
-                                            string useraname = null;
-                                            DateTime? validityDate = null;
-                                            string mac;
-                                            byte[] roundtrip = AesGcm256.SimpleDecryptWithPasswordForSecureFile(bytes1, textpassword.Password.ToString(), out mac);
-                                            if (roundtrip == null)
+
+                                            file.Write(roundtrip, 0, roundtrip.Length);
+                                        }
+                                        bool res = await HandleReturnCodeAsync(ret1, path, mac);
+
+                                        if (res)
+                                        {
+                                            await System.Threading.Tasks.Task.Delay(5000);
+                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                            var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                             {
-                                                ret1 = 0;
-                                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("Password incorrect or File is Tempered !")));
-                                                return;
-                                            }
-                                            else
+                                                resetAllFields();
+
+                                                return MyMessageBox.ShowDialog("Congratulations!\n\nDocument is successfully Decrypted.\n" + DownloadPath, MyMessageBox.Buttons.OK_PathOpen);
+                                            }));
+
+                                            if (result == "2")
                                             {
-                                                string fileName = fi.Name.Split('_')[0];
-                                                filePath = DownloadPath + "\\" + fileName;
-
-                                                using (Stream file = File.OpenWrite(filePath))
+                                                try
                                                 {
-
-                                                    file.Write(roundtrip, 0, roundtrip.Length);
+                                                    Process.Start(DownloadPath);
                                                 }
-                                                bool res=  await HandleReturnCodeAsync(ret1, path, mac);
-
-                                                if (res)
+                                                catch (Exception ex)
                                                 {
-                                                    await System.Threading.Tasks.Task.Delay(5000);
-                                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                    var result = this.Dispatcher.Invoke(new Func<string>(() =>
-                                                    {
-                                                        resetAllFields();
-
-                                                        return MyMessageBox.ShowDialog("Congratulations!\n\nDocument is successfully Decrypted.\n" + DownloadPath, MyMessageBox.Buttons.OK_PathOpen);
-                                                    }));
-
-                                                    if (result == "2")
-                                                    {
-                                                        try
-                                                        {
-                                                            Process.Start(DownloadPath);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            Console.WriteLine("An error occurred: " + ex.Message);
-                                                        }
-                                                    }
-
+                                                    Console.WriteLine("An error occurred: " + ex.Message);
                                                 }
-                                                else
-                                                {
-                                                    if (File.Exists(filePath))
-                                                    File.Delete(filePath);
-                                                    await System.Threading.Tasks.Task.Delay(5000);
-                                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                    return;
-                                                }
-                                                
                                             }
+
                                         }
                                         else
                                         {
-                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
-                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
-                                            
-                                            filePath = DownloadPath + "\\" + fi.Name.Split('_')[0];
-                                            X509Certificate2Collection fcollection = await helper.GetCertificates();
+                                            if (File.Exists(filePath))
+                                                File.Delete(filePath);
+                                            await System.Threading.Tasks.Task.Delay(5000);
+                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                            return;
+                                        }
 
-                                            if (fcollection.Count == 0)
+                                    }
+                                }
+                                else
+                                {
+                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
+                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
+
+                                    filePath = DownloadPath + "\\" + fi.Name.Split('_')[0];
+                                    X509Certificate2Collection fcollection = await helper.GetCertificates();
+
+                                    if (fcollection.Count == 0)
+                                    {
+                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                        this.Dispatcher.Invoke(() =>
+                                        {
+                                            MyMessageBox.ShowDialog(
+                                                "Token not detected. Please insert the IACA token and try again !");
+                                        });
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        X509Certificate2 cert1 = null;
+                                        if (fcollection.Count == 1)
+                                        {
+                                            cert1 = fcollection[0];
+                                        }
+                                        else if (fcollection.Count > 1)
+                                        {
+                                            cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
+                                        }
+                                        if (cert1 != null)
+                                        {
+                                            string macDetails;   // declare variable first
+
+                                            ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
+                                            // ret1 = Service1.DecryptFile(path, filePath, cert1);
+                                            if (!string.IsNullOrWhiteSpace(macDetails))
+                                                gmacDetails = macDetails;
+                                        }
+                                    }
+
+                                    if (ret1 == 0)
+                                    {
+                                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                        var result = this.Dispatcher.Invoke(new Func<string>(() =>
+                                        {
+                                            return MyMessageBox.Show("Verification failed.\n The provided token is invalid, or the file has been modified.\n Please use the correct token and the original, unmodified file.");
+                                        }));
+
+                                    }
+                                    else
+                                    {
+                                        bool res = await HandleReturnCodeAsync(ret1, path, gmacDetails);
+
+                                        if (res)
+                                        {
+                                            await System.Threading.Tasks.Task.Delay(5000);
+                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                            var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                             {
-                                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                this.Dispatcher.Invoke(() =>
-                                                {
-                                                    MyMessageBox.ShowDialog(
-                                                        "Token not detected. Please insert the IACA token and try again !");
-                                                });
-                                                return;
-                                            }
-                                            else
+
+                                                return MyMessageBox.ShowDialog("Congratulations!\n\nDocument is successfully Decrypted.\n" + DownloadPath, MyMessageBox.Buttons.OK_PathOpen);
+                                            }));
+
+                                            if (result == "2")
                                             {
-                                                X509Certificate2 cert1 = null;
-                                                if (fcollection.Count == 1)
+                                                try
                                                 {
-                                                    cert1 = fcollection[0];
+                                                    Process.Start(DownloadPath);
                                                 }
-                                                else if (fcollection.Count > 1)
+                                                catch (Exception ex)
                                                 {
-                                                    cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
-                                                }
-                                                if (cert1 != null)
-                                                {
-                                                     string macDetails;   // declare variable first
-
-                                                     ret1 = Service1.DecryptFile(path, filePath, cert1, out macDetails);
-                                                    // ret1 = Service1.DecryptFile(path, filePath, cert1);
-                                                    if (!string.IsNullOrWhiteSpace(macDetails))
-                                                        gmacDetails = macDetails;
-                                                }
-                                            }
-                                           
-                                            if (ret1 == 0)
-                                            {
-                                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                var result = this.Dispatcher.Invoke(new Func<string>(() =>
-                                                {
-                                                    return MyMessageBox.Show("Verification failed.\n The provided token is invalid, or the file has been modified.\n Please use the correct token and the original, unmodified file.");
-                                                }));
-
-                                            }
-                                            else
-                                            {
-                                                bool res = await HandleReturnCodeAsync(ret1, path, gmacDetails);
-
-                                                if (res)
-                                                {
-                                                    await System.Threading.Tasks.Task.Delay(5000);
-                                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                    var result = this.Dispatcher.Invoke(new Func<string>(() =>
-                                                    {
-
-                                                        return MyMessageBox.ShowDialog("Congratulations!\n\nDocument is successfully Decrypted.\n" + DownloadPath, MyMessageBox.Buttons.OK_PathOpen);
-                                                    }));
-
-                                                    if (result == "2")
-                                                    {
-                                                        try
-                                                        {
-                                                            Process.Start(DownloadPath);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            Console.WriteLine("An error occurred: " + ex.Message);
-                                                        }
-                                                    }
-
-                                                }
-                                                else
-                                                {
-                                                    string fileName = fi.Name.Split('_')[0];
-                                                    filePath = DownloadPath + "\\" + fileName;
-                                                    if (File.Exists(filePath))
-                                                        File.Delete(filePath);
-                                                    await System.Threading.Tasks.Task.Delay(5000);
-                                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                                    return;
+                                                    Console.WriteLine("An error occurred: " + ex.Message);
                                                 }
                                             }
 
                                         }
+                                        else
+                                        {
+                                            string fileName = fi.Name.Split('_')[0];
+                                            filePath = DownloadPath + "\\" + fileName;
+                                            if (File.Exists(filePath))
+                                                File.Delete(filePath);
+                                            await System.Threading.Tasks.Task.Delay(5000);
+                                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                                            return;
+                                        }
+                                    }
 
-                                    }).Start();
-                                
-                            }
-                            else
-                            {
+                                }
+
+                            }).Start();
+
+                        }
+                        else
+                        {
                             this.Dispatcher.Invoke(() =>
                             {
                                 MyMessageBox.ShowDialog(
                                     "File format not supported. Please Select .mil file.");
                             });
-                            
-                            }
+
                         }
-                        else
-                        {
+                    }
+                    else
+                    {
                         this.Dispatcher.Invoke(() =>
                         {
                             MyMessageBox.ShowDialog(
                                 "File size is too large! Max size is 500 MB.");
                         });
-                       
-                        }
-                    
+
+                    }
+
                 }
                 catch (Exception)
                 {
@@ -1633,7 +1636,7 @@ namespace DGISAPP.Views
                 }
             });
         }
-        private async System.Threading.Tasks.Task<bool> HandleReturnCodeAsync(int ret1, string path,string macDetails)
+        private async System.Threading.Tasks.Task<bool> HandleReturnCodeAsync(int ret1, string path, string macDetails)
         {
             try
             {
@@ -1676,7 +1679,7 @@ namespace DGISAPP.Views
                     {
                         string hash = macDetails.Split('|')[4];
                         string DownloadPath = System.IO.Path.GetDirectoryName(path);
-                        bool ok = false;
+                        var ok = (false, "");
                         FileInfo fin = new FileInfo(path);
                         string fileName = fin.Name.Split('_')[0];
                         string file = DownloadPath + "\\" + fileName;
@@ -1688,13 +1691,21 @@ namespace DGISAPP.Views
                             ok = await HugeFileSignatureService.VerifyPortableAsync(file, signatureFile, UpdateProgress, hash);
                         }
 
-                        if (ok)
+                        if (ok.Item1)
                         {
                             steps.Add(("Digital Sign Verified", true));
                         }
                         else
                         {
-                            string error = "Digital sign not verified";
+                            string error = "";
+                            if (ok.Item2 == "")
+                            {
+                                error = "Digital sign not verified";
+                            }
+                            else
+                            {
+                                error = ok.Item2;
+                            }
                             failures.Add(error);
                             steps.Add((error, false));
                         }
@@ -1745,7 +1756,7 @@ namespace DGISAPP.Views
                             steps.Add(("Validity", true));
                         }
                     }
-                    if(steps.Count> 0)
+                    if (steps.Count > 0)
                     {
                         await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
                         {
@@ -1758,7 +1769,7 @@ namespace DGISAPP.Views
                             }
                         });
                     }
-                    
+
                     if (failures.Count > 0)
                     {
                         return false;
@@ -1773,13 +1784,13 @@ namespace DGISAPP.Views
                     return true;
                 }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return false;
             }
 
-            
-            
+
+
         }
         private string CreateZip(string originalFile, string signedFile, string encryptedFile)
         {
@@ -1812,7 +1823,7 @@ namespace DGISAPP.Views
         private void UpdateProgress(double percent)
         {
             // This can be called from any thread
-           // Dispatcher.Invoke(() => progress.Value = percent);
+            // Dispatcher.Invoke(() => progress.Value = percent);
         }
 
         private string ShowMsg(string text, MyMessageBox.Buttons buttons = MyMessageBox.Buttons.OK)
@@ -1832,5 +1843,5 @@ namespace DGISAPP.Views
         }
 
     }
-     
+
 }
