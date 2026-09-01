@@ -46,7 +46,6 @@
     <Compile Include="CertificateInstallerAction.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ErrorLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

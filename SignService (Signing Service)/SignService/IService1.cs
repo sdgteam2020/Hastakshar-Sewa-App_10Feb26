@@ -14,72 +14,99 @@ namespace SignService
     public interface IService1
     {
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", UriTemplate = "/SignXml", BodyStyle = WebMessageBodyStyle.Bare, RequestFormat = WebMessageFormat.Xml, ResponseFormat = WebMessageFormat.Xml)]
+
         Task<XmlElement> SignXml(XmlElement data);
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", UriTemplate = "/VerifySignXml", BodyStyle = WebMessageBodyStyle.Bare, RequestFormat = WebMessageFormat.Xml, ResponseFormat = WebMessageFormat.Json)]
 
         List<DigitalVerifyDetails> VerifySignXml(XmlElement data);
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/GetPublicKey")]
         Task<TokenDetails> GetPublicKey();
 
-
+        [OperationContract]
+        
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchPersID")]
         Task<List<TokenDetails>> FetchPersID();
        
-       
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchUniqueTokenDetails")]
         Task<List<TokenDetails>> FetchUniqueTokenDetails();
        
-       
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenDetails")]
         Task<List<TokenDetails>> FetchTokenDetails();
 
        
-         Task<List<PersIdValidation>> ValidatePersID(string inputPersID);
+        [OperationContract]
+        [WebInvoke(Method = "POST", UriTemplate = "/ValidatePersID", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
+        Task<List<PersIdValidation>> ValidatePersID(string inputPersID);
 
         
-       
-        Task<List<TokenDetails>> FetchTokenOCSPCrlDetails(bool IsCheckCrl,string ThumbPrint);
-        Task<List<TokenDetailsOcsp>> FetchTokenOCSPDetailsAsync(string ThumbPrint);
-        Task<List<TokenDetailsCrl>> FetchTokenCrlDetailsAsync(string ThumbPrint);
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenOCSPCrlDetails?IsCheckCrl={IsCheckCrl}&ThumbPrint={ThumbPrint}")]
+        Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl,string ThumbPrint);
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", UriTemplate = "/ValidatePersID2FA", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<Boolean> ValidatePersID2FA(string inputPersID);
          
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignBulkAsync")]
         Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData);   
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignAsync")]
         Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData);
 
-        
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignVerifyAsync")]
         ResponseMessage DigitalSignVerifyAsync(DigitalSignData reqData);
          
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/ByteDigitalSignAsync")]
         Task<ResponseMessage> ByteDigitalSignAsync(List<DigitalSignData> reqData);
        
 
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/HasInternetConnectionAsyncTest")]
         Task<bool> HasInternetConnectionAsyncTest();
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", UriTemplate = "/SignHash", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         string SignHash(string rData);
 
        
-        
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/Getpdffile")]
         string Getpdffile();
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/PdfCordinatefile")]
         int PdfCordinatefile(DTOCustomSignCordinate customSignCordinate);
 
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/AsymmetricEncryption")]
         Task<ResponseMessage> AsymmetricEncryption(List<AsymmetricEncryptionData> reqData);
 
-
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/AsymmetricDencryption")]
         Task<ResponseMessage> AsymmetricDencryption(List<AsymmetricEncryptionData> reqData);
 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/SymmetricEncryption")]
         Task<ResponseMessage> SymmetricEncryption(SymmetricEncryptionData reqData);
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/SymmetricDencryption")]
         Task<ResponseMessage> SymmetricDencryption(SymmetricEncryptionData reqData); 
-       
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/AddWaterMarks")]
         Task<ResponseMessage> AddWaterMarks(DtoWaterMarkData Data);
-
         [OperationContract]
         [WebInvoke(
              Method = "GET",
@@ -169,68 +196,7 @@ namespace SignService
         [DataMember]
         public string ValidTo { get; set; }
     }
-    public class TokenDetailsOcsp
-    {
-
-        [DataMember]
-        public String API { get; set; }
-        [DataMember]
-        public Boolean OCSPCheck { get; set; }
-        [DataMember]
-        public String OCSPMsg { get; set; }
-
-        [DataMember]
-        public String subject { get; set; }
-        [DataMember]
-        public String issuer { get; set; }
-        [DataMember]
-        public String Thumbprint { get; set; }
-        [DataMember]
-        public String ValidFrom { get; set; }
-        [DataMember]
-        public String ValidTo { get; set; }
-        [DataMember]
-        public String Status { get; set; }
-        [DataMember]
-        public String Remarks { get; set; }
-        [DataMember]
-        public Boolean TokenValid { get; set; }
-        [DataMember]
-        public string Public_Key { get; set; }
-
-    }
-    public class TokenDetailsCrl
-    {
-
-        [DataMember]
-        public String API { get; set; }
-        [DataMember]
-        public Boolean CrlCheck { get; set; }
-        [DataMember]
-        public String CrlMsg { get; set; }
-
-        [DataMember]
-        public String subject { get; set; }
-        [DataMember]
-        public String issuer { get; set; }
-        [DataMember]
-        public String Thumbprint { get; set; }
-        [DataMember]
-        public String ValidFrom { get; set; }
-        [DataMember]
-        public String ValidTo { get; set; }
-        [DataMember]
-        public String Status { get; set; }
-        [DataMember]
-        public String Remarks { get; set; }
-        [DataMember]
-        public Boolean TokenValid { get; set; }
-        [DataMember]
-        public string Public_Key { get; set; }
-
-    }
-
-    [DataContract]
+        [DataContract]
     public class TokenDetails
     {
 

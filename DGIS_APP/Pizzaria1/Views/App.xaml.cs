@@ -1,5 +1,4 @@
-﻿using DGISAPP.NamedPipe;
-using SignService;
+﻿using SignService;
 using SignService.Security;
 using System;
 using System.Configuration;
@@ -19,8 +18,7 @@ namespace DGISApp
     public partial class App : Application
     {
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
-        private DgisNamedPipeServer _pipeServer;
-        private Process _signerProcess;
+
         ServiceHost host = null;
 
         private async void Application_Startup(object sender, StartupEventArgs e)
@@ -52,16 +50,11 @@ namespace DGISApp
                 { 
                     var creds = DeviceCredentialStore.GetOrCreate();
 
-                    //this.host = new ServiceHost(typeof(SignService.Service1));
-                    //foreach (ServiceEndpoint EP in host.Description.Endpoints)
-                    //    EP.Behaviors.Add(new BehaviorAttribute());
+                    this.host = new ServiceHost(typeof(SignService.Service1));
+                    foreach (ServiceEndpoint EP in host.Description.Endpoints)
+                        EP.Behaviors.Add(new BehaviorAttribute());
 
-                    //host.Open();
-
-                    _pipeServer = new DgisNamedPipeServer();
-                    _pipeServer.Start();
-
-                    StartSignerService();
+                    host.Open();
 
                     string programsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.StartMenu) + "//Programs//DGIS//1//DGIS App.appref-ms";
                     string startupFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
@@ -110,144 +103,6 @@ namespace DGISApp
                 ErrorLog.LogErrorToFile(ex);
             }
 
-        }
-        private void StartSignerService()
-        {
-            try
-            {
-                string basePath = AppDomain.CurrentDomain.BaseDirectory;
-
-                string signerExe = null;
-
-                // ----------------------------------------------------
-                // 1. INSTALLED VERSION
-                // ----------------------------------------------------
-                string installedPath = Path.Combine(
-                    basePath,
-                    "SignerServiceCore",
-                    "SignerServiceCore.exe");
-
-                if (File.Exists(installedPath))
-                {
-                    signerExe = installedPath;
-                }
-
-                // ----------------------------------------------------
-                // 2. DEVELOPMENT DEBUG VERSION
-                // ----------------------------------------------------
-                if (signerExe == null)
-                {
-                    string debugPath = Path.GetFullPath(
-                        Path.Combine(
-                            basePath,
-                            @"..\..\..\SignerServiceCore\bin\Debug\net10.0-windows\SignerServiceCore.exe"));
-
-                    if (File.Exists(debugPath))
-                    {
-                        signerExe = debugPath;
-                    }
-                }
-
-                // ----------------------------------------------------
-                // 3. DEVELOPMENT RELEASE VERSION
-                // ----------------------------------------------------
-                if (signerExe == null)
-                {
-                    string releasePath = Path.GetFullPath(
-                        Path.Combine(
-                            basePath,
-                            @"..\..\..\SignerServiceCore\bin\Release\net10.0-windows\SignerServiceCore.exe"));
-
-                    if (File.Exists(releasePath))
-                    {
-                        signerExe = releasePath;
-                    }
-                }
-
-                // ----------------------------------------------------
-                // NOT FOUND
-                // ----------------------------------------------------
-                if (signerExe == null)
-                {
-                    MessageBox.Show(
-                        "SignerServiceCore.exe not found.\n\n" +
-                        "Please build SignerServiceCore project first.",
-                        "DGIS Signer",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // KILL EXISTING SignerServiceCore PROCESS
-                // ----------------------------------------------------
-                Process[] existingProcesses =
-                    Process.GetProcessesByName("SignerServiceCore");
-
-                foreach (Process process in existingProcesses)
-                {
-                    try
-                    {
-                        if (!process.HasExited)
-                        {
-                            process.Kill();
-
-                            // Wait until port/process is fully released
-                            process.WaitForExit(5000);
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore individual process kill failure
-                    }
-                    finally
-                    {
-                        process.Dispose();
-                    }
-                }
-
-                // Small delay so port 55102/resources are released
-                System.Threading.Thread.Sleep(500);
-
-                // ----------------------------------------------------
-                // START NEW SignerServiceCore PROCESS
-                // ----------------------------------------------------
-                string signerFolder =
-                    Path.GetDirectoryName(signerExe);
-
-                ProcessStartInfo startInfo =
-                    new ProcessStartInfo
-                    {
-                        FileName = signerExe,
-
-                        WorkingDirectory = signerFolder,
-
-                        UseShellExecute = false,
-
-                        CreateNoWindow = true,
-
-                        WindowStyle = ProcessWindowStyle.Hidden
-                    };
-
-                _signerProcess =
-                    Process.Start(startInfo);
-
-                if (_signerProcess == null)
-                {
-                    throw new Exception(
-                        "SignerServiceCore process could not be started.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Unable to start SignerServiceCore.\n\n" +
-                    ex.Message,
-                    "DGIS Signer",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
         }
         private void RemoveOldDGISStartMenu1()
         {

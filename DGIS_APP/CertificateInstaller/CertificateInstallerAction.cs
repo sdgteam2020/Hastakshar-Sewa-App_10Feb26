@@ -36,8 +36,6 @@ namespace CertificateInstaller
                     RemoveOldDGISStartMenu();
                     RemoveOldDGISStartMenu1();
                     OpenPort();
-                    DemandHttp();
-                    Advfirewall();
 
                     foreach (var process in Process.GetProcessesByName("DGISAPP"))
                     {
@@ -58,51 +56,6 @@ namespace CertificateInstaller
         {
             base.Commit(savedState);
             RunExecutable();
-        }
-        public void Advfirewall()
-        {
-            try
-            {
-                // The command to enable to http service to start on demand
-                string command = $@"netsh advfirewall firewall add rule name=DGIS_TCP_55102 dir=in action=allow protocol=TCP localport=55102";
-
-
-
-                ExecuteNetshCommand(command);
-
-
-            }
-            catch (Exception ex)
-            {
-                // Log exception or handle errors as necessary
-                Console.WriteLine($"Error: {ex.Message}");
-                ErrorLog.LogErrorToFile(ex);
-                //return false;
-            }
-        }
-
-        public void DemandHttp()
-        {
-            try
-            {
-                // The command to enable to http service to start on demand
-                string command1 = $@"sc config http start= demand";
-
-                ExecuteNetshCommand(command1);
-                // The command to start the http service
-                string command2 = $@"net start http";
-
-                ExecuteNetshCommand(command2);
-
-
-            }
-            catch (Exception ex)
-            {
-                // Log exception or handle errors as necessary
-                Console.WriteLine($"Error: {ex.Message}");
-                ErrorLog.LogErrorToFile(ex);
-                //return false;
-            }
         }
         public void OpenPort()
         {
