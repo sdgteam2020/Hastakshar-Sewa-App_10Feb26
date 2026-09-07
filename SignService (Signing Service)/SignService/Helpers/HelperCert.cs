@@ -56,28 +56,7 @@ namespace SignService.Helpers
 
             try
             {
-                store.Open(OpenFlags.OpenExistingOnly);
-                await Task.Run(() =>
-                {
-
-                    foreach (X509Certificate2 cert in store.Certificates)
-                    {
-                        try
-                        {
-                            if (!(cert.Subject.Contains("localhost") || cert.Subject.Contains("DESKTOP")))
-                            { 
-                                if (cert.PrivateKey is RSACryptoServiceProvider rsaProvider && rsaProvider.CspKeyContainerInfo.HardwareDevice)
-                                {
-                                    fcollection.Add(cert);
-                                }
-                            }
-                        }
-                        catch (CryptographicException)
-                        { 
-                        }
-                    }
-                    store.Close();
-                });
+                await helper.GetCertificates();
                 if (fcollection.Count == 0)
                 {
                     responseStatus.Status = "0";
@@ -157,5 +136,7 @@ namespace SignService.Helpers
             responseStatus.Remark = "Try again";
             return responseStatus; 
         } 
+
+
     }
 }

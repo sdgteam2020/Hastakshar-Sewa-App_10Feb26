@@ -1,7 +1,9 @@
 ﻿using iText.IO.Font;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
+using iText.Kernel;
 using iText.Kernel.Font;
+using iText.Kernel.Pdf;
 using iText.Kernel.Pdf;
 using iText.Signatures;
 using MaterialDesignThemes.Wpf;
@@ -11,6 +13,7 @@ using MyApp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SignService;
+using SignService.DTOs;
 using SignService.Helpers;
 using SignService.HttpClients;
 using Spire.Pdf.Fields;
@@ -36,11 +39,13 @@ using System.Security.Cryptography.X509Certificates;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Xml;
 using WinniesMessageBox;
 using static DGISApp.DigitalSign;
@@ -48,10 +53,6 @@ using static iText.Signatures.PdfSigner;
 using static ValidateCertificate.ValidateCert;
 using Brushes = System.Windows.Media.Brushes;
 using Console = System.Console;
-using System.Text.RegularExpressions;
-using System.Windows.Media;
-using iText.Kernel.Pdf;
-using iText.Kernel;
 
 namespace DGISAPP.Views
 {
@@ -967,6 +968,7 @@ namespace DGISAPP.Views
                         if (SubjectSplit[i].Contains("SERIALNUMBER"))
                             xmlDataForPublicKey.SerialNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
                     }
+
                     byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
                     xmlDataForPublicKey.Public_Key = Convert.ToBase64String(textBytes);
                     xmlDataForPublicKey.TokenValid = PublicKey.TokenValid;
@@ -1385,7 +1387,7 @@ namespace DGISAPP.Views
                     saveDigitalSignInfo.ValidTo = tokenDetails.ValidTo;
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
-                    saveDigitalSignInfo.SerialNo = cert.Subject.Split(',')[1].Replace("SERIALNUMBER=", "").Trim();
+                    saveDigitalSignInfo.SerialNo = helper.GetSubject(cert).SerialNumber;
                     saveDigitalSignInfo.DocumentName = Path.GetFileName(sigPath);
 
                 }

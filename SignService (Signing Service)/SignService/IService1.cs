@@ -1,4 +1,5 @@
 ﻿
+using SignService.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -50,6 +51,12 @@ namespace SignService
         [OperationContract]
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenOCSPCrlDetails?IsCheckCrl={IsCheckCrl}&ThumbPrint={ThumbPrint}")]
         Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl,string ThumbPrint);
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenOCSPDetails?ThumbPrint={ThumbPrint}")]
+        Task<List<TokenDetailsOcsp>> FetchTokenOCSPDetailsAsync(string ThumbPrint);
+        [OperationContract]
+        [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenCrlDetails?ThumbPrint={ThumbPrint}")]
+        Task<List<TokenDetailsCrl>> FetchTokenCrlDetailsAsync(string ThumbPrint);
 
         [OperationContract]
         [WebInvoke(Method = "POST", UriTemplate = "/ValidatePersID2FA", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
@@ -78,7 +85,7 @@ namespace SignService
 
         [OperationContract]
         [WebInvoke(Method = "POST", UriTemplate = "/SignHash", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
-        string SignHash(string rData);
+        Task<string> SignHash(string rData);
 
        
         [OperationContract]
@@ -200,8 +207,7 @@ namespace SignService
     public class TokenDetails
     {
 
-        [DataMember]
-        public String API { get; set; }
+       
         [DataMember]
         public Boolean CRL_OCSPCheck { get; set; }
         [DataMember]

@@ -1,10 +1,12 @@
 ﻿using Microsoft.Office.Interop.Word;
+using SignService.DTOs;
 using System;
 using System.Configuration;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using Document = Microsoft.Office.Interop.Word.Document;
 namespace SignService.Helpers
@@ -93,6 +95,25 @@ namespace SignService.Helpers
             }
 
             return fcollection;
+        }
+        public static DTOSubject GetSubject(X509Certificate2 cert)
+        {
+            string[] SubjectSplit = cert.Subject.Split(',');
+            DTOSubject dTOSubject = new DTOSubject();
+            string StrName = "";
+            string StrICNo = "";
+            string StrRank = "";
+            for (int i = 0; i < SubjectSplit.Length; i++)
+            {
+                if (SubjectSplit[i].Contains("SERIALNUMBER="))
+                    dTOSubject.SerialNumber = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
+                if (SubjectSplit[i].Contains("CN="))
+                    dTOSubject.Name = SubjectSplit[i].ToString().Replace("CN=", "").Trim();
+                if (SubjectSplit[i].Contains("T="))
+                    dTOSubject.Rank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
+            }
+
+            return dTOSubject;
         }
     }
 }

@@ -8,6 +8,7 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Extgstate;
 using iText.Signatures;
 using Microsoft.Office.Interop.Word;
+using SignService.DTOs;
 using SignService.Helpers;
 using SignService.HttpClients;
 using System;
@@ -193,7 +194,7 @@ namespace SignService
                 {
                     var TokenDetails = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchPersID",
+                        
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!"
@@ -215,14 +216,7 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
 
-                    string[] SubjectSplit = cert1.Subject.Split(',');
-                    string PersNo = "";
-                    for (int i = 0; i < SubjectSplit.Length; i++)
-                    {
-                        if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                            PersNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                    }
-
+                    DTOSubject Subject = helper.GetSubject(cert1);
 
 
                     bool TokenValidity = false;
@@ -238,13 +232,13 @@ namespace SignService
                         Remark = "Token Expired";
                     }
 
-                    if (!string.IsNullOrEmpty(PersNo))
+                    if (!string.IsNullOrEmpty(Subject.SerialNumber))
                     {
                         var TokenDetails = new TokenDetails
                         {
-                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchPersID",
+                            
                             CRL_OCSPCheck = false,
-                            subject = PersNo,
+                            subject = Subject.SerialNumber,
                             issuer = null,
                             Thumbprint = null,
                             ValidFrom = cert1.NotBefore.ToString(),
@@ -269,7 +263,7 @@ namespace SignService
 
                 var TokenDetails = new TokenDetails
                 {
-                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+                    
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString()
@@ -307,14 +301,8 @@ namespace SignService
                     X509Certificate2 certificate = cert1;
                     try
                     {
-                        string[] SubjectSplit = cert1.Subject.Split(',');
-                        string response = "";
-                        for (int i = 0; i < SubjectSplit.Length; i++)
-                        {
-                            if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                                response = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                        }
-                        if (inputPersID == response)
+                        DTOSubject Subject = helper.GetSubject(cert1);
+                        if (inputPersID == Subject.SerialNumber)
                         {
                             if (VerifyCertificatePassword(cert1))
                             {
@@ -409,12 +397,7 @@ namespace SignService
 
                     {
                         string[] SubjectSplit = cert1.Subject.Split(',');
-                        string response = "";
-                        for (int i = 0; i < SubjectSplit.Length; i++)
-                        {
-                            if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                                response = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                        }
+                        DTOSubject Subject = helper.GetSubject(cert1);
                         bool TokenExpity = false;
                         string StatusMsg = "200";
 
@@ -424,7 +407,7 @@ namespace SignService
                             StatusMsg = "201";
                         }
 
-                        if (inputPersID == response)
+                        if (inputPersID == Subject.SerialNumber)
                         {
                             var validation = new PersIdValidation
                             {
@@ -489,7 +472,7 @@ namespace SignService
                 {
                     var TokenDetails = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+                        
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
@@ -522,7 +505,7 @@ namespace SignService
 
                     var TokenDetails = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+                        
                         CRL_OCSPCheck = false,
                         subject = cert1.Subject,
                         issuer = cert1.Issuer,
@@ -542,7 +525,7 @@ namespace SignService
 
                 var TokenDetails = new TokenDetails
                 {
-                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+                    
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
@@ -577,10 +560,10 @@ namespace SignService
                         {
                             TokenValidity = false;
                         }
-
+                       
                         var detail = new TokenDetails
                         {
-                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenDetails",
+                            
                             CRL_OCSPCheck = false,
                             subject = cert1.Subject,
                             issuer = cert1.Issuer,
@@ -601,7 +584,7 @@ namespace SignService
                 {
                     var detail = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenDetails",
+                        
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
@@ -616,7 +599,7 @@ namespace SignService
             {
                 var TokenDetails = new TokenDetails
                 {
-                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenDetails",
+                    
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
@@ -629,7 +612,419 @@ namespace SignService
             }
 
         }
+        public async Task<List<TokenDetailsOcsp>> FetchTokenOCSPDetailsAsync(string ThumbPrint)
+        {
+            string MsgCrlOCSP = "";
+            bool BlnCrlOCSP = false;
+            List<TokenDetailsOcsp> TokenDetailList = new List<TokenDetailsOcsp>();
+            try
+            {
+                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                X509Certificate2Collection fcollection = new X509Certificate2Collection();
 
+
+                if (ThumbPrint == "")
+                {
+                    fcollection = await helper.GetCertificates();
+                }
+                else
+                {
+                    X509Certificate2Collection fcol = new X509Certificate2Collection();
+                    fcol = await helper.GetCertificates();
+
+                    X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
+                    if (selectedCertificate != null)
+                    {
+                        fcollection.Add(selectedCertificate);
+                    }
+
+                }
+                //store.Close();
+
+
+                if (fcollection.Count == 0)
+                {
+                    var TokenDetails = new TokenDetailsOcsp
+                    {
+                        
+                        OCSPCheck = BlnCrlOCSP,
+                        OCSPMsg = MsgCrlOCSP,
+                        Status = "404",
+                        Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
+                        TokenValid = false
+                    };
+                    TokenDetailList.Add(TokenDetails);
+                    return TokenDetailList.ToList();
+                }
+                else
+                {
+                    X509Certificate2 cert1 = null;
+                    if (fcollection.Count == 1)
+                    {
+                        cert1 = fcollection[0];
+                    }
+                    else if (fcollection.Count > 1)
+                    {
+                        try
+                        {
+                            X509Certificate2Collection selectedCertificates = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection);
+
+                            if (selectedCertificates.Count > 0)
+                            {
+                                cert1 = selectedCertificates[0];
+                            }
+                            else
+                            {
+                                var TokenDetails = new TokenDetailsOcsp
+                                {
+
+                                   
+                                    OCSPCheck = BlnCrlOCSP,
+                                    OCSPMsg = MsgCrlOCSP,
+                                    subject = null,
+                                    issuer = null,
+                                    Thumbprint = null,
+                                    ValidFrom = null,
+                                    ValidTo = null,
+                                    Status = "200",
+                                    Remarks = "No Certificate Selected !",
+                                    TokenValid = false,
+                                };
+                                TokenDetailList.Add(TokenDetails);
+                                return TokenDetailList.ToList();
+                            }
+                        }
+                        catch
+                        {
+                            var TokenDetails = new TokenDetailsOcsp
+                            {
+
+                                
+                                OCSPCheck = BlnCrlOCSP,
+                                OCSPMsg = MsgCrlOCSP,
+                                subject = null,
+                                issuer = null,
+                                Thumbprint = null,
+                                ValidFrom = null,
+                                ValidTo = null,
+                                Status = "200",
+                                Remarks = "No Certificate Selected !",
+                                TokenValid = false,
+                            };
+                            TokenDetailList.Add(TokenDetails);
+                        }
+                    }
+
+
+
+
+                    
+                    var (ValidateCertificateAsyncOutput, validationMsg, OCSPMsg, OCSPValid) = await ValidateCertificate.ValidateCert.ValidateCertificateOCSPAsync(cert1);
+
+
+                    if (OCSPValid == true)
+                    {
+                       
+                        switch ((CertificateStatus)OCSPMsg)
+                        {
+                            case CertificateStatus.Good:
+                                MsgCrlOCSP = "OCSP Verified";
+                                BlnCrlOCSP = true;
+                                break;
+
+                            case CertificateStatus.NotFound:
+                                MsgCrlOCSP = "Digital certificate of token cannot be verified with CA due to network/responder issues.";
+                                BlnCrlOCSP = false;
+                                break;
+
+                            case CertificateStatus.Revoked:
+                                MsgCrlOCSP = "Digital certificate is revoked.";
+                                BlnCrlOCSP = false;
+                                break;
+
+                            case CertificateStatus.Unknown:
+                                MsgCrlOCSP = "OCSP status is unknown.";
+                                BlnCrlOCSP = false;
+                                break;
+
+                            case CertificateStatus.InternalError:
+                                MsgCrlOCSP = "OCSP responder internal error.";
+                                BlnCrlOCSP = false;
+                                break;
+
+                            case CertificateStatus.TryLater:
+                                MsgCrlOCSP = "OCSP responder unavailable. Please try later.";
+                                BlnCrlOCSP = false;
+                                break;
+
+                            case CertificateStatus.Unauthorized:
+                                MsgCrlOCSP = "OCSP request unauthorized.";
+                                BlnCrlOCSP = false;
+                                break;
+
+                            default:
+                                MsgCrlOCSP = "OCSP validation failed.";
+                                BlnCrlOCSP = false;
+                                break;
+                        }
+
+                    }
+                    else
+                    {
+                        MsgCrlOCSP = "OCSP is Revoked or " + validationMsg;
+                        BlnCrlOCSP = false;
+                    }
+
+                    if (ValidateCertificateAsyncOutput == true)
+                    {
+                        var TokenDetails = new TokenDetailsOcsp
+                        {
+
+                            
+                            OCSPCheck = BlnCrlOCSP,
+                            OCSPMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = "Unique Cert details of inserted Token",
+                            TokenValid = true,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    else
+                    {
+                        var TokenDetails = new TokenDetailsOcsp
+                        {
+
+                            
+                            OCSPCheck = BlnCrlOCSP,
+                            OCSPMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = validationMsg,
+                            TokenValid = false,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    return TokenDetailList.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+
+                var TokenDetails = new TokenDetailsOcsp
+                {
+                    
+                    OCSPCheck = BlnCrlOCSP,
+                    OCSPMsg = MsgCrlOCSP,
+                    Status = "500",
+                    Remarks = "Exception Occured-" + ex.Message.ToString(),
+                    TokenValid = false
+
+                };
+                TokenDetailList.Add(TokenDetails);
+                ErrorLog.LogErrorToFile(ex);
+                return TokenDetailList.ToList();
+            }
+        }
+        public async Task<List<TokenDetailsCrl>> FetchTokenCrlDetailsAsync(string ThumbPrint)
+        {
+            string MsgCrlOCSP = "";
+            bool BlnCrlOCSP = false;
+            List<TokenDetailsCrl> TokenDetailList = new List<TokenDetailsCrl>();
+            try
+            {
+                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                X509Certificate2Collection fcollection = new X509Certificate2Collection();
+
+
+                if (ThumbPrint == "")
+                {
+                    fcollection = await helper.GetCertificates();
+                }
+                else
+                {
+                    X509Certificate2Collection fcol = new X509Certificate2Collection();
+                    fcol = await helper.GetCertificates();
+
+                    X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
+                    if (selectedCertificate != null)
+                    {
+                        fcollection.Add(selectedCertificate);
+                    }
+
+                }
+                //store.Close();
+
+
+                if (fcollection.Count == 0)
+                {
+                    var TokenDetails = new TokenDetailsCrl
+                    {
+                        
+                        CrlCheck = BlnCrlOCSP,
+                        CrlMsg = MsgCrlOCSP,
+                        Status = "404",
+                        Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
+                        TokenValid = false
+                    };
+                    TokenDetailList.Add(TokenDetails);
+                    return TokenDetailList.ToList();
+                }
+                else
+                {
+                    X509Certificate2 cert1 = null;
+                    if (fcollection.Count == 1)
+                    {
+                        cert1 = fcollection[0];
+                    }
+                    else if (fcollection.Count > 1)
+                    {
+                        try
+                        {
+                            X509Certificate2Collection selectedCertificates = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection);
+
+                            if (selectedCertificates.Count > 0)
+                            {
+                                cert1 = selectedCertificates[0];
+                            }
+                            else
+                            {
+                                var TokenDetails = new TokenDetailsCrl
+                                {
+
+                                    
+                                    CrlCheck = BlnCrlOCSP,
+                                    CrlMsg = MsgCrlOCSP,
+                                    subject = null,
+                                    issuer = null,
+                                    Thumbprint = null,
+                                    ValidFrom = null,
+                                    ValidTo = null,
+                                    Status = "200",
+                                    Remarks = "No Certificate Selected !",
+                                    TokenValid = false,
+                                };
+                                TokenDetailList.Add(TokenDetails);
+                                return TokenDetailList.ToList();
+                            }
+                        }
+                        catch
+                        {
+                            var TokenDetails = new TokenDetailsCrl
+                            {
+
+                                
+                                CrlCheck = BlnCrlOCSP,
+                                CrlMsg = MsgCrlOCSP,
+                                subject = null,
+                                issuer = null,
+                                Thumbprint = null,
+                                ValidFrom = null,
+                                ValidTo = null,
+                                Status = "200",
+                                Remarks = "No Certificate Selected !",
+                                TokenValid = false,
+                            };
+                            TokenDetailList.Add(TokenDetails);
+                        }
+                    }
+
+
+
+
+
+                    var (ValidateCertificateAsyncOutput, validationMsg, CrlMsg, CrlValid) = await ValidateCertificate.ValidateCert.ValidateCertificateCrlAsync(cert1);
+
+
+                    if (CrlValid == true)
+                    {
+                        if (CrlValid == true)
+                        {
+                            MsgCrlOCSP = "CRL Verified";
+                            BlnCrlOCSP = true;
+                        }
+
+                        else
+                        {
+                            MsgCrlOCSP = "CRL Not Checked";
+                            BlnCrlOCSP = false;
+                        }
+
+
+                    }
+                    else
+                    {
+                        MsgCrlOCSP = "CRL is Revoked or " + validationMsg;
+                        BlnCrlOCSP = false;
+                    }
+
+                    if (ValidateCertificateAsyncOutput == true)
+                    {
+                        var TokenDetails = new TokenDetailsCrl
+                        {
+
+                            
+                            CrlCheck = BlnCrlOCSP,
+                            CrlMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = "Unique Cert details of inserted Token",
+                            TokenValid = true,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    else
+                    {
+                        var TokenDetails = new TokenDetailsCrl
+                        {
+
+                            
+                            CrlCheck = BlnCrlOCSP,
+                            CrlMsg = MsgCrlOCSP,
+                            subject = cert1.Subject,
+                            issuer = cert1.Issuer,
+                            Thumbprint = cert1.Thumbprint,
+                            ValidFrom = cert1.NotBefore.ToString(),
+                            ValidTo = cert1.NotAfter.ToString(),
+                            Status = "200",
+                            Remarks = validationMsg,
+                            TokenValid = false,
+                        };
+                        TokenDetailList.Add(TokenDetails);
+                    }
+                    return TokenDetailList.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+
+                var TokenDetails = new TokenDetailsCrl
+                {
+                    
+                    CrlCheck = BlnCrlOCSP,
+                    CrlMsg = MsgCrlOCSP,
+                    Status = "500",
+                    Remarks = "Exception Occured-" + ex.Message.ToString(),
+                    TokenValid = false
+
+                };
+                TokenDetailList.Add(TokenDetails);
+                ErrorLog.LogErrorToFile(ex);
+                return TokenDetailList.ToList();
+            }
+        }
         public async Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl, string ThumbPrint)
         {
             string MsgCrlOCSP = "";
@@ -664,7 +1059,7 @@ namespace SignService
                 {
                     var TokenDetails = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                        
                         CRL_OCSPCheck = BlnCrlOCSP,
                         CRL_OCSPMsg = MsgCrlOCSP,
                         Status = "404",
@@ -696,7 +1091,7 @@ namespace SignService
                                 var TokenDetails = new TokenDetails
                                 {
 
-                                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                                    
                                     CRL_OCSPCheck = BlnCrlOCSP,
                                     CRL_OCSPMsg = MsgCrlOCSP,
                                     subject = null,
@@ -717,7 +1112,7 @@ namespace SignService
                             var TokenDetails = new TokenDetails
                             {
 
-                                API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                                
                                 CRL_OCSPCheck = BlnCrlOCSP,
                                 CRL_OCSPMsg = MsgCrlOCSP,
                                 subject = null,
@@ -788,7 +1183,7 @@ namespace SignService
                         var TokenDetails = new TokenDetails
                         {
 
-                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                            
                             CRL_OCSPCheck = BlnCrlOCSP,
                             CRL_OCSPMsg = MsgCrlOCSP,
                             subject = cert1.Subject,
@@ -807,7 +1202,7 @@ namespace SignService
                         var TokenDetails = new TokenDetails
                         {
 
-                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                            
                             CRL_OCSPCheck = BlnCrlOCSP,
                             CRL_OCSPMsg = MsgCrlOCSP,
                             subject = cert1.Subject,
@@ -829,7 +1224,7 @@ namespace SignService
 
                 var TokenDetails = new TokenDetails
                 {
-                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchTokenOCSPCrlDetailsAsync",
+                    
                     CRL_OCSPCheck = BlnCrlOCSP,
                     CRL_OCSPMsg = MsgCrlOCSP,
                     Status = "500",
@@ -1120,21 +1515,10 @@ namespace SignService
                                         imageData = ImageDataFactory.Create(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalSignWT.png");
                                     }
 
-                                    string[] SubjectSplit = cert1.Subject.Split(',');
+                                    DTOSubject Subject =helper.GetSubject(cert1);
 
-                                    string StrName = "";
-                                    string StrICNo = "";
-                                    string StrRank = "";
-                                    for (int i = 0; i < SubjectSplit.Length; i++)
-                                    {
-                                        if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                                            StrICNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                        if (SubjectSplit[i].Contains("CN="))
-                                            StrName = SubjectSplit[i].ToString().Replace("CN=", "").Trim();
-                                        if (SubjectSplit[i].Contains("T="))
-                                            StrRank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
-                                    }
-                                    saveDigitalSignInfo.SerialNo = StrICNo;
+                                  
+                                    saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
                                     saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
 
 
@@ -1145,9 +1529,9 @@ namespace SignService
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                     String StrSignature = "";
                                     if (CustomText != "")
-                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
                                     else
-                                        StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                        StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
 
                                     try
                                     {
@@ -1162,22 +1546,55 @@ namespace SignService
                                             var getXYaxis = helperCert.GetSignatureCordinate(fileforloop);
                                             if (getXYaxis != null)
                                             {
-                                                if (sigNames.Count % 2 == 0)
+                                                // Default position for very first signature
+                                                int defaultX = 100;
+                                                int defaultY = 50;
+
+                                                // Signature rectangle = 180 x 50
+                                                int horizontalGap = 20;
+                                                int verticalGap = 10;
+
+                                                int signatureWidth = 180;
+                                                int signatureHeight = 50;
+
+                                                if (getXYaxis != null && getXYaxis.Count > 0)
                                                 {
-                                                    Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
-                                                    Xaxis = getXYaxis[0].XCoordinate;
+                                                    // First signature determines first column X
+                                                    int firstColumnX = getXYaxis[0].XCoordinate;
+
+                                                    // Last existing signature
+                                                    var lastSignature = getXYaxis[getXYaxis.Count - 1];
+
+                                                    int lastX = lastSignature.XCoordinate;
+                                                    int lastY = lastSignature.YCoordinate;
+
+                                                    // If existing signature count is ODD,
+                                                    // next signature goes in second column, same row.
+                                                    if (getXYaxis.Count % 2 != 0)
+                                                    {
+                                                        Xaxis = firstColumnX + signatureWidth + horizontalGap;
+                                                        Yaxis = lastY;
+                                                    }
+                                                    else
+                                                    {
+                                                        // Two signatures already completed in current row.
+                                                        // Start first column of NEXT row.
+
+                                                        Xaxis = firstColumnX;
+
+                                                        // Bottom -> Top
+                                                        Yaxis = lastY + signatureHeight + verticalGap;
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
-                                                    Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate + 200;
-                                                    if (Xaxis > 300)
-                                                    {
-                                                        Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
-                                                        Xaxis = getXYaxis[0].XCoordinate;
-                                                    }
+                                                    // First ever signature
+                                                    Xaxis = defaultX;
+                                                    Yaxis = defaultY;
                                                 }
                                             }
+
+                                           
                                             signer = new PdfSigner(reader, fileStream, stampProp.UseAppendMode());
                                         }
                                         PdfSignatureAppearance appearance = signer.GetSignatureAppearance()
@@ -1393,22 +1810,10 @@ namespace SignService
                                         imageData = ImageDataFactory.Create(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalSignWT.png");
                                     }
 
-                                    string[] SubjectSplit = cert1.Subject.Split(',');
-                                    string StrName = "";
-                                    string StrICNo = "";
-                                    string StrRank = "";
-                                    for (int i = 0; i < SubjectSplit.Length; i++)
-                                    {
-                                        if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                                            StrICNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                        if (SubjectSplit[i].Contains("CN="))
-                                            StrName = SubjectSplit[i].ToString().Replace("CN=", "").Trim();
-                                        if (SubjectSplit[i].Contains("T="))
-                                            StrRank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
-                                    }
+                                    DTOSubject Subject = helper.GetSubject(cert1);
                                     inputPdfStream.Position = 0;
 
-                                    saveDigitalSignInfo.SerialNo = StrICNo;
+                                    saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
 
                                     iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(inputPdfStream));
                                     SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
@@ -1416,31 +1821,73 @@ namespace SignService
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                     String StrSignature = "";
                                     if (CustomText != "")
-                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
                                     else
-                                        StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                                        StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
 
                                     try
                                     {
                                         HelperCert helperCert = new HelperCert();
                                         var getXYaxis = helperCert.GetSignatureCordinate(pathss);
-                                        if (getXYaxis != null)
+
+                                        if (Xaxis == 0 && Yaxis == 0)
                                         {
-                                            if (sigNames.Count % 2 == 0)
+                                            // Default position for very first signature
+                                            int defaultX = 100;
+                                            int defaultY = 50;
+
+                                            // Signature rectangle = 180 x 50
+                                            int horizontalGap = 20;
+                                            int verticalGap = 10;
+
+                                            int signatureWidth = 180;
+                                            int signatureHeight = 50;
+
+                                            if (getXYaxis != null && getXYaxis.Count > 0)
                                             {
-                                                Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
-                                                Xaxis = getXYaxis[0].XCoordinate;
+                                                // First signature determines first column X
+                                                int firstColumnX = getXYaxis[0].XCoordinate;
+
+                                                // Last existing signature
+                                                var lastSignature = getXYaxis[getXYaxis.Count - 1];
+
+                                                int lastX = lastSignature.XCoordinate;
+                                                int lastY = lastSignature.YCoordinate;
+
+                                                // If existing signature count is ODD,
+                                                // next signature goes in second column, same row.
+                                                if (getXYaxis.Count % 2 != 0)
+                                                {
+                                                    Xaxis = firstColumnX + signatureWidth + horizontalGap;
+                                                    Yaxis = lastY;
+                                                }
+                                                else
+                                                {
+                                                    // Two signatures already completed in current row.
+                                                    // Start first column of NEXT row.
+
+                                                    Xaxis = firstColumnX;
+
+                                                    // Bottom -> Top
+                                                    Yaxis = lastY + signatureHeight + verticalGap;
+                                                }
                                             }
                                             else
                                             {
-                                                Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
-                                                Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate + 200;
-                                                if (Xaxis > 300)
-                                                {
-                                                    Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
-                                                    Xaxis = getXYaxis[0].XCoordinate;
-                                                }
+                                                // First ever signature
+                                                Xaxis = defaultX;
+                                                Yaxis = defaultY;
                                             }
+                                        }
+
+                                        if (Xaxis <= 0)
+                                        {
+                                            Xaxis = 100;
+                                        }
+
+                                        if (Yaxis <= 0)
+                                        {
+                                            Yaxis = 100;
                                         }
 
                                         PdfSigner signer = new PdfSigner(reader, ms, new StampingProperties());
@@ -1500,7 +1947,7 @@ namespace SignService
 
 
 
-        public string SignHash(string message)
+        public async Task<string> SignHash(string message)
         {
             string status = null;
             if (message == null)
@@ -1509,28 +1956,9 @@ namespace SignService
             }
             try
             {
-                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                X509Certificate2Collection fcollection = new X509Certificate2Collection();
-                store.Open(OpenFlags.OpenExistingOnly);
 
-                foreach (X509Certificate2 cert in store.Certificates)
-                {
-                    try
-                    {
-                        if (!(cert.Subject.Contains("localhost") || cert.Subject.Contains("DESKTOP")))
-                        {
-                            if (cert.PrivateKey is RSACryptoServiceProvider rsaProvider && rsaProvider.CspKeyContainerInfo.HardwareDevice)
-                            {
-                                fcollection.Add(cert);
-                            }
-                        }
-                    }
-                    catch (CryptographicException)
-                    {
+                X509Certificate2Collection fcollection = await helper.GetCertificates();
 
-                    }
-                }
-                store.Close();
 
                 if (fcollection.Count == 0)
                 {
@@ -1713,22 +2141,9 @@ namespace SignService
                         X509Certificate2 certificate = new X509Certificate2(certBytes);
                         certificates.Add(certificate);
 
-                        var subdata = certificate.Subject.Split(',');
+                        DTOSubject Subject = helper.GetSubject(certificate);
 
-                        string StrName = "";
-                        string StrICNo = "";
-                        string StrRank = "";
-                        for (int i = 0; i < subdata.Length; i++)
-                        {
-                            if (subdata[i].Contains("SERIALNUMBER="))
-                                StrICNo = subdata[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                            if (subdata[i].Contains("CN="))
-                                StrName = subdata[i].ToString().Replace("CN=", "").Trim();
-                            if (subdata[i].Contains("T="))
-                                StrRank = subdata[i].ToString().Replace("T=", "").Trim();
-                        }
-
-                        ret.SignatureBy = StrICNo + " (" + StrName + ") ";
+                        ret.SignatureBy = Subject.SerialNumber + " (" + Subject.Name + ") ";
 
 
                     }
@@ -1826,7 +2241,7 @@ namespace SignService
                 {
                     var TokenDetails = new TokenDetails
                     {
-                        API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/GetPublicKey",
+                        
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Token not detected. Please insert the IACA token and try again !"
@@ -1848,14 +2263,7 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
 
-                    string[] SubjectSplit = cert1.Subject.Split(',');
-
-                    string PersNo = "";
-                    for (int i = 0; i < SubjectSplit.Length; i++)
-                    {
-                        if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                            PersNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                    }
+                    DTOSubject Subject = helper.GetSubject(cert1);
 
                     bool TokenValidity = false;
                     string Remark = "";
@@ -1872,14 +2280,14 @@ namespace SignService
                     }
 
 
-                    if (!string.IsNullOrEmpty(PersNo))
+                    if (!string.IsNullOrEmpty(Subject.SerialNumber))
                     {
                         RSA rsa = cert1.GetRSAPublicKey();
                         string xmlPublicKey = rsa.ToXmlString(false);
                         var TokenDetails = new TokenDetails
                         {
 
-                            API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/GetPublicKey",
+                            
                             CRL_OCSPCheck = false,
                             subject = cert1.Subject,
                             issuer = null,
@@ -1907,7 +2315,7 @@ namespace SignService
 
                 var TokenDetails = new TokenDetails
                 {
-                    API = "https://dgisapp.army.mil:55102/Temporary_Listen_Addresses/FetchUniqueTokenDetails",
+                    
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString()

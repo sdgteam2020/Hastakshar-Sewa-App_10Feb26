@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using MyApp;
 using Newtonsoft.Json;
 using SignService;
+using SignService.DTOs;
 using SignService.Helpers;
 using System;
 using System.Collections.Generic;
@@ -76,27 +77,7 @@ namespace DGISApp
         }
          
 
-        public async Task<bool> IsConnectedToInternet()
-        {
-
-            if (ChkCrl.IsChecked == true)
-            {
-
-                var hasInternetTask = await helper.HasInternetConnectionAsyncTest();
-                if (hasInternetTask == true)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
+     
 
         private void DropList_DragEnter(object sender, DragEventArgs e)
         {
@@ -990,20 +971,9 @@ namespace DGISApp
                                             }
 
 
-                                            string[] SubjectSplit = cert1.Subject.Split(',');
-                                            string StrName = "";
-                                            string StrICNo = "";
-                                            string StrRank = "";
-                                            for (int i = 0; i < SubjectSplit.Length; i++)
-                                            {
-                                                if (SubjectSplit[i].Contains("SERIALNUMBER="))
-                                                    StrICNo = SubjectSplit[i].ToString().Replace("SERIALNUMBER=", "").Trim();
-                                                if (SubjectSplit[i].Contains("CN="))
-                                                    StrName = SubjectSplit[i].ToString().Replace("CN=", "").Trim();
-                                                if (SubjectSplit[i].Contains("T="))
-                                                    StrRank = SubjectSplit[i].ToString().Replace("T=", "").Trim();
-                                            } 
-                                            saveDigitalSignInfo.SerialNo = StrICNo; 
+                                            DTOSubject Subject = helper.GetSubject(cert1);
+
+                                            saveDigitalSignInfo.SerialNo = Subject.SerialNumber; 
                                             iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(filename));
                                             SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
                                             IList<string> sigNames = signatureUtil.GetSignatureNames();
@@ -1018,11 +988,11 @@ namespace DGISApp
                                             String StrSignature = "";
                                             if (StrRemark != "")
                                             {
-                                                StrSignature = StrRemark + "\n\n Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                                StrSignature = StrRemark + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
                                             }
                                             else
                                             {
-                                                StrSignature = "Digitally Signed by \n " + StrRank + " " + StrName + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                                StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
                                             }
 
                                             if (custom == false)
@@ -1087,25 +1057,56 @@ namespace DGISApp
                                                     var getXYaxis = helperCert.GetSignatureCordinate(downloadfilePath + "\\" + fileName + ".pdf");
                                                     int Xaxis = 0;
                                                     int Yaxis = 0;
-                                                    if (getXYaxis != null)
+                                                    if (Xaxis == 0 && Yaxis == 0)
                                                     {
-                                                        if (sigNames.Count % 2 == 0)
+                                                        // Default position for very first signature
+                                                        int defaultX = 100;
+                                                        int defaultY = 50;
+
+                                                        // Signature rectangle = 180 x 50
+                                                        int horizontalGap = 20;
+                                                        int verticalGap = 10;
+
+                                                        int signatureWidth = 180;
+                                                        int signatureHeight = 50;
+
+                                                        if (getXYaxis != null && getXYaxis.Count > 0)
                                                         {
-                                                            Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
-                                                            Xaxis = getXYaxis[0].XCoordinate;
+                                                            // First signature determines first column X
+                                                            int firstColumnX = getXYaxis[0].XCoordinate;
+
+                                                            // Last existing signature
+                                                            var lastSignature = getXYaxis[getXYaxis.Count - 1];
+
+                                                            int lastX = lastSignature.XCoordinate;
+                                                            int lastY = lastSignature.YCoordinate;
+
+                                                            // If existing signature count is ODD,
+                                                            // next signature goes in second column, same row.
+                                                            if (getXYaxis.Count % 2 != 0)
+                                                            {
+                                                                Xaxis = firstColumnX + signatureWidth + horizontalGap;
+                                                                Yaxis = lastY;
+                                                            }
+                                                            else
+                                                            {
+                                                                // Two signatures already completed in current row.
+                                                                // Start first column of NEXT row.
+
+                                                                Xaxis = firstColumnX;
+
+                                                                // Bottom -> Top
+                                                                Yaxis = lastY + signatureHeight + verticalGap;
+                                                            }
                                                         }
                                                         else
                                                         {
-                                                            Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate;
-                                                            Xaxis = getXYaxis[sigNames.Count - 1].XCoordinate + 200;
-                                                            if (Xaxis > 400)
-                                                            {
-                                                                Yaxis = getXYaxis[sigNames.Count - 1].YCoordinate + 50;
-                                                                Xaxis = 15; 
-                                                            }
+                                                            // First ever signature
+                                                            Xaxis = defaultX;
+                                                            Yaxis = defaultY;
                                                         }
                                                     }
-                                                   
+
                                                     iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(Xaxis, Yaxis, 180, 50);
 
 
@@ -1733,7 +1734,7 @@ namespace DGISApp
                     saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
-                    saveDigitalSignInfo.SerialNo = cert.Subject.Split(',')[1].Replace("SERIALNUMBER=", "").Trim();
+                    saveDigitalSignInfo.SerialNo = helper.GetSubject(cert).SerialNumber;
                     saveDigitalSignInfo.DocumentName = Path.GetFileName(sigPath);
                 }
                 else

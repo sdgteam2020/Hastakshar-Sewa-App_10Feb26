@@ -12,8 +12,21 @@ using Org.BouncyCastle.X509;
 
 namespace ValidateCertificate
 {
-    public enum CertificateStatus { Good = 0, Revoked = 1, Unknown = 2, NotFound = 3 };
+   
+    public enum CertificateStatus
+    {
+        Good = 0,
+        Revoked = 1,
+        Unknown = 2,
+        NotFound = 3,
 
+        MalformedRequest = 4,
+        InternalError = 5,
+        TryLater = 6,
+        SignatureRequired = 7,
+        Unauthorized = 8,
+        InvalidResponse = 9
+    }
     class OcspClient
     {
 
@@ -154,37 +167,90 @@ namespace ValidateCertificate
             try
             {
                 OcspResp r = new OcspResp(binaryResp);
+
                 CertificateStatus cStatus = CertificateStatus.Unknown;
 
                 switch (r.Status)
                 {
                     case OcspRespStatus.Successful:
-                        BasicOcspResp or = (BasicOcspResp)r.GetResponseObject();
-
-                        if (or.Responses.Length == 1)
                         {
-                            SingleResp resp = or.Responses[0];
+                            BasicOcspResp or = r.GetResponseObject() as BasicOcspResp;
 
-                            ValidateCertificateId(issuerCert, eeCert, resp.GetCertID());
+                            if (or == null)
+                            {
+                                cStatus = CertificateStatus.InvalidResponse;
+                                break;
+                            }
 
-                            Object certificateStatus = resp.GetCertStatus();
+                            if (or.Responses == null || or.Responses.Length == 0)
+                            {
+                                cStatus = CertificateStatus.NotFound;
+                                break;
+                            }
 
-                            if (certificateStatus == Org.BouncyCastle.Ocsp.CertificateStatus.Good)
+                            if (or.Responses.Length == 1)
                             {
-                                cStatus = CertificateStatus.Good;
+                                SingleResp resp = or.Responses[0];
+
+                                ValidateCertificateId(
+                                    issuerCert,
+                                    eeCert,
+                                    resp.GetCertID()
+                                );
+
+                                object certificateStatus = resp.GetCertStatus();
+
+                                if (certificateStatus ==
+                                    Org.BouncyCastle.Ocsp.CertificateStatus.Good)
+                                {
+                                    cStatus = CertificateStatus.Good;
+                                }
+                                else if (certificateStatus is
+                                         Org.BouncyCastle.Ocsp.RevokedStatus)
+                                {
+                                    cStatus = CertificateStatus.Revoked;
+                                }
+                                else if (certificateStatus is
+                                         Org.BouncyCastle.Ocsp.UnknownStatus)
+                                {
+                                    cStatus = CertificateStatus.Unknown;
+                                }
+                                else
+                                {
+                                    cStatus = CertificateStatus.Unknown;
+                                }
                             }
-                            else if (certificateStatus is Org.BouncyCastle.Ocsp.RevokedStatus)
+                            else
                             {
-                                cStatus = CertificateStatus.Revoked;
+                                cStatus = CertificateStatus.InvalidResponse;
                             }
-                            else if (certificateStatus is Org.BouncyCastle.Ocsp.UnknownStatus)
-                            {
-                                cStatus = CertificateStatus.Unknown;
-                            }
+
+                            break;
                         }
+
+                    case OcspRespStatus.MalformedRequest:
+                        cStatus = CertificateStatus.MalformedRequest;
                         break;
+
+                    case OcspRespStatus.InternalError:
+                        cStatus = CertificateStatus.InternalError;
+                        break;
+
+                    case OcspRespStatus.TryLater:
+                        cStatus = CertificateStatus.TryLater;
+                        break;
+
+                    case OcspRespStatus.SigRequired:
+                        cStatus = CertificateStatus.SignatureRequired;
+                        break;
+
+                    case OcspRespStatus.Unauthorized:
+                        cStatus = CertificateStatus.Unauthorized;
+                        break;
+
                     default:
-                        throw new Exception("Unknow status '" + r.Status + "'.");
+                        cStatus = CertificateStatus.InvalidResponse;
+                        break;
                 }
 
                 return cStatus;

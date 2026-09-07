@@ -148,6 +148,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="global.asax" />
+    <Compile Include="DTOs\DTOSubject.cs" />
+    <Compile Include="DTOs\TokenDetailsCrl.cs" />
+    <Compile Include="DTOs\TokenDetailsOcsp.cs" />
     <Compile Include="ErrorLog.cs" />
     <Compile Include="Helpers\AesGcm256.cs" />
     <Compile Include="Helpers\helper.cs" />
