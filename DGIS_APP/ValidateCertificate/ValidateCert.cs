@@ -47,7 +47,7 @@ namespace ValidateCertificate
                 // Check for certificate expiration asynchronously
                 bool isNotExpired = await Task.Run(() => DateTime.Now <= certificate.NotAfter);
 
-                //if (!isNotExpired) { throw new Exception("Token is expired. Pl contact issuer!"); }
+                if (!isNotExpired) { throw new Exception("Token is expired. Pl contact issuer!"); }
 
 
                 var ocspTask = IsCertificateOCSPAsync(certificate);
