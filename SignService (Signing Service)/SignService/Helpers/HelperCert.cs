@@ -49,19 +49,19 @@ namespace SignService.Helpers
         }
         public async Task<ResponseStatus> CheckSomethingAsync()
         {
-            ResponseStatus responseStatus=new ResponseStatus();
+            ResponseStatus responseStatus = new ResponseStatus();
             X509Certificate2 cert1 = null;
             X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             X509Certificate2Collection fcollection = new X509Certificate2Collection();
 
             try
             {
-                await helper.GetCertificates();
+                fcollection = await helper.GetCertificates();
                 if (fcollection.Count == 0)
                 {
                     responseStatus.Status = "0";
                     responseStatus.Remark = "Token not detected. Please insert the IACA token and try again !";
-                    return responseStatus; 
+                    return responseStatus;
                 }
                 else
                 {
@@ -91,16 +91,16 @@ namespace SignService.Helpers
                                     return responseStatus;
                                 }
                                 else
-                                { 
-                                     responseStatus.Status = "-1";
-                                     responseStatus.Remark = "The certificate on the inserted token has expired. Please use a token with a valid certificate and try again !";
-                                  
+                                {
+                                    responseStatus.Status = "-1";
+                                    responseStatus.Remark = "The certificate on the inserted token has expired. Please use a token with a valid certificate and try again !";
+
                                     return responseStatus;
-                                    
+
                                 }
 
-                                
-                                
+
+
                             }
                         }
                         catch
@@ -120,22 +120,22 @@ namespace SignService.Helpers
                     CertThumbPrint = "";
                     responseStatus.Status = "0";
                     responseStatus.Remark = "Pl insert valid Token !";
-                    return responseStatus; 
+                    return responseStatus;
                 }
                 else
                 {
                     CertThumbPrint = "";
                     responseStatus.Status = "-1";
                     responseStatus.Remark = "Try again or report to ASDC. Reason1:- " + ex.Message;
-                    return responseStatus; 
-                   
+                    return responseStatus;
+
                 }
-             
+
             }
             responseStatus.Status = "0";
             responseStatus.Remark = "Try again";
-            return responseStatus; 
-        } 
+            return responseStatus;
+        }
 
 
     }

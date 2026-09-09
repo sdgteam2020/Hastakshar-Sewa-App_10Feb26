@@ -13,6 +13,7 @@ using SignService.Helpers;
 using SignService.HttpClients;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -36,7 +37,7 @@ namespace SignService
     public class Service1 : IService1
     {
         public static string PrevThumbNail = "";
-        bool IsLocalToken = false;
+        bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
         public string GetData(string element)
         {
             X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
@@ -221,7 +222,7 @@ namespace SignService
 
                     bool TokenValidity = false;
                     string Remark = "";
-                    if (DateTime.Now <= cert1.NotAfter)
+                    if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                     {
                         TokenValidity = true;
                         Remark = "Personal No of Unique Cert is fetched for the inserted Token";
@@ -401,7 +402,7 @@ namespace SignService
                         bool TokenExpity = false;
                         string StatusMsg = "200";
 
-                        if (DateTime.Now > cert1.NotAfter)
+                        if (DateTime.Now > cert1.NotAfter && !IsLocalToken)  
                         {
                             TokenExpity = true;
                             StatusMsg = "201";
@@ -494,7 +495,7 @@ namespace SignService
                     }
 
                     bool TokenValidity = false;
-                    if (DateTime.Now <= cert1.NotAfter)
+                    if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                     {
                         TokenValidity = true;
                     }
@@ -552,7 +553,7 @@ namespace SignService
                     foreach (X509Certificate2 cert1 in fcollection)
                     {
                         bool TokenValidity = false;
-                        if (DateTime.Now <= cert1.NotAfter)
+                        if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                         {
                             TokenValidity = true;
                         }
@@ -1431,7 +1432,7 @@ namespace SignService
 
                 X509Certificate2 cert1 = certCollection[0];
 
-                if (DateTime.Now > cert1.NotAfter)
+                if (DateTime.Now > cert1.NotAfter && !IsLocalToken)
                 {
                     ResponseMsg.Message = "Token Expired !";
                     ResponseMsg.Valid = false;
@@ -1747,7 +1748,7 @@ namespace SignService
 
                 X509Certificate2 cert1 = certCollection[0];
 
-                if (DateTime.Now > cert1.NotAfter)
+                if (DateTime.Now > cert1.NotAfter && !IsLocalToken)
                 {
                     ResponseMsg.Message = "Token Expired !";
                     ResponseMsg.Valid = false;
