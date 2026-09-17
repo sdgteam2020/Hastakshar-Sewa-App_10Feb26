@@ -7,10 +7,10 @@ namespace SignService.HttpClients
 {
     public class ApiClient
     {
-        //private static readonly string _baseUrl = "https://localhost:7018/";
+        private static readonly string _baseUrl = "https://localhost:7018/";
         //private static readonly string _baseUrl = "https://192.168.10.41";
         //private static readonly string _baseUrl = "https://192.168.10.251";
-        private static readonly string _baseUrl = "https://hastaksharsewa.army.mil";
+        //private static readonly string _baseUrl = "https://hastaksharsewa.army.mil";
         private static readonly DeviceJwtHttpClient _client = new DeviceJwtHttpClient(_baseUrl);
 
         public async Task<List<XmlDataForPublicKey>> PostRequestAsync(string endpoint, object postData)
@@ -22,8 +22,9 @@ namespace SignService.HttpClients
                 return await _client.PostJsonAsync<List<XmlDataForPublicKey>>(
                     endpoint,
                     postData,
-                    creds.DeviceId,
-                    creds.DeviceKey
+                    creds.DomainId,
+                    creds.IPAddress,
+                    creds.ClientKey
                 );
             }
             catch (Exception ex)
@@ -43,8 +44,9 @@ namespace SignService.HttpClients
                 return await _client.PostJsonAsync<T>(
                     endpoint,
                     postData,
-                    creds.DeviceId,
-                    creds.DeviceKey
+                    creds.DomainId,
+                    creds.IPAddress,
+                    creds.ClientKey
                 );
             }
             catch (Exception ex)

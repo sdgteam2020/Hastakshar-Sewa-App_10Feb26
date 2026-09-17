@@ -11,11 +11,11 @@ namespace SignService.Security
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                          "DGIS", "device.dat");  
 
-        public static void Save(string deviceId, string deviceKey)
+        public static void Save(string domainId, string ipAddress, string clientKey)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
 
-            string plain = $"{deviceId}\n{deviceKey}";
+            string plain = $"{domainId}\n{ipAddress}\n{clientKey}";
             byte[] bytes = Encoding.UTF8.GetBytes(plain);
 
           
@@ -24,7 +24,7 @@ namespace SignService.Security
             File.WriteAllBytes(FilePath, encrypted);
         }
 
-        public static (string DeviceId, string DeviceKey)? Load()
+        public static (string DomainId, string IPAddress, string ClientKey)? Load()
         {
             if (!File.Exists(FilePath))
                 return null;
@@ -35,25 +35,36 @@ namespace SignService.Security
             byte[] bytes = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.LocalMachine);
 
             string plain = Encoding.UTF8.GetString(bytes);
-            var parts = plain.Split(new[] { '\n' }, 2);
+            var parts = plain.Split(new[] { '\n' }, 3);
 
-            if (parts.Length < 2)
+            if (parts.Length < 3)
                 return null;
 
-            return (parts[0].Trim(), parts[1].Trim());
+            return (parts[0].Trim(), parts[1].Trim(), parts.Length > 2 ? parts[2]?.Trim() : null);
         }
 
-        public static (string DeviceId, string DeviceKey) GetOrCreate()
+        public static (string DomainId,string IPAddress, string ClientKey) GetOrCreate()
         {
             var existing = Load();
-            if (existing != null)
+            if (existing != null
+                && (string.IsNullOrEmpty(existing.Value.DomainId)
+                || string.IsNullOrEmpty(existing.Value.IPAddress)
+                || string.IsNullOrEmpty(existing.Value.ClientKey)))
+            {
+                Delete();
+                string domainId = Environment.MachineName;
+                string ipAddress = Service1.GetClientIpAddressSafe();
+                string clientKey = Guid.NewGuid().ToString("N");
+
+                Save(domainId, ipAddress, clientKey);
+                return (domainId, ipAddress, clientKey);
+            }
+            else
+            {
                 return existing.Value;
+            }
 
-            string deviceId = Environment.MachineName;
-            string deviceKey = Guid.NewGuid().ToString("N"); 
-
-            Save(deviceId, deviceKey);
-            return (deviceId, deviceKey);
+           
         }
 
         public static bool Exists() => File.Exists(FilePath);

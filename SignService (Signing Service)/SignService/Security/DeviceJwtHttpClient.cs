@@ -35,10 +35,10 @@ namespace SignService.Security
         }
 
    
-        public async Task EnsureTokenAsync(string deviceId, string deviceKey, CancellationToken ct = default)
+        public async Task EnsureTokenAsync(string domainId, string ipAddress, string clientKey, CancellationToken ct = default)
         { 
             if (_tokenFailedPermanently)
-                throw new Exception("Device token request previously failed (403). Skipping retry.");
+                throw new Exception("Client token request previously failed (403). Skipping retry.");
              
             if (DateTime.UtcNow < _tokenFailUntilUtc)
                 throw new Exception("Token request is in cooldown. Try again later.");
@@ -54,7 +54,7 @@ namespace SignService.Security
 
                 try
                 {
-                    var token = await RequestDeviceTokenAsync(deviceId, deviceKey, ct).ConfigureAwait(false);
+                    var token = await RequestDeviceTokenAsync(domainId, ipAddress, clientKey, ct).ConfigureAwait(false);
 
                     _accessToken = token.AccessToken;
                     _expiresUtc = DateTime.UtcNow.AddSeconds(token.ExpiresInSeconds);
@@ -85,11 +85,12 @@ namespace SignService.Security
         }
 
         private async Task<TokenResponse> RequestDeviceTokenAsync(
-                string deviceId,
-                string deviceKey,
+                string domainId,
+                string ipAddress,
+                string clientKey,
                 CancellationToken ct)
         {
-            var payload = new { deviceId, deviceKey };  
+            var payload = new { domainId, ipAddress, clientKey };  
             var json = JsonConvert.SerializeObject(payload);
 
              var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -156,15 +157,15 @@ namespace SignService.Security
             }
         }
          
-        public async Task<T> PostJsonAsync<T>(string endpoint, object postData, string deviceId, string deviceKey, CancellationToken ct = default)
+        public async Task<T> PostJsonAsync<T>(string endpoint, object postData, string domainId, string ipAddress, string clientKey, CancellationToken ct = default)
         {
-            await EnsureTokenAsync(deviceId, deviceKey, ct);
+            await EnsureTokenAsync(domainId, ipAddress, clientKey, ct);
              
             var result = await PostOnceAsync<T>(endpoint, postData, ct);
              
             if (result.isUnauthorized)
             {
-                await ForceRefreshTokenAsync(deviceId, deviceKey, ct);
+                await ForceRefreshTokenAsync(domainId, ipAddress, clientKey, ct);
                 result = await PostOnceAsync<T>(endpoint, postData, ct);
             }
 
@@ -174,7 +175,7 @@ namespace SignService.Security
             return result.value;
         }
 
-        private async Task ForceRefreshTokenAsync(string deviceId, string deviceKey, CancellationToken ct)
+        private async Task ForceRefreshTokenAsync(string domainId, string ipAddress, string clientKey, CancellationToken ct)
         {
             await _tokenLock.WaitAsync(ct);
             try
@@ -188,7 +189,7 @@ namespace SignService.Security
                 _tokenLock.Release();
             }
 
-            await EnsureTokenAsync(deviceId, deviceKey, ct);
+            await EnsureTokenAsync(domainId, ipAddress, clientKey, ct);
         }
 
         private async Task<(bool isSuccess, bool isUnauthorized, T value, string errorMessage)> PostOnceAsync<T>(string endpoint, object postData, CancellationToken ct)

@@ -46,7 +46,7 @@ namespace SignService
             try
             {
                 if (!isLocalError && ex != null)
-                    SendLogToApi(ip, ex.Message, ex.StackTrace, error);
+                    SendLogToApi(ip, ex, error);
             }
             catch
             {
@@ -57,22 +57,21 @@ namespace SignService
         private const int TimeoutSeconds = 5;
 
 
-        public static void SendLogToApi(string ip, string errorMessage, string stackTrace, string extra)
+        public static void SendLogToApi(string ip, dynamic ex, string extra)
         {
-            _ = Task.Run(() => SendLogToApiAsync(ip, errorMessage, stackTrace, extra, CancellationToken.None));
+            _ = Task.Run(() => SendLogToApiAsync(ip, ex, extra, CancellationToken.None));
         }
 
 
         public static async Task SendLogToApiAsync(
             string ip,
-            string errorMessage,
-            string stackTrace,
+            dynamic ex1,
             string extra,
             CancellationToken ct)
         {
             try
             {
-                var payload = BuildPayload(ip, errorMessage, stackTrace, extra);
+                var payload = BuildPayload(ip, ex1, extra);
                 await new ApiClient().PostRequestAsync<string>(
                     "api/ClientLogs/SaveClientLogs",
                     payload
@@ -84,24 +83,25 @@ namespace SignService
             }
         }
 
-        private static object BuildPayload(string ip, string errMsg, string stackTrace, string extra)
+        private static object BuildPayload(string ip, dynamic ex, string extra)
         {
             string appName = "HastaksharSewa";
             string appVersion = GetAppVersion();
+            string errMsg = string.Empty;
 
+            errMsg += $"\n Exception: {ex?.Message ?? "No exception message"}\n Stack Trace: {ex?.StackTrace ?? "No stack trace"} \n Extra: {extra}";
+            errMsg += $"\n Operating System: {Environment.OSVersion}";
+            errMsg += $"\n 64-bit OS: {Environment.Is64BitOperatingSystem}";
+            errMsg += $"\n Machine Name: {Environment.MachineName}";
+            errMsg += $"\n System Directory: {Environment.SystemDirectory}";
+            errMsg += $"\n User Name: {Environment.UserName}";
             return new
             {
                 ipAddress = ip,
                 machineName = Environment.MachineName,
-                userName = Environment.UserName,
-                operatingSystem = Environment.OSVersion.ToString(),
-                is64Bit = Environment.Is64BitOperatingSystem,
-                systemDirectory = Environment.SystemDirectory,
-                appName,
-                appVersion,
                 errorMessage = errMsg,
-                stackTrace,
-                extra = string.IsNullOrWhiteSpace(extra) ? null : extra
+                appName,
+                appVersion                
             };
         }
 
