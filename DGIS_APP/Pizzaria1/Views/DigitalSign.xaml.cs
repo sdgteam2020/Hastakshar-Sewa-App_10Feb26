@@ -54,6 +54,9 @@ namespace DGISApp
         string CertThumbPrint = "";
         string UrlApi = ConfigurationManager.AppSettings["UrlApi"].ToString();
         bool IsLocalToken= bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
+        bool ocspStatus = false;
+        string tokenStatus = "";
+        Service1 sv = new Service1();
         public DigitalSign()
         {
             InitializeComponent();
@@ -63,21 +66,53 @@ namespace DGISApp
         
         private async void LoadDataAsync()
         {
+            ChkOcsp.IsChecked = false;
+            ChkOcsp.Foreground = Brushes.Black;
             HelperCert helperCert = new HelperCert();
             var result = await helperCert.CheckSomethingAsync();
+            tokenStatus = result.Status;
             if (result.Status == "0")
                 MyMessageBox.ShowDialog(result.Remark);
             else if (result.Status == "-1")
                 MyMessageBox.ShowDialog(result.Remark);
             else if (result.Status == "1")
+            {
                 CertThumbPrint = result.Remark;
+                 CheckOcspDetails();
+            }
             else if (result.Status == "2")
                 CertThumbPrint = result.Remark;
 
         }
-         
+        private async void CheckOcspDetails()
+        {
+            var res = await sv.FetchTokenOCSPDetailsAsync(CertThumbPrint);
+            ocspStatus = res[0].OCSPCheck;
+            if (ocspStatus)
+            {
+                ChkOcsp.Background = Brushes.Green;
+                ChkOcsp.Foreground = Brushes.Green;
+            }
+            else
+            {
+                ChkOcsp.Background = Brushes.Red;
+                ChkOcsp.Foreground = Brushes.Red;
+            }
+            ChkOcsp.IsChecked = true;
+        }
+        private async void ChkOcsp_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChkOcsp.IsChecked == true)
+            {
+                LoadDataAsync();
+               // CheckOcspDetails();
+            }
+            else
+            {
+                ChkOcsp.Foreground = Brushes.Black;
+            }
+        }
 
-     
 
         private void DropList_DragEnter(object sender, DragEventArgs e)
         {
@@ -89,7 +124,16 @@ namespace DGISApp
         {
             try
             {
-                string email = textRemark.Text;
+                //Check Ocsp
+                if (ChkOcsp.IsChecked == true && ocspStatus==false)
+                {
+                    MyMessageBox.ShowDialog(
+                      "OCSP verification failed.\n\n" +
+                      "Please uncheck the OCSP option and try the digital signature again."
+   );
+                    return;
+                }
+                    string email = textRemark.Text;
                 string pattern = @"^[a-zA-Z0-9@, ._\-]+$";
                 if (!Regex.IsMatch(email, pattern) && textRemark.Text != "")
                 {
@@ -99,20 +143,18 @@ namespace DGISApp
                     return;
                 }
 
+                //HelperCert helperCert = new HelperCert();
+                //var result = await helperCert.CheckSomethingAsync();
+                //if (result.Status == "0")
+                //    MyMessageBox.ShowDialog(result.Remark);
+                //else if (result.Status == "-1")
+                //    MyMessageBox.ShowDialog(result.Remark);
+                //else if (result.Status == "1")
+                //    CertThumbPrint = result.Remark;
+                //else if (result.Status == "2")
+                //    CertThumbPrint = result.Remark;
 
-
-                HelperCert helperCert = new HelperCert();
-                var result = await helperCert.CheckSomethingAsync();
-                if (result.Status == "0")
-                    MyMessageBox.ShowDialog(result.Remark);
-                else if (result.Status == "-1")
-                    MyMessageBox.ShowDialog(result.Remark);
-                else if (result.Status == "1")
-                    CertThumbPrint = result.Remark;
-                else if (result.Status == "2")
-                    CertThumbPrint = result.Remark;
-
-                if (result.Status == "1")
+                if (tokenStatus == "1")
                 {
                     if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
                     {
@@ -170,6 +212,7 @@ namespace DGISApp
         {
             try
             {
+                bool CheckOcsp = false;
                 int Pagenumber = 1;
 
                 if (this.CPage.IsChecked == true)
@@ -212,9 +255,17 @@ namespace DGISApp
                 string SendJaon = Newtonsoft.Json.JsonConvert.SerializeObject(senddataList.ToArray());
                 var content = new StringContent(SendJaon, Encoding.UTF8, "application/json");
                 var client = new HttpClient();
-                 
+
+                if (ChkOcsp.IsChecked == true)
+                {
+                    CheckOcsp = true;
+                }
+                else
+                {
+                    CheckOcsp = false;
+                }
                 IService1 service1 = new Service1();
-                var apiResponse = await service1.DigitalSignBulkAsync(senddataList);
+                var apiResponse = await service1.DigitalSignBulkAsync(senddataList, CheckOcsp);
 
                 if (apiResponse != null)
                 {
@@ -314,6 +365,7 @@ namespace DGISApp
         private void onlineDigitalSig(string[] files, int x = 0, int y = 0, int pageNumber = 0)
         {
             bool CheckCrl = false;
+            bool CheckOcsp = false;
             String NewFileName = "";
            
             int pagecount = 0;
@@ -326,7 +378,15 @@ namespace DGISApp
                 nextfile:
                     string fileforloop = filename;
                     FileInfo fi = new FileInfo(fileforloop);
-                    if (fi.Length <= 524288000)
+                    if (fi.Length > 0)
+                    {
+                        MyMessageBox.ShowDialog("Invalid File! \n\nFile is blank or Tempered.");
+                        NewFileName = "";
+                        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                        return;
+                    }
+                    else if (fi.Length <= 524288000)
                     {
                         if (NewFileName != "")
                         {
@@ -374,17 +434,25 @@ namespace DGISApp
                                 ConfigurationManager.AppSettings["LastSelectedLocation"] = Path.GetDirectoryName(filename);
                             }
 
-                            if (ChkCrl.IsChecked == true)
+                            //if (ChkCrl.IsChecked == true)
+                            //{
+                            //    CheckCrl = true;
+                            //}
+                            if (ChkOcsp.IsChecked == true)
                             {
-                                CheckCrl = true;
+                                CheckOcsp = true;
+                            }
+                            else
+                            {
+                                CheckOcsp = false;
                             }
 
-                            fileName = Path.GetFileNameWithoutExtension(fileforloop);
+                                fileName = Path.GetFileNameWithoutExtension(fileforloop);
 
                             BusyBar.IsBusy = true;
 
                             cancellationTokenSource = new CancellationTokenSource();
-                            new Thread(() => SignDocument(DownloadPath, fileforloop, IntPrintPageNo, x, y, custom, CheckCrl, cancellationTokenSource.Token)).Start();
+                            new Thread(() => SignDocument(DownloadPath, fileforloop, IntPrintPageNo, x, y, custom, CheckOcsp, cancellationTokenSource.Token)).Start();
                            
 
 
@@ -457,7 +525,15 @@ namespace DGISApp
         private async void btnOpenFiles_Click(object sender, RoutedEventArgs e)
         {
             listitem.Items.Clear();
-
+            //Check 
+            if (ChkOcsp.IsChecked == true && ocspStatus == false)
+            {
+                MyMessageBox.ShowDialog(
+                  "OCSP verification failed.\n\n" +
+                  "Please uncheck the OCSP option and try the digital signature again."
+);
+                return;
+            }
             string email = textRemark.Text;
             string pattern = @"^[a-zA-Z0-9@, ._\-]+$";
             if (!Regex.IsMatch(email, pattern) && textRemark.Text != "")
@@ -470,18 +546,18 @@ namespace DGISApp
             
             try
             {
-                HelperCert helperCert = new HelperCert();
-                var result = await helperCert.CheckSomethingAsync();
-                if (result.Status == "0")
-                    MyMessageBox.ShowDialog(result.Remark);
-                else if (result.Status == "-1")
-                    MyMessageBox.ShowDialog(result.Remark);
-                else if (result.Status == "1")
-                    CertThumbPrint = result.Remark;
-                else if (result.Status == "2")
-                    CertThumbPrint = result.Remark;
+                //HelperCert helperCert = new HelperCert();
+                //var result = await helperCert.CheckSomethingAsync();
+                //if (result.Status == "0")
+                //    MyMessageBox.ShowDialog(result.Remark);
+                //else if (result.Status == "-1")
+                //    MyMessageBox.ShowDialog(result.Remark);
+                //else if (result.Status == "1")
+                //    CertThumbPrint = result.Remark;
+                //else if (result.Status == "2")
+                //    CertThumbPrint = result.Remark;
 
-                if (result.Status == "1")
+                if (tokenStatus == "1")
                 {
                     if (ChkBulkSign.IsChecked == true)
                     {
@@ -730,12 +806,12 @@ namespace DGISApp
                     else
                     {
 
-
+                        MyMessageBox.ShowDialog("Invalid File! \nThis file is blank or tempered.");
                         Card1.Width = 700;
                         pdfviewer.Visibility = Visibility.Hidden;
                         this.BusyBar.IsBusy = false;
                         this.DropList.IsEnabled = true;
-
+                        return;
                     }
                 }
                 else
@@ -773,7 +849,7 @@ namespace DGISApp
         /// Pdf signature default and custom
         /// </summary>
 
-        public async void SignDocument(string downloadfilePath, string filename, int PageNum, int X = 0, int Y = 0, Boolean custom = false, Boolean BlnCheckCrl = false, CancellationToken cancellationToken = default(CancellationToken))
+        public async void SignDocument(string downloadfilePath, string filename, int PageNum, int X = 0, int Y = 0, Boolean custom = false, Boolean checkOcspValue = false, CancellationToken cancellationToken = default(CancellationToken))
         {
             bool ValidToken = false;
             string TokenRemarks = "";
@@ -796,7 +872,7 @@ namespace DGISApp
                 this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
 
-                bool CheckCrlTick = this.Dispatcher.Invoke(new Func<bool>(() => this.ChkCrl.IsChecked == true));
+              //  bool CheckCrlTick = this.Dispatcher.Invoke(new Func<bool>(() => this.ChkCrl.IsChecked == true));
 
 
                 if (CertThumbPrint == null || CertThumbPrint == "")
@@ -817,38 +893,38 @@ namespace DGISApp
                     }
                     else
                     {
-                        bool crloscp1 = certificateData.CRL_OCSPCheck;
-                        string crlocspmsg1 = certificateData.CRL_OCSPMsg;
+                        //bool crloscp1 = certificateData.CRL_OCSPCheck;
+                        //string crlocspmsg1 = certificateData.CRL_OCSPMsg;
 
-                        if (CheckCrlTick == true)
-                        {
-                            if (crloscp1 == true && crlocspmsg1 == "Digital Cert of token cannot be verified with CA due to Network issues")
-                            {
-                                bool CloseThread1 = false;
-                                this.Dispatcher.Invoke(() =>
-                                {
-                                    if (MyMessageBox.ShowDialog("Digital Cert of token cannot be verified with CA due to Network issues. Do you want to continue ?", MyMessageBox.Buttons.Yes_No) != "1")
-                                    {
-                                        CloseThread1 = true;
-                                    }
-                                });
+                        //if (CheckCrlTick == true)
+                        //{
+                        //    if (crloscp1 == true && crlocspmsg1 == "Digital Cert of token cannot be verified with CA due to Network issues")
+                        //    {
+                        //        bool CloseThread1 = false;
+                        //        this.Dispatcher.Invoke(() =>
+                        //        {
+                        //            if (MyMessageBox.ShowDialog("Digital Cert of token cannot be verified with CA due to Network issues. Do you want to continue ?", MyMessageBox.Buttons.Yes_No) != "1")
+                        //            {
+                        //                CloseThread1 = true;
+                        //            }
+                        //        });
 
-                                if (CloseThread1 == true)
-                                {
-                                    this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Signed !")));
-                                    this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                    this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                    return;
-                                }
-                            }
-                            else if (crloscp1 == false)
-                            {
-                                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("CRL Check Failed !")));
-                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                return;
-                            }
-                        }
+                        //        if (CloseThread1 == true)
+                        //        {
+                        //            this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Signed !")));
+                        //            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                        //            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                        //            return;
+                        //        }
+                        //    }
+                        //    else if (crloscp1 == false)
+                        //    {
+                        //        this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("CRL Check Failed !")));
+                        //        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                        //        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                        //        return;
+                        //    }
+                        //}
 
                         X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
                         store.Open(OpenFlags.ReadOnly);
@@ -885,43 +961,43 @@ namespace DGISApp
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
 
-                    if (CheckCrlTick == true)
-                    {
-                        if (crloscp == true && crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
-                        {
-                            bool CloseThread = false;
-                            this.Dispatcher.Invoke(() =>
-                            {
-                                if (MyMessageBox.ShowDialog("Digital Cert of token cannot be verified with CA due to Network issues. Do you want to continue ?", MyMessageBox.Buttons.Yes_No) != "1")
-                                {
-                                    CloseThread = true;
-                                }
-                            });
+                    //if (CheckCrlTick == true)
+                    //{
+                    //    if (crloscp == true && crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
+                    //    {
+                    //        bool CloseThread = false;
+                    //        this.Dispatcher.Invoke(() =>
+                    //        {
+                    //            if (MyMessageBox.ShowDialog("Digital Cert of token cannot be verified with CA due to Network issues. Do you want to continue ?", MyMessageBox.Buttons.Yes_No) != "1")
+                    //            {
+                    //                CloseThread = true;
+                    //            }
+                    //        });
 
-                            if (CloseThread == true)
-                            {
-                                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Signed !")));
-                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                                this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                                return;
-                            }
-                        }
-                        else if (crloscp == false)
-                        {
-                            if (crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
-                                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(crlocspmsg)));
-                            else
-                                this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("CRL Check Failed !")));
-                            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
-                            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
-                            return;
-                        }
-                    }
+                    //        if (CloseThread == true)
+                    //        {
+                    //            this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("No Docu Signed !")));
+                    //            this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                    //            this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                    //            return;
+                    //        }
+                    //    }
+                    //    else if (crloscp == false)
+                    //    {
+                    //        if (crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
+                    //            this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(crlocspmsg)));
+                    //        else
+                    //            this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog("CRL Check Failed !")));
+                    //        this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
+                    //        this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+                    //        return;
+                    //    }
+                    //}
                 }
-
-
+               
                 String StrRemark = this.Dispatcher.Invoke(new Func<string>(() => this.textRemark.Text.ToString()));
-
+                DTOSubject Subject1 = helper.GetSubject(cert1);
+                String StrSignature = await helper.GetSignature(Subject1, StrRemark, cert1.Thumbprint, checkOcspValue);
                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
                 PdfReader reader = new PdfReader(filename);
                 reader.SetUnethicalReading(true);
@@ -984,16 +1060,17 @@ namespace DGISApp
                                             saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
 
                                             iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
-
-                                            String StrSignature = "";
-                                            if (StrRemark != "")
-                                            {
-                                                StrSignature = StrRemark + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
-                                            }
-                                            else
-                                            {
-                                                StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
-                                            }
+                                          
+                                            
+                                            //String StrSignature = "";
+                                            //if (StrRemark != "")
+                                            //{
+                                            //    StrSignature = StrRemark + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                            //}
+                                            //else
+                                            //{
+                                            //    StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                            //}
 
                                             if (custom == false)
                                             {
@@ -1210,6 +1287,7 @@ namespace DGISApp
                                             reader.Close();
                                             if (ErrorEncountered == false)
                                             {
+                                                this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = true));
                                                 string Result = "0";
                                                 this.Dispatcher.Invoke(() =>
                                                 {
@@ -1233,6 +1311,7 @@ namespace DGISApp
                                                     }
                                                 }
                                                 if (isAnyFileSigned) await new Service1().SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
+                                                
                                             }
                                         }
                                         catch (Exception ex)
@@ -1399,69 +1478,69 @@ namespace DGISApp
         }
 
 
-        private async void ChkCrl_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (ChkCrl.IsChecked == true)
-                {
-                    bool isConnected = await helper.HasInternetConnectionAsyncTest();
-                    if (isConnected)
-                    {            
-                        ChkCrl.Background = Brushes.Green; 
+        //private async void ChkCrl_Click(object sender, RoutedEventArgs e)
+        //{
+        //    try
+        //    {
+        //        if (ChkCrl.IsChecked == true)
+        //        {
+        //            bool isConnected = await helper.HasInternetConnectionAsyncTest();
+        //            if (isConnected)
+        //            {            
+        //                ChkCrl.Background = Brushes.Green; 
 
-                        string Certificate = await GetTokenDetail(true, CertThumbPrint);
+        //                string Certificate = await GetTokenDetail(true, CertThumbPrint);
 
-                        if (Certificate != "")
-                        {
-                            List<CertificateData> certificates = JsonConvert.DeserializeObject<List<CertificateData>>(Certificate);
-                            CertificateData certificateData = certificates[0];
+        //                if (Certificate != "")
+        //                {
+        //                    List<CertificateData> certificates = JsonConvert.DeserializeObject<List<CertificateData>>(Certificate);
+        //                    CertificateData certificateData = certificates[0];
 
-                            bool ValidToken = certificates[0].TokenValid;
-                            string TokenRemarks = certificates[0].Remarks;
-                            if (ValidToken == false)
-                            {
-                                crloscp = certificateData.CRL_OCSPCheck;
-                                crlocspmsg = certificateData.CRL_OCSPMsg;
-                                ChkCrl.Background = Brushes.Red; 
-                                MyMessageBox.ShowDialog(TokenRemarks);
-                                return;
-                            }
-                            else
-                            {
+        //                    bool ValidToken = certificates[0].TokenValid;
+        //                    string TokenRemarks = certificates[0].Remarks;
+        //                    if (ValidToken == false)
+        //                    {
+        //                        crloscp = certificateData.CRL_OCSPCheck;
+        //                        crlocspmsg = certificateData.CRL_OCSPMsg;
+        //                        ChkCrl.Background = Brushes.Red; 
+        //                        MyMessageBox.ShowDialog(TokenRemarks);
+        //                        return;
+        //                    }
+        //                    else
+        //                    {
 
-                                crloscp = certificateData.CRL_OCSPCheck;
-                                crlocspmsg = certificateData.CRL_OCSPMsg;
+        //                        crloscp = certificateData.CRL_OCSPCheck;
+        //                        crlocspmsg = certificateData.CRL_OCSPMsg;
 
-                                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                                store.Open(OpenFlags.ReadOnly);
-                                X509Certificate2Collection certCollection = store.Certificates.Find(X509FindType.FindByThumbprint, certificateData.Thumbprint, false);
-                                store.Close();
+        //                        X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+        //                        store.Open(OpenFlags.ReadOnly);
+        //                        X509Certificate2Collection certCollection = store.Certificates.Find(X509FindType.FindByThumbprint, certificateData.Thumbprint, false);
+        //                        store.Close();
 
-                                X509Certificate2 cert1 = certCollection[0];
-                            }
-                        } 
+        //                        X509Certificate2 cert1 = certCollection[0];
+        //                    }
+        //                } 
 
-                    }
-                    else
+        //            }
+        //            else
 
-                    {
-                        ChkCrl.Background = Brushes.Red; 
-                        crloscp = true;
-                        crlocspmsg = ""; 
-                    }
-                }
-                else
-                {
-                    crloscp = true;
-                    crlocspmsg = "";
-                }
-            }
-            catch (Exception ex)
-            { 
-                ErrorLog.LogErrorToFile(ex);
-            }
-        }
+        //            {
+        //                ChkCrl.Background = Brushes.Red; 
+        //                crloscp = true;
+        //                crlocspmsg = ""; 
+        //            }
+        //        }
+        //        else
+        //        {
+        //            crloscp = true;
+        //            crlocspmsg = "";
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    { 
+        //        ErrorLog.LogErrorToFile(ex);
+        //    }
+        //}
 
         private async Task<string> GetTokenDetail(bool IsCheckCrl, string Thumb)
         {
@@ -1475,9 +1554,6 @@ namespace DGISApp
                 return "";
             }
         }
-
-
-
         private void ChkBulkSign_Click(object sender, RoutedEventArgs e)
         {
             if (ChkBulkSign.IsChecked == true)
@@ -1541,6 +1617,14 @@ namespace DGISApp
 
         private async void btnSelectAnyFile_Click(object sender, RoutedEventArgs e)
         {
+            if (ChkOcsp.IsChecked == true && ocspStatus == false)
+            {
+                MyMessageBox.ShowDialog(
+                  "OCSP verification failed.\n\n" +
+                  "Please uncheck the OCSP option and try the digital signature again."
+);
+                return;
+            }
             //CertificateData certificateData = null;
             //X509Certificate2 cert1 = null;
             //bool isAnyFileSigned = false;
@@ -1583,6 +1667,14 @@ namespace DGISApp
 
         private async void DropListAny_Drop(object sender, DragEventArgs e)
         {
+            if (ChkOcsp.IsChecked == true && ocspStatus == false)
+            {
+                MyMessageBox.ShowDialog(
+                  "OCSP verification failed.\n\n" +
+                  "Please uncheck the OCSP option and try the digital signature again."
+);
+                return;
+            }
             //CertificateData certificateData = null;
             //X509Certificate2 cert1 = null;
             //bool isAnyFileSigned = false;
@@ -1627,7 +1719,7 @@ namespace DGISApp
             {
                 
                 string remark = "";
-                bool checkCrlTick = false;
+                //bool checkCrlTick = false;
                  
                 DTOSaveDigitalSignInfo saveDigitalSignInfo;
                 var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
@@ -1638,7 +1730,7 @@ namespace DGISApp
                 await Dispatcher.InvokeAsync(() =>
                 {
                     remark = (textRemarkAny?.Text ?? "").Trim();
-                    checkCrlTick = (ChkCrl?.IsChecked == true);
+                    //checkCrlTick = (ChkCrl?.IsChecked == true);
                 });
 
                 if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
@@ -1677,28 +1769,28 @@ namespace DGISApp
                 }
 
                 CertThumbPrint = result.Remark;
-                 
-                if (checkCrlTick)
-                {
-                    if (crloscp == true && crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
-                    {
-                        if (ShowMsg(
-                                "Digital Cert of token cannot be verified with CA due to Network issues. Do you want to continue ?",
-                                MyMessageBox.Buttons.Yes_No) != "1")
-                        {
-                            ShowMsg("No file signed!");
-                            return;
-                        }
-                    }
-                    else if (crloscp == false)
-                    {
-                        ShowMsg(crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues"
-                            ? crlocspmsg
-                            : "CRL Check Failed !");
-                        return;
-                    }
-                }
-                 
+
+                //if (checkCrlTick)
+                //{
+                //    if (crloscp == true && crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues")
+                //    {
+                //        if (ShowMsg(
+                //                "Digital Cert of token cannot be verified with CA due to Network issues. Do you want to continue ?",
+                //                MyMessageBox.Buttons.Yes_No) != "1")
+                //        {
+                //            ShowMsg("No file signed!");
+                //            return;
+                //        }
+                //    }
+                //    else if (crloscp == false)
+                //    {
+                //        ShowMsg(crlocspmsg == "Digital Cert of token cannot be verified with CA due to Network issues"
+                //            ? crlocspmsg
+                //            : "CRL Check Failed !");
+                //        return;
+                //    }
+                //}
+
                 X509Certificate2 cert;
                 using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
                 {

@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Policy;
 using System.Threading.Tasks;
 using Document = Microsoft.Office.Interop.Word.Document;
+using static ValidateCertificate.ValidateCert;
 namespace SignService.Helpers
 {
     public static class helper
@@ -115,5 +116,26 @@ namespace SignService.Helpers
 
             return dTOSubject;
         }
+
+        public static async Task<string> GetSignature(DTOSubject Subject, string CustomText,string CertThumbPrint, bool OcspStatus)
+        {
+            try
+            {
+                String StrSignature = "";
+                if (OcspStatus == false)
+                    StrSignature = "Offline Sign \n\n";
+                if (CustomText != "")
+                    StrSignature += CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                else
+                    StrSignature += "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+
+                return StrSignature;
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
+        }
+       
     }
 }
