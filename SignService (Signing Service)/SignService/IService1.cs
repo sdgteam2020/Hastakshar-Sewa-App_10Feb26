@@ -14,6 +14,7 @@ namespace SignService
     [ServiceContract]
     public interface IService1
     {
+        //Old API
 
         [OperationContract]
         [WebInvoke(Method = "POST", UriTemplate = "/SignXml", BodyStyle = WebMessageBodyStyle.Bare, RequestFormat = WebMessageFormat.Xml, ResponseFormat = WebMessageFormat.Xml)]
@@ -32,15 +33,15 @@ namespace SignService
         [OperationContract]
         
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchPersID")]
-        Task<List<TokenDetails>> FetchPersID();
+        Task<List<PersDTO>> FetchPersID();
        
         [OperationContract]
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchUniqueTokenDetails")]
-        Task<List<TokenDetails>> FetchUniqueTokenDetails();
+        Task<List<TokenDetailsDTO>> FetchUniqueTokenDetails();
        
         [OperationContract]
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenDetails")]
-        Task<List<TokenDetails>> FetchTokenDetails();
+        Task<List<TokenDetailsDTO>> FetchTokenDetails();
 
        
         [OperationContract]
@@ -53,22 +54,22 @@ namespace SignService
         Task<List<TokenDetails>> FetchTokenOCSPCrlDetailsAsync(bool IsCheckCrl,string ThumbPrint);
         [OperationContract]
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenOCSPDetails?ThumbPrint={ThumbPrint}")]
-        Task<List<TokenDetailsOcsp>> FetchTokenOCSPDetailsAsync(string ThumbPrint);
+        Task<List<TokenDetailsOcspDTO>> FetchTokenOCSPDetailsAsync(string ThumbPrint);
         [OperationContract]
         [WebInvoke(Method = "GET", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/FetchTokenCrlDetails?ThumbPrint={ThumbPrint}")]
-        Task<List<TokenDetailsCrl>> FetchTokenCrlDetailsAsync(string ThumbPrint);
+        Task<List<TokenDetailsCrlDTO>> FetchTokenCrlDetailsAsync(string ThumbPrint);
 
         [OperationContract]
         [WebInvoke(Method = "POST", UriTemplate = "/ValidatePersID2FA", BodyStyle = WebMessageBodyStyle.Wrapped, RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         Task<Boolean> ValidatePersID2FA(string inputPersID);
          
         [OperationContract]
-        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignBulkAsync")]
-        Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData);   
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignBulkAsync?OcspStatus={OcspStatus}")]
+        Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData,bool OcspStatus);   
 
-        [OperationContract]
-        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignAsync")]
-        Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData);
+        //[OperationContract]
+        //[WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignAsync")]
+        //Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData);
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, UriTemplate = "/DigitalSignVerifyAsync")]

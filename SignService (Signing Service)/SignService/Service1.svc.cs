@@ -184,26 +184,26 @@ namespace SignService
         }
 
 
-        public async Task<List<TokenDetails>> FetchPersID()
+        public async Task<List<PersDTO>> FetchPersID()
         {
 
-            List<TokenDetails> TokenDetailList = new List<TokenDetails>();
+            List<PersDTO> persDTOs = new List<PersDTO>();
             try
             {
                 X509Certificate2Collection fcollection = await helper.GetCertificates();
                 if (fcollection.Count == 0)
                 {
-                    var TokenDetails = new TokenDetails
+                    var persDTO = new PersDTO
                     {
-                        
-                        CRL_OCSPCheck = false,
+
+                        subject = null,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!"
 
                     };
-                    TokenDetailList.Add(TokenDetails);
+                    persDTOs.Add(persDTO);
 
-                    return TokenDetailList.ToList();
+                    return persDTOs.ToList();
                 }
                 else
                 {
@@ -219,37 +219,18 @@ namespace SignService
 
                     DTOSubject Subject = helper.GetSubject(cert1);
 
-
-                    bool TokenValidity = false;
-                    string Remark = "";
-                    if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
-                    {
-                        TokenValidity = true;
-                        Remark = "Personal No of Unique Cert is fetched for the inserted Token";
-                    }
-                    else
-                    {
-                        TokenValidity = false;
-                        Remark = "Token Expired";
-                    }
-
                     if (!string.IsNullOrEmpty(Subject.SerialNumber))
                     {
-                        var TokenDetails = new TokenDetails
+                        var persDTO = new PersDTO
                         {
-                            
-                            CRL_OCSPCheck = false,
+
                             subject = Subject.SerialNumber,
-                            issuer = null,
-                            Thumbprint = null,
-                            ValidFrom = cert1.NotBefore.ToString(),
-                            ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
-                            Remarks = Remark,
-                            TokenValid = TokenValidity
+                            Remarks = "PersId found!",
+
                         };
-                        TokenDetailList.Add(TokenDetails);
-                        return TokenDetailList.ToList();
+                        persDTOs.Add(persDTO);
+                        return persDTOs.ToList();
                     }
                     else
                     {
@@ -262,17 +243,15 @@ namespace SignService
             catch (Exception ex)
             {
 
-                var TokenDetails = new TokenDetails
+                var persDTO = new PersDTO
                 {
-                    
-                    CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString()
 
                 };
-                TokenDetailList.Add(TokenDetails);
+                persDTOs.Add(persDTO);
                 ErrorLog.LogErrorToFile(ex);
-                return TokenDetailList.ToList();
+                return persDTOs.ToList();
             }
 
         }
@@ -462,25 +441,23 @@ namespace SignService
         }
 
 
-        public async Task<List<TokenDetails>> FetchUniqueTokenDetails()
+        public async Task<List<TokenDetailsDTO>> FetchUniqueTokenDetails()
         {
-            List<TokenDetails> TokenDetailList = new List<TokenDetails>();
+            List<TokenDetailsDTO> tokenDetailsDTOs = new List<TokenDetailsDTO>();
             try
             {
                 X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
-                    var TokenDetails = new TokenDetails
+                    var tokenDetailsDTO = new TokenDetailsDTO
                     {
-                        
-                        CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
                         TokenValid = false,
                     };
-                    TokenDetailList.Add(TokenDetails);
-                    return TokenDetailList.ToList();
+                    tokenDetailsDTOs.Add(tokenDetailsDTO);
+                    return tokenDetailsDTOs.ToList();
                 }
                 else
                 {
@@ -504,10 +481,8 @@ namespace SignService
                         TokenValidity = false;
                     }
 
-                    var TokenDetails = new TokenDetails
+                    var tokenDetailsDTO = new TokenDetailsDTO
                     {
-                        
-                        CRL_OCSPCheck = false,
                         subject = cert1.Subject,
                         issuer = cert1.Issuer,
                         Thumbprint = cert1.Thumbprint,
@@ -517,32 +492,31 @@ namespace SignService
                         Remarks = "Unique Cert details of inserted Token",
                         TokenValid = TokenValidity
                     };
-                    TokenDetailList.Add(TokenDetails);
-                    return TokenDetailList.ToList();
+                    tokenDetailsDTOs.Add(tokenDetailsDTO);
+                    return tokenDetailsDTOs.ToList();
                 }
             }
             catch (Exception ex)
             {
 
-                var TokenDetails = new TokenDetails
+                var tokenDetailsDTO = new TokenDetailsDTO
                 {
-                    
-                    CRL_OCSPCheck = false,
+
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
                     TokenValid = false
                 };
                 ErrorLog.LogErrorToFile(ex);
-                TokenDetailList.Add(TokenDetails);
-                return TokenDetailList.ToList();
+                tokenDetailsDTOs.Add(tokenDetailsDTO);
+                return tokenDetailsDTOs.ToList();
             }
 
         }
 
 
-        public async Task<List<TokenDetails>> FetchTokenDetails()
+        public async Task<List<TokenDetailsDTO>> FetchTokenDetails()
         {
-            List<TokenDetails> TokenDetailList = new List<TokenDetails>();
+            List<TokenDetailsDTO> tokenDetailsDTOs = new List<TokenDetailsDTO>();
             try
             {
                 X509Certificate2Collection fcollection = await helper.GetCertificates();
@@ -561,11 +535,9 @@ namespace SignService
                         {
                             TokenValidity = false;
                         }
-                       
-                        var detail = new TokenDetails
+
+                        var tokenDetailsDTO = new TokenDetailsDTO
                         {
-                            
-                            CRL_OCSPCheck = false,
                             subject = cert1.Subject,
                             issuer = cert1.Issuer,
                             Thumbprint = cert1.Thumbprint,
@@ -577,47 +549,44 @@ namespace SignService
 
                         };
                         i++;
-                        TokenDetailList.Add(detail);
+                        tokenDetailsDTOs.Add(tokenDetailsDTO);
                     }
-                    return TokenDetailList.ToList();
+                    return tokenDetailsDTOs.ToList();
                 }
                 else
                 {
-                    var detail = new TokenDetails
+                    var tokenDetailsDTO = new TokenDetailsDTO
                     {
-                        
-                        CRL_OCSPCheck = false,
+
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
                         TokenValid = false
                     };
-                    TokenDetailList.Add(detail);
-                    return TokenDetailList.ToList();
+                    tokenDetailsDTOs.Add(tokenDetailsDTO);
+                    return tokenDetailsDTOs.ToList();
                 }
 
             }
             catch (Exception ex)
             {
-                var TokenDetails = new TokenDetails
+                var tokenDetailsDTO = new TokenDetailsDTO
                 {
-                    
-                    CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
                     TokenValid = false
                 };
-
-                TokenDetailList.Add(TokenDetails);
+                tokenDetailsDTOs.Add(tokenDetailsDTO);
                 ErrorLog.LogErrorToFile(ex);
-                return TokenDetailList.ToList();
+                return tokenDetailsDTOs.ToList();
+
             }
 
         }
-        public async Task<List<TokenDetailsOcsp>> FetchTokenOCSPDetailsAsync(string ThumbPrint)
+        public async Task<List<TokenDetailsOcspDTO>> FetchTokenOCSPDetailsAsync(string ThumbPrint)
         {
             string MsgCrlOCSP = "";
             bool BlnCrlOCSP = false;
-            List<TokenDetailsOcsp> TokenDetailList = new List<TokenDetailsOcsp>();
+            List<TokenDetailsOcspDTO> tokenDetailsOcspDTOs = new List<TokenDetailsOcspDTO>();
             try
             {
                 X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
@@ -645,17 +614,17 @@ namespace SignService
 
                 if (fcollection.Count == 0)
                 {
-                    var TokenDetails = new TokenDetailsOcsp
+                    var tokenDetailsOcspDTO = new TokenDetailsOcspDTO
                     {
-                        
+
                         OCSPCheck = BlnCrlOCSP,
                         OCSPMsg = MsgCrlOCSP,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
-                        TokenValid = false
+
                     };
-                    TokenDetailList.Add(TokenDetails);
-                    return TokenDetailList.ToList();
+                    tokenDetailsOcspDTOs.Add(tokenDetailsOcspDTO);
+                    return tokenDetailsOcspDTOs.ToList();
                 }
                 else
                 {
@@ -676,56 +645,47 @@ namespace SignService
                             }
                             else
                             {
-                                var TokenDetails = new TokenDetailsOcsp
+                                var tokenDetailsOcspDTO = new TokenDetailsOcspDTO
                                 {
 
-                                   
+
                                     OCSPCheck = BlnCrlOCSP,
                                     OCSPMsg = MsgCrlOCSP,
-                                    subject = null,
-                                    issuer = null,
-                                    Thumbprint = null,
-                                    ValidFrom = null,
-                                    ValidTo = null,
+
                                     Status = "200",
                                     Remarks = "No Certificate Selected !",
-                                    TokenValid = false,
+
                                 };
-                                TokenDetailList.Add(TokenDetails);
-                                return TokenDetailList.ToList();
+                                tokenDetailsOcspDTOs.Add(tokenDetailsOcspDTO);
+                                return tokenDetailsOcspDTOs.ToList();
                             }
                         }
                         catch
                         {
-                            var TokenDetails = new TokenDetailsOcsp
+                            var tokenDetailsOcspDTO = new TokenDetailsOcspDTO
                             {
 
-                                
+
                                 OCSPCheck = BlnCrlOCSP,
                                 OCSPMsg = MsgCrlOCSP,
-                                subject = null,
-                                issuer = null,
-                                Thumbprint = null,
-                                ValidFrom = null,
-                                ValidTo = null,
                                 Status = "200",
                                 Remarks = "No Certificate Selected !",
-                                TokenValid = false,
+
                             };
-                            TokenDetailList.Add(TokenDetails);
+                            tokenDetailsOcspDTOs.Add(tokenDetailsOcspDTO);
                         }
                     }
 
 
 
 
-                    
+
                     var (ValidateCertificateAsyncOutput, validationMsg, OCSPMsg, OCSPValid) = await ValidateCertificate.ValidateCert.ValidateCertificateOCSPAsync(cert1);
 
 
                     if (OCSPValid == true)
                     {
-                       
+
                         switch ((CertificateStatus)OCSPMsg)
                         {
                             case CertificateStatus.Good:
@@ -778,68 +738,58 @@ namespace SignService
 
                     if (ValidateCertificateAsyncOutput == true)
                     {
-                        var TokenDetails = new TokenDetailsOcsp
+                        var tokenDetailsOcspDTO = new TokenDetailsOcspDTO
                         {
 
-                            
+
                             OCSPCheck = BlnCrlOCSP,
                             OCSPMsg = MsgCrlOCSP,
-                            subject = cert1.Subject,
-                            issuer = cert1.Issuer,
-                            Thumbprint = cert1.Thumbprint,
-                            ValidFrom = cert1.NotBefore.ToString(),
-                            ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
                             Remarks = "Unique Cert details of inserted Token",
-                            TokenValid = true,
+
                         };
-                        TokenDetailList.Add(TokenDetails);
+                        tokenDetailsOcspDTOs.Add(tokenDetailsOcspDTO);
                     }
                     else
                     {
-                        var TokenDetails = new TokenDetailsOcsp
+                        var tokenDetailsOcspDTO = new TokenDetailsOcspDTO
                         {
 
-                            
+
                             OCSPCheck = BlnCrlOCSP,
                             OCSPMsg = MsgCrlOCSP,
-                            subject = cert1.Subject,
-                            issuer = cert1.Issuer,
-                            Thumbprint = cert1.Thumbprint,
-                            ValidFrom = cert1.NotBefore.ToString(),
-                            ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
                             Remarks = validationMsg,
-                            TokenValid = false,
+
                         };
-                        TokenDetailList.Add(TokenDetails);
+                        tokenDetailsOcspDTOs.Add(tokenDetailsOcspDTO);
                     }
-                    return TokenDetailList.ToList();
+                    return tokenDetailsOcspDTOs.ToList();
                 }
             }
             catch (Exception ex)
             {
 
-                var TokenDetails = new TokenDetailsOcsp
+                var tokenDetailsOcspDTO = new TokenDetailsOcspDTO
                 {
-                    
+
                     OCSPCheck = BlnCrlOCSP,
                     OCSPMsg = MsgCrlOCSP,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
-                    TokenValid = false
+
 
                 };
-                TokenDetailList.Add(TokenDetails);
+                tokenDetailsOcspDTOs.Add(tokenDetailsOcspDTO);
                 ErrorLog.LogErrorToFile(ex);
-                return TokenDetailList.ToList();
+                return tokenDetailsOcspDTOs.ToList();
             }
         }
-        public async Task<List<TokenDetailsCrl>> FetchTokenCrlDetailsAsync(string ThumbPrint)
+        public async Task<List<TokenDetailsCrlDTO>> FetchTokenCrlDetailsAsync(string ThumbPrint)
         {
             string MsgCrlOCSP = "";
             bool BlnCrlOCSP = false;
-            List<TokenDetailsCrl> TokenDetailList = new List<TokenDetailsCrl>();
+            List<TokenDetailsCrlDTO> TokenDetailList = new List<TokenDetailsCrlDTO>();
             try
             {
                 X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
@@ -867,14 +817,14 @@ namespace SignService
 
                 if (fcollection.Count == 0)
                 {
-                    var TokenDetails = new TokenDetailsCrl
+                    var TokenDetails = new TokenDetailsCrlDTO
                     {
-                        
+
                         CrlCheck = BlnCrlOCSP,
                         CrlMsg = MsgCrlOCSP,
                         Status = "404",
                         Remarks = "Certificate not Found. Please insert valid Token and Try agian!",
-                        TokenValid = false
+
                     };
                     TokenDetailList.Add(TokenDetails);
                     return TokenDetailList.ToList();
@@ -898,20 +848,15 @@ namespace SignService
                             }
                             else
                             {
-                                var TokenDetails = new TokenDetailsCrl
+                                var TokenDetails = new TokenDetailsCrlDTO
                                 {
 
-                                    
+
                                     CrlCheck = BlnCrlOCSP,
                                     CrlMsg = MsgCrlOCSP,
-                                    subject = null,
-                                    issuer = null,
-                                    Thumbprint = null,
-                                    ValidFrom = null,
-                                    ValidTo = null,
                                     Status = "200",
                                     Remarks = "No Certificate Selected !",
-                                    TokenValid = false,
+
                                 };
                                 TokenDetailList.Add(TokenDetails);
                                 return TokenDetailList.ToList();
@@ -919,20 +864,15 @@ namespace SignService
                         }
                         catch
                         {
-                            var TokenDetails = new TokenDetailsCrl
+                            var TokenDetails = new TokenDetailsCrlDTO
                             {
 
-                                
+
                                 CrlCheck = BlnCrlOCSP,
                                 CrlMsg = MsgCrlOCSP,
-                                subject = null,
-                                issuer = null,
-                                Thumbprint = null,
-                                ValidFrom = null,
-                                ValidTo = null,
                                 Status = "200",
                                 Remarks = "No Certificate Selected !",
-                                TokenValid = false,
+
                             };
                             TokenDetailList.Add(TokenDetails);
                         }
@@ -969,39 +909,27 @@ namespace SignService
 
                     if (ValidateCertificateAsyncOutput == true)
                     {
-                        var TokenDetails = new TokenDetailsCrl
+                        var TokenDetails = new TokenDetailsCrlDTO
                         {
 
-                            
+
                             CrlCheck = BlnCrlOCSP,
                             CrlMsg = MsgCrlOCSP,
-                            subject = cert1.Subject,
-                            issuer = cert1.Issuer,
-                            Thumbprint = cert1.Thumbprint,
-                            ValidFrom = cert1.NotBefore.ToString(),
-                            ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
                             Remarks = "Unique Cert details of inserted Token",
-                            TokenValid = true,
                         };
                         TokenDetailList.Add(TokenDetails);
                     }
                     else
                     {
-                        var TokenDetails = new TokenDetailsCrl
+                        var TokenDetails = new TokenDetailsCrlDTO
                         {
 
-                            
+
                             CrlCheck = BlnCrlOCSP,
                             CrlMsg = MsgCrlOCSP,
-                            subject = cert1.Subject,
-                            issuer = cert1.Issuer,
-                            Thumbprint = cert1.Thumbprint,
-                            ValidFrom = cert1.NotBefore.ToString(),
-                            ValidTo = cert1.NotAfter.ToString(),
                             Status = "200",
                             Remarks = validationMsg,
-                            TokenValid = false,
                         };
                         TokenDetailList.Add(TokenDetails);
                     }
@@ -1011,15 +939,13 @@ namespace SignService
             catch (Exception ex)
             {
 
-                var TokenDetails = new TokenDetailsCrl
+                var TokenDetails = new TokenDetailsCrlDTO
                 {
-                    
+
                     CrlCheck = BlnCrlOCSP,
                     CrlMsg = MsgCrlOCSP,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString(),
-                    TokenValid = false
-
                 };
                 TokenDetailList.Add(TokenDetails);
                 ErrorLog.LogErrorToFile(ex);
@@ -1310,79 +1236,79 @@ namespace SignService
                 }
             }
         }
-        public async Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData)
-        {
-            ResponseMessage responseMessage = new ResponseMessage();
-            ResponseBulkSign apiResponse = await DigitalSignBulkAsync(reqData);
+        //public async Task<ResponseMessage> DigitalSignAsync(List<DigitalSignData> reqData)
+        //{
+        //    ResponseMessage responseMessage = new ResponseMessage();
+        //    ResponseBulkSign apiResponse = await DigitalSignBulkAsync(reqData);
 
-            if (apiResponse != null)
-            {
+        //    if (apiResponse != null)
+        //    {
 
-                string resultstring = "";
-                int count = 0;
-                int Signed = 0;
-                if (apiResponse.ResponseMessage != null)
-                {
-                    resultstring = "Congratulations!\n\nDocument is successfully Signed.\n";
-                    resultstring += apiResponse.ResponseMessage.Message + "\n";
-                    Signed = 1;
-                }
-                if (apiResponse.ResponseMessagelst != null)
-                {
-                    foreach (ResponseMessage data in apiResponse.ResponseMessagelst)
-                    {
+        //        string resultstring = "";
+        //        int count = 0;
+        //        int Signed = 0;
+        //        if (apiResponse.ResponseMessage != null)
+        //        {
+        //            resultstring = "Congratulations!\n\nDocument is successfully Signed.\n";
+        //            resultstring += apiResponse.ResponseMessage.Message + "\n";
+        //            Signed = 1;
+        //        }
+        //        if (apiResponse.ResponseMessagelst != null)
+        //        {
+        //            foreach (ResponseMessage data in apiResponse.ResponseMessagelst)
+        //            {
 
-                        if (count == 0)
-                        {
-                            resultstring += "\n Opps!\nDocument is Not successfully Signed.\n";
-                            resultstring += "This Docu Not Sign Either Password Protected or Page Not Found.\n";
+        //                if (count == 0)
+        //                {
+        //                    resultstring += "\n Opps!\nDocument is Not successfully Signed.\n";
+        //                    resultstring += "This Docu Not Sign Either Password Protected or Page Not Found.\n";
 
-                            count++;
-                        }
+        //                    count++;
+        //                }
 
-                        resultstring += data.Message + "\n ";
-
-
+        //                resultstring += data.Message + "\n ";
 
 
 
-                    }
-                }
-                if (resultstring != "")
-                {
-                    if (Signed > 0)
-                    {
-                        responseMessage.Message = resultstring;
-                        responseMessage.Valid = true;
 
-                    }
-                    else
-                    {
-                        responseMessage.Message = resultstring;
-                        responseMessage.Valid = false;
-                    }
 
-                }
-                else
-                {
-                    if (apiResponse.ResponseMessage != null)
-                    {
-                        responseMessage.Message = $"Error:" + apiResponse.ResponseMessage.Message;
-                        responseMessage.Valid = false;
+        //            }
+        //        }
+        //        if (resultstring != "")
+        //        {
+        //            if (Signed > 0)
+        //            {
+        //                responseMessage.Message = resultstring;
+        //                responseMessage.Valid = true;
 
-                    }
-                }
+        //            }
+        //            else
+        //            {
+        //                responseMessage.Message = resultstring;
+        //                responseMessage.Valid = false;
+        //            }
 
-            }
-            else
-            {
-                responseMessage.Message = $"Error:" + apiResponse.ResponseMessage.Message;
-                responseMessage.Valid = false;
-            }
-            return responseMessage;
-        }
+        //        }
+        //        else
+        //        {
+        //            if (apiResponse.ResponseMessage != null)
+        //            {
+        //                responseMessage.Message = $"Error:" + apiResponse.ResponseMessage.Message;
+        //                responseMessage.Valid = false;
 
-        public async Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData)
+        //            }
+        //        }
+
+        //    }
+        //    else
+        //    {
+        //        responseMessage.Message = $"Error:" + apiResponse.ResponseMessage.Message;
+        //        responseMessage.Valid = false;
+        //    }
+        //    return responseMessage;
+        //}
+
+        public async Task<ResponseBulkSign> DigitalSignBulkAsync(List<DigitalSignData> reqData, bool CheckOcsp)
         {
             string message = null;
             bool isAnyFileSigned = false;
@@ -1505,7 +1431,7 @@ namespace SignService
 
                                 Org.BouncyCastle.X509.X509Certificate[] chain3 = new[] { cp1.ReadCertificate(cert1.RawData) };
 
-                                await System.Threading.Tasks.Task.Run(() =>
+                                await System.Threading.Tasks.Task.Run(async () =>
                                 {
                                     StampingProperties stampProp = new StampingProperties();
                                     stampProp.PreserveEncryption();
@@ -1528,11 +1454,13 @@ namespace SignService
                                     SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
-                                    String StrSignature = "";
-                                    if (CustomText != "")
-                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
-                                    else
-                                        StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                 
+                                    String StrSignature =await helper.GetSignature(Subject, CustomText,cert1.Thumbprint, CheckOcsp);
+                                    //String StrSignature = "";
+                                    //if (CustomText != "")
+                                    //    StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
+                                    //else
+                                    //    StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
 
                                     try
                                     {
@@ -1800,7 +1728,7 @@ namespace SignService
 
                                 Org.BouncyCastle.X509.X509Certificate[] chain3 = new[] { cp1.ReadCertificate(cert1.RawData) };
 
-                                await System.Threading.Tasks.Task.Run(() =>
+                                await System.Threading.Tasks.Task.Run(async () =>
                                 {
                                     StampingProperties stampProp = new StampingProperties();
                                     stampProp.PreserveEncryption();
@@ -1820,11 +1748,12 @@ namespace SignService
                                     SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
-                                    String StrSignature = "";
-                                    if (CustomText != "")
-                                        StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
-                                    else
-                                        StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                                    String StrSignature =await helper.GetSignature(Subject,CustomText,cert1.Thumbprint,false);
+                                    //String StrSignature = "";
+                                    //if (CustomText != "")
+                                    //    StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                                    //else
+                                    //    StrSignature = "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
 
                                     try
                                     {
@@ -2242,7 +2171,7 @@ namespace SignService
                 {
                     var TokenDetails = new TokenDetails
                     {
-                        
+
                         CRL_OCSPCheck = false,
                         Status = "404",
                         Remarks = "Token not detected. Please insert the IACA token and try again !"
@@ -2288,7 +2217,7 @@ namespace SignService
                         var TokenDetails = new TokenDetails
                         {
 
-                            
+
                             CRL_OCSPCheck = false,
                             subject = cert1.Subject,
                             issuer = null,
@@ -2316,7 +2245,7 @@ namespace SignService
 
                 var TokenDetails = new TokenDetails
                 {
-                    
+
                     CRL_OCSPCheck = false,
                     Status = "500",
                     Remarks = "Exception Occured-" + ex.Message.ToString()

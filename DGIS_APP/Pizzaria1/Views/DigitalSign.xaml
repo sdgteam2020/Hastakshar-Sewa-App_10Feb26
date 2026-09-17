@@ -70,8 +70,10 @@
                                      Content="Any File"
                                      Margin="20,8,50,8"
                                      Checked="RBModeAnyFile_Checked"/>
-                        <CheckBox Content="Check Crl"   Margin="20,10,5,5" x:Name="ChkCrl" Click="ChkCrl_Click" >
+                        <CheckBox Content="Check Ocsp"   Margin="20,10,5,5" x:Name="ChkOcsp"  IsChecked="True" Click="ChkOcsp_Click" >
                         </CheckBox>
+                        <!--<CheckBox Content="Check Crl"   Margin="20,10,5,5" x:Name="ChkCrl" Click="ChkCrl_Click" >
+                        </CheckBox>-->
                     </WrapPanel>
 
                     <!--End Code for Radio button for Signing Mode -->
