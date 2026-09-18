@@ -378,7 +378,7 @@ namespace DGISApp
                 nextfile:
                     string fileforloop = filename;
                     FileInfo fi = new FileInfo(fileforloop);
-                    if (fi.Length > 0)
+                    if (fi.Length < 0)
                     {
                         MyMessageBox.ShowDialog("Invalid File! \n\nFile is blank or Tempered.");
                         NewFileName = "";
