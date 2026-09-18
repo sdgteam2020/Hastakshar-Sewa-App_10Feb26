@@ -46,7 +46,16 @@ namespace SignService.Security
         public static (string DomainId,string IPAddress, string ClientKey) GetOrCreate()
         {
             var existing = Load();
-            if (existing != null
+            if(existing == null)
+            {
+                string domainId = Environment.MachineName;
+                string ipAddress = Service1.GetClientIpAddressSafe();
+                string clientKey = Guid.NewGuid().ToString("N");
+
+                Save(domainId, ipAddress, clientKey);
+                return (domainId, ipAddress, clientKey);
+            }
+            else if (existing != null
                 && (string.IsNullOrEmpty(existing.Value.DomainId)
                 || string.IsNullOrEmpty(existing.Value.IPAddress)
                 || string.IsNullOrEmpty(existing.Value.ClientKey)))
