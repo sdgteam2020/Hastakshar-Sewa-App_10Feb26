@@ -48,7 +48,6 @@ namespace DGISApp
             try
             {
                 await Task.WhenAll(
-                    SaveInstallationAsync(),
                     SaveDailyRunAsync(),
                     XMLAPICallAsync()
                 );
@@ -195,11 +194,6 @@ namespace DGISApp
                 version = version
             };
             return PCDetail;
-        }
-
-        private Task<bool> SaveInstallationAsync()
-        {
-            return _api.PostRequestAsync<bool>("/api/transaction/SaveInstallationAsync", GetPCDetail());
         }
 
         private Task<bool> SaveDailyRunAsync()
