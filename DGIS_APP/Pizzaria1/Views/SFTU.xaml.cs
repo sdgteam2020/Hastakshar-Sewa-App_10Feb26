@@ -1472,7 +1472,10 @@ namespace DGISAPP.Views
                                     }
                                     else
                                     {
-                                        string fileName = fi.Name.Split('_')[0];
+                                        int targetIndex = fi.Name.LastIndexOf("_") - 10;
+                                        string fileName = fi.Name.Substring(0, targetIndex);
+
+                                        //string fileName = fi.Name.Split('_')[0];
                                         filePath = DownloadPath + "\\" + fileName;
 
                                         using (Stream file = File.OpenWrite(filePath))
@@ -1524,7 +1527,10 @@ namespace DGISAPP.Views
                                     this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                     this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
 
-                                    filePath = DownloadPath + "\\" + fi.Name.Split('_')[0];
+                                    int targetIndex = fi.Name.LastIndexOf("_") - 10;
+                                    string fileName = fi.Name.Substring(0, targetIndex);
+                                    filePath = DownloadPath + "\\" + fileName;
+                                    //filePath = DownloadPath + "\\" + fi.Name.Split('_')[0];
                                     X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                                     if (fcollection.Count == 0)
@@ -1600,7 +1606,7 @@ namespace DGISAPP.Views
                                         }
                                         else
                                         {
-                                            string fileName = fi.Name.Split('_')[0];
+                                            //string fileName = fi.Name.Split('_')[0];
                                             filePath = DownloadPath + "\\" + fileName;
                                             if (File.Exists(filePath))
                                                 File.Delete(filePath);
@@ -1688,7 +1694,8 @@ namespace DGISAPP.Views
                         string DownloadPath = System.IO.Path.GetDirectoryName(path);
                         var ok = (false, "");
                         FileInfo fin = new FileInfo(path);
-                        string fileName = fin.Name.Split('_')[0];
+                        int targetIndex = fin.Name.LastIndexOf("_")-10;
+                        string fileName = fin.Name.Substring(0, targetIndex); 
                         string file = DownloadPath + "\\" + fileName;
                         var signatureFile = file + ".sig.json";
 
