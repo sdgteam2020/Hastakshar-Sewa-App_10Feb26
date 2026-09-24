@@ -125,9 +125,9 @@ namespace SignService.Helpers
                 if (OcspStatus == false)
                     StrSignature = "Offline Sign \n\n";
                 if (CustomText != "")
-                    StrSignature += CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                    StrSignature += CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTimeOffset.Now.ToString() + " \n © Hastakshar SEWA, DGIS";
                 else
-                    StrSignature += "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
+                    StrSignature += "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTimeOffset.Now.ToString() + " \n © Hastakshar SEWA, DGIS";
 
                 return StrSignature;
             }

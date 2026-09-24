@@ -950,16 +950,7 @@ namespace DGISApp
                         return;
                     }
 
-                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");
-                    IService1 service1 = new Service1();
-                    var PublicKey = await service1.GetPublicKey();
-                    byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
-                    saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
-                    saveDigitalSignInfo.ValidToken = PublicKey.TokenValid;
-                    saveDigitalSignInfo.ValidFrom = PublicKey.ValidFrom;
-                    saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
-                    saveDigitalSignInfo.OriginForSign = origin;
-                    saveDigitalSignInfo.RefererForSign = referer;
+                  
 
                     //if (CheckCrlTick == true)
                     //{
@@ -999,6 +990,31 @@ namespace DGISApp
                 DTOSubject Subject1 = helper.GetSubject(cert1);
                 String StrSignature = await helper.GetSignature(Subject1, StrRemark, cert1.Thumbprint, checkOcspValue);
                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
+
+                
+
+                IService1 service1 = new Service1();
+                var PublicKey = await service1.GetPublicKey();
+                byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
+
+                var match = Regex.Match(StrSignature, @"Date\s*:\s*(\d{2}-\d{2}-\d{4}\s\d{2}:\d{2}:\d{2}\s[+-]\d{2}:\d{2})");
+
+                if (match.Success)
+                {
+                    saveDigitalSignInfo.SignedDateTime = match.Groups[1].Value;
+
+                }
+                else
+                {
+                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString();
+                }
+                saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
+                saveDigitalSignInfo.ValidToken = PublicKey.TokenValid;
+                saveDigitalSignInfo.ValidFrom = PublicKey.ValidFrom;
+                saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
+                saveDigitalSignInfo.OriginForSign = origin;
+                saveDigitalSignInfo.RefererForSign = referer;
+
                 PdfReader reader = new PdfReader(filename);
                 reader.SetUnethicalReading(true);
                 Thread t = new Thread((ThreadStart)(async () =>

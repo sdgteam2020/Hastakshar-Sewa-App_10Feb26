@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -13,7 +14,7 @@ namespace SignService.Helpers
     {
         private const int BufferSize = 16 * 1024 * 1024; 
         private const int ParallelChunks = 8;
- 
+        private static readonly bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
         public static async Task<(string FilePath, string hash)> SignPortableAsync(
             string filePath,
             X509Certificate2 cert,
@@ -136,13 +137,13 @@ namespace SignService.Helpers
                 DateTime notAfter = certificate.NotAfter;
                 DateTime now = DateTime.Now;
 
-                if (now < notBefore)
+                if (now < notBefore && IsLocalToken)
                 {
                     // Certificate is not valid yet
                     return (false, "Certificate is not valid yet!");
                 }
 
-                if (now > notAfter)
+                if (now > notAfter && IsLocalToken)
                 {
                     // Certificate has expired
                     return (false, "Certificate has expired!");

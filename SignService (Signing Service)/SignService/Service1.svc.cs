@@ -1386,8 +1386,7 @@ namespace SignService
                 {
                     Pageno = 1;
                 }
-
-                saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");
+                                
                 var PublicKey = await GetPublicKey();
                 byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
                 saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
@@ -1445,9 +1444,7 @@ namespace SignService
                                     DTOSubject Subject =helper.GetSubject(cert1);
 
                                   
-                                    saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
-                                    saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
-
+                                   
 
 
                                     iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(fileforloop));
@@ -1456,6 +1453,20 @@ namespace SignService
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                  
                                     String StrSignature =await helper.GetSignature(Subject, CustomText,cert1.Thumbprint, CheckOcsp);
+
+                                    saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
+                                    saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
+                                    var match = Regex.Match(StrSignature, @"Date\s*:\s*(\d{2}-\d{2}-\d{4}\s\d{2}:\d{2}:\d{2}\s[+-]\d{2}:\d{2})");
+
+                                    if (match.Success)
+                                    {
+                                        saveDigitalSignInfo.SignedDateTime = match.Groups[1].Value;
+
+                                    }
+                                    else
+                                    {
+                                        saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString();
+                                    }
                                     //String StrSignature = "";
                                     //if (CustomText != "")
                                     //    StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + saveDigitalSignInfo.SignedDateTime + " \n © Hastakshar SEWA, DGIS";
@@ -1545,9 +1556,11 @@ namespace SignService
                                             signer.SignDetached(es, chain3, null, null, null, 0, CryptoStandard.CMS);
                                             SingedFiles = SingedFiles + 1;
                                             ResponseMsg1.Message = Convert.ToString(SingedFiles) + " files Signed out of " + Convert.ToString(totalFiles) + " !";
+                                            await SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
                                             ResponseMsg1.Valid = true;
                                             ResponseMsgbullst.ResponseMessage = ResponseMsg1;
                                             isAnyFileSigned = true;
+                                            NewFileName = "";
                                         }
                                         catch
                                         {
@@ -1625,7 +1638,6 @@ namespace SignService
                     ErrorLog.LogErrorToFile(ex);
                 }
                 ResponseMsgbullst.ResponseMessagelst = ResponseMsglist;
-                if (isAnyFileSigned) await SaveDigitalSignedDataToAnalytics(saveDigitalSignInfo);
                 return ResponseMsgbullst;
             }
             catch (Exception ex)
