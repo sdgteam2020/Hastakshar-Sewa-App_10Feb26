@@ -1833,7 +1833,7 @@ namespace DGISApp
                 if (!string.IsNullOrEmpty(sigPath))
                 {
                     saveDigitalSignInfo = new DTOSaveDigitalSignInfo();
-                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss"); 
+                    saveDigitalSignInfo.SignedDateTime = DateTimeOffset.Now.ToString(); 
                     var PublicKey = await new Service1().GetPublicKey();
                     byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
                     saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
