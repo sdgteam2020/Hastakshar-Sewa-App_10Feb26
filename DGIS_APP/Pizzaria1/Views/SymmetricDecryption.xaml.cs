@@ -279,7 +279,7 @@ namespace DGISApp
                                             {
                                                 var result = this.Dispatcher.Invoke(new Func<string>(() =>
                                                 {
-                                                    return MyMessageBox.Show("Wrong Token Inserted Does Not Match Private Key");
+                                                    return MyMessageBox.Show("Wrong Token Inserted Does Not Match Private Key, or File tempered");
                                                 }));
 
                                                         }
