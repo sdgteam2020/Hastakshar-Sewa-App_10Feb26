@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using WinniesMessageBox;
@@ -92,7 +93,7 @@ namespace DGISApp
             if (end == "") return (text.Substring(p1));
             else return text.Substring(p1, p2 - p1) + "";
         }
-        private void DropList_Drop(object sender, DragEventArgs e)
+        private async void DropList_Drop(object sender, DragEventArgs e)
         {
             string DownloadPath = "";
             try
@@ -145,6 +146,43 @@ namespace DGISApp
                     {
                         int processedFiles = 0;
                         int totalFiles = droppedFilePaths.Count();
+
+                        X509Certificate2Collection fcollection = await helper.GetCertificates();
+
+                        if (fcollection.Count == 0)
+                        {
+                            MyMessageBox.Show("No certificate found.");
+                            return;
+                        }
+
+
+                        X509Certificate2 cert1 = null;
+
+
+                        // Select certificate only once
+                        if (fcollection.Count == 1)
+                        {
+                            cert1 = fcollection[0];
+                        }
+                        else
+                        {
+                            var selected = X509Certificate2UI.SelectFromCollection(
+                                fcollection,
+                                "Select Decryption Certificate",
+                                "Please select certificate once for batch decryption",
+                                X509SelectionFlag.SingleSelection);
+
+                            if (selected.Count > 0)
+                                cert1 = selected[0];
+                        }
+
+
+                        if (cert1 == null)
+                        {
+                            MyMessageBox.Show("Certificate selection cancelled.");
+                            return;
+                        }
+
                         foreach (var path in droppedFilePaths)
                         {
                             ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
@@ -237,14 +275,13 @@ namespace DGISApp
                                     }
                                     else
                                     {
-                                        new Thread(async () =>
+                                        new Thread( () =>
                                         {
 
                                             this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
                                             this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
                                             string filePath = DownloadPath + "\\" + fi.Name.Split('.')[0] + "_DEC_" + DateTime.Now.ToString("ddMMM") + "_" + DateTime.Now.Millisecond + "" + "" + "." + betweenStrings(fi.Name, ".", "_");
 
-                                            X509Certificate2Collection fcollection = await helper.GetCertificates();
 
                                             if (fcollection.Count == 0)
                                             {
@@ -252,15 +289,6 @@ namespace DGISApp
                                             }
                                             else
                                             {
-                                                X509Certificate2 cert1 = null;
-                                                if (fcollection.Count == 1)
-                                                {
-                                                    cert1 = fcollection[0];
-                                                }
-                                                else if (fcollection.Count > 1)
-                                                {
-                                                    cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
-                                                }
                                                 if (cert1 != null)
                                                 {
                                                     string macDetails;   // declare variable first
@@ -539,6 +567,15 @@ namespace DGISApp
                         int processedFiles = 0;
                         int totalFiles = openFileDialog.FileNames.Count();
                         X509Certificate2Collection fcollection = await helper.GetCertificates();
+                        X509Certificate2 cert1 = null;
+                        if (fcollection.Count == 1)
+                        {
+                            cert1 = fcollection[0];
+                        }
+                        else if (fcollection.Count > 1)
+                        {
+                            cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
+                        }
                         foreach (var path in openFileDialog.FileNames)
                         {
                             ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
@@ -553,7 +590,7 @@ namespace DGISApp
 
                                 stream1.Close();
 
-                                new Thread(async () =>
+                                new Thread(() =>
                                 {
 
                                     this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = true));
@@ -568,15 +605,7 @@ namespace DGISApp
                                     }
                                     else
                                     {
-                                        X509Certificate2 cert1 = null;
-                                        if (fcollection.Count == 1)
-                                        {
-                                            cert1 = fcollection[0];
-                                        }
-                                        else if (fcollection.Count > 1)
-                                        {
-                                            cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
-                                        }
+                                        
                                         if (DateTime.Now <= cert1.NotAfter || IsLocalToken)
                                         {
                                             string macDetails;   // declare variable first

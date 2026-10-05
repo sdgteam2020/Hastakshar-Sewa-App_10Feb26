@@ -15,7 +15,7 @@ namespace SignService.Helpers
         private const int BufferSize = 16 * 1024 * 1024; 
         private const int ParallelChunks = 8;
         private static readonly bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
-        public static async Task<(string FilePath, string hash)> SignPortableAsync(
+        public static async Task<(string FilePath, string hash , string signDate)> SignPortableAsync(
             string filePath,
             X509Certificate2 cert,
             Action<double> progress,
@@ -44,6 +44,8 @@ namespace SignService.Helpers
 
                 var chain = BuildCertChain(cert);
 
+                var signDate=DateTimeOffset.Now.ToString();
+
                 var sigObj = new PortableSig
                 {
                     FileName = Path.GetFileName(filePath),
@@ -55,7 +57,7 @@ namespace SignService.Helpers
                     CertificateChainBase64 = chain,
                     Description = description,
                     SignedBy = cert.Subject,
-                    SigningDate = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss tt"),
+                    SigningDate = signDate,
                     IsValidNow = cert.NotAfter > DateTime.Now
 
                 };
@@ -74,7 +76,7 @@ namespace SignService.Helpers
                     Encoding.UTF8));
 
                 progress?.Invoke(100);  
-                return (outPath, HashValue);
+                return (outPath, HashValue, signDate);
             }
         }
          

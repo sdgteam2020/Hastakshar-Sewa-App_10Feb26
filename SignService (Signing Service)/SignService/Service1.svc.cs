@@ -1323,8 +1323,6 @@ namespace SignService
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];
-            string referer = headers?["Referer"];
 
             try
             {
@@ -1393,8 +1391,6 @@ namespace SignService
                 saveDigitalSignInfo.ValidToken = PublicKey.TokenValid;
                 saveDigitalSignInfo.ValidFrom = PublicKey.ValidFrom;
                 saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
-                saveDigitalSignInfo.OriginForSign = origin;
-                saveDigitalSignInfo.RefererForSign = referer;
                 foreach (string filename in files)
                 {
                 nextfile:
@@ -1409,6 +1405,7 @@ namespace SignService
                     {
                         fileforloop = filename;
                     }
+
                     if (Path.GetExtension(fileforloop) == ".pdf")
                     {
 
@@ -1456,11 +1453,10 @@ namespace SignService
 
                                     saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
                                     saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
-                                    var match = Regex.Match(StrSignature, @"Date\s*:\s*(\d{2}-\d{2}-\d{4}\s\d{2}:\d{2}:\d{2}\s[+-]\d{2}:\d{2})");
-
+                                    var match = Regex.Match(StrSignature, @"Date\s*:\s*(?<date>[^\r\n]+)", RegexOptions.IgnoreCase);
                                     if (match.Success)
                                     {
-                                        saveDigitalSignInfo.SignedDateTime = match.Groups[1].Value;
+                                        saveDigitalSignInfo.SignedDateTime = match.Groups["date"].Value.Trim();
 
                                     }
                                     else

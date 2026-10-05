@@ -1,15 +1,19 @@
-﻿using Microsoft.Office.Interop.Word;
+﻿using iText.Kernel.Crypto;
+using iText.Kernel.Pdf;
+using Microsoft.Office.Interop.Word;
 using SignService.DTOs;
+using SignService.Enums;
 using System;
 using System.Configuration;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Policy;
 using System.Threading.Tasks;
+using WinniesMessageBox;
 using Document = Microsoft.Office.Interop.Word.Document;
-using static ValidateCertificate.ValidateCert;
 namespace SignService.Helpers
 {
     public static class helper
@@ -136,6 +140,7 @@ namespace SignService.Helpers
                 return null;
             }
         }
-       
+
+        
     }
 }

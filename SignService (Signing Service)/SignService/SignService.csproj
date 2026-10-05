@@ -103,6 +103,7 @@
       <HintPath>..\..\DGIS_APP\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\DGIS_APP\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
     </Reference>
@@ -156,8 +157,10 @@
     <Compile Include="DTOs\TokenDetailsDTO.cs" />
     <Compile Include="DTOs\TokenDetailsOcsp.cs" />
     <Compile Include="DTOs\TokenDetailsOcspDTO.cs" />
+    <Compile Include="Enums\DocumentValidationResult.cs" />
     <Compile Include="ErrorLog.cs" />
     <Compile Include="Helpers\AesGcm256.cs" />
+    <Compile Include="Helpers\FileValidationHelper.cs" />
     <Compile Include="Helpers\helper.cs" />
     <Compile Include="Helpers\HelperCert.cs" />
     <Compile Include="Helpers\HugeFileSignatureService.cs" />
