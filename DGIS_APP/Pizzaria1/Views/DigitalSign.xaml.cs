@@ -487,7 +487,7 @@ namespace DGISApp
                             }
                             else
                             {
-                                helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
+                                Helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
                             }
 
 
@@ -840,7 +840,7 @@ namespace DGISApp
                         }
                         else
                         {
-                            helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
+                            Helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
                         }
 
 
@@ -1027,8 +1027,8 @@ namespace DGISApp
                 }
 
                 String StrRemark = this.Dispatcher.Invoke(new Func<string>(() => this.textRemark.Text.ToString()));
-                DTOSubject Subject1 = helper.GetSubject(cert1);
-                String StrSignature = await helper.GetSignature(Subject1, StrRemark, cert1.Thumbprint, checkOcspValue);
+                DTOSubject Subject1 = Helper.GetSubject(cert1);
+                String StrSignature = await Helper.GetSignature(Subject1, StrRemark, cert1.Thumbprint, checkOcspValue);
                 this.Dispatcher.Invoke(new Action(() => BusyBar.IsBusy = false));
 
 
@@ -1100,7 +1100,7 @@ namespace DGISApp
                                             }
 
 
-                                            DTOSubject Subject = helper.GetSubject(cert1);
+                                            DTOSubject Subject = Helper.GetSubject(cert1);
 
                                             saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
                                             iText.Kernel.Pdf.PdfDocument pdfDocument = new iText.Kernel.Pdf.PdfDocument(new PdfReader(filename));
@@ -1878,7 +1878,7 @@ namespace DGISApp
                     saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
-                    saveDigitalSignInfo.SerialNo = helper.GetSubject(cert).SerialNumber;
+                    saveDigitalSignInfo.SerialNo = Helper.GetSubject(cert).SerialNumber;
                     saveDigitalSignInfo.DocumentName = Path.GetFileName(sigPath);
                 }
                 else

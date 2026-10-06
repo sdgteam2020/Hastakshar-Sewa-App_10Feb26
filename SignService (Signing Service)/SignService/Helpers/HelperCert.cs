@@ -56,7 +56,7 @@ namespace SignService.Helpers
 
             try
             {
-                fcollection = await helper.GetCertificates();
+                fcollection = await Helper.GetCertificates();
                 if (fcollection.Count == 0)
                 {
                     responseStatus.Status = "0";

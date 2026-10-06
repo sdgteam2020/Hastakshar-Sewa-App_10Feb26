@@ -147,7 +147,7 @@ namespace DGISApp
                         int processedFiles = 0;
                         int totalFiles = droppedFilePaths.Count();
 
-                        X509Certificate2Collection fcollection = await helper.GetCertificates();
+                        X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                         if (fcollection.Count == 0)
                         {
@@ -566,7 +566,7 @@ namespace DGISApp
                     {
                         int processedFiles = 0;
                         int totalFiles = openFileDialog.FileNames.Count();
-                        X509Certificate2Collection fcollection = await helper.GetCertificates();
+                        X509Certificate2Collection fcollection = await Helper.GetCertificates();
                         X509Certificate2 cert1 = null;
                         if (fcollection.Count == 1)
                         {

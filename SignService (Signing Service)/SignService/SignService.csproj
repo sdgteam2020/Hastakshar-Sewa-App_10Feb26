@@ -161,7 +161,7 @@
     <Compile Include="ErrorLog.cs" />
     <Compile Include="Helpers\AesGcm256.cs" />
     <Compile Include="Helpers\FileValidationHelper.cs" />
-    <Compile Include="Helpers\helper.cs" />
+    <Compile Include="Helpers\Helper.cs" />
     <Compile Include="Helpers\HelperCert.cs" />
     <Compile Include="Helpers\HugeFileSignatureService.cs" />
     <Compile Include="HttpClients\ApiClient.cs" />

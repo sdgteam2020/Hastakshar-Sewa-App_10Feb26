@@ -1,22 +1,16 @@
-﻿using iText.Kernel.Crypto;
-using iText.Kernel.Pdf;
-using Microsoft.Office.Interop.Word;
+﻿using Microsoft.Office.Interop.Word;
 using SignService.DTOs;
-using SignService.Enums;
 using System;
 using System.Configuration;
 using System.IO;
-using System.IO.Compression;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using WinniesMessageBox;
 using Document = Microsoft.Office.Interop.Word.Document;
 namespace SignService.Helpers
 {
-    public static class helper
+    public static class Helper
     {
         public static void ConvertPDF(string inputpath, string outputPath, WdSaveFormat format)
         {

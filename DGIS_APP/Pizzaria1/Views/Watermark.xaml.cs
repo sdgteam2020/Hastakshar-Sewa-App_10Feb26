@@ -292,7 +292,7 @@ namespace DGISApp
                     }
                     else
                     {
-                        helper.ConvertPDF(path, NewFileName, WdSaveFormat.wdFormatPDF);
+                        Helper.ConvertPDF(path, NewFileName, WdSaveFormat.wdFormatPDF);
                     }
                     goto nextfile;
                 }

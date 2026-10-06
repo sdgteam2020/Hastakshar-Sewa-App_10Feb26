@@ -1387,7 +1387,7 @@ namespace DGISAPP.Views
                     saveDigitalSignInfo.ValidTo = tokenDetails.ValidTo;
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
-                    saveDigitalSignInfo.SerialNo = helper.GetSubject(cert).SerialNumber;
+                    saveDigitalSignInfo.SerialNo = Helper.GetSubject(cert).SerialNumber;
                     saveDigitalSignInfo.DocumentName = Path.GetFileName(sigPath);
 
                 }
@@ -1525,7 +1525,7 @@ namespace DGISAPP.Views
                                     this.Dispatcher.Invoke(new Action(() => DropList.IsEnabled = false));
 
                                     filePath = DownloadPath + "\\" + fi.Name.Split('_')[0];
-                                    X509Certificate2Collection fcollection = await helper.GetCertificates();
+                                    X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                                     if (fcollection.Count == 0)
                                     {
