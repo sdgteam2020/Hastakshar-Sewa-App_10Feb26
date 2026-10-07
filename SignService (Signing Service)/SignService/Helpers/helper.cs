@@ -99,9 +99,7 @@ namespace SignService.Helpers
         {
             string[] SubjectSplit = cert.Subject.Split(',');
             DTOSubject dTOSubject = new DTOSubject();
-            string StrName = "";
-            string StrICNo = "";
-            string StrRank = "";
+           
             for (int i = 0; i < SubjectSplit.Length; i++)
             {
                 if (SubjectSplit[i].Contains("SERIALNUMBER="))

@@ -45,13 +45,7 @@ namespace DGISApp
         string message = null;
         string fileName = null;
         string DownloadPath = "";
-        public string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
-        float pixelWidth = 0;
-        float pixelHeight = 0;
-        int PageWidth = 0;
-        int PageHeight = 0;
-        bool crloscp = false;
-        string crlocspmsg = "";
+        public string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";     
         string CertThumbPrint = "";
         string UrlApi = ConfigurationManager.AppSettings["UrlApi"].ToString();
         bool IsLocalToken = bool.Parse(ConfigurationManager.AppSettings["IsLocalToken"]);
