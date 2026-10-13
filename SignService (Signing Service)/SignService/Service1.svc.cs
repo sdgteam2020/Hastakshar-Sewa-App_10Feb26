@@ -56,7 +56,7 @@ namespace SignService
         {
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -190,7 +190,7 @@ namespace SignService
             List<PersDTO> persDTOs = new List<PersDTO>();
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
                 if (fcollection.Count == 0)
                 {
                     var persDTO = new PersDTO
@@ -217,7 +217,7 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
 
-                    DTOSubject Subject = helper.GetSubject(cert1);
+                    DTOSubject Subject = Helper.GetSubject(cert1);
 
                     if (!string.IsNullOrEmpty(Subject.SerialNumber))
                     {
@@ -260,7 +260,7 @@ namespace SignService
         {
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -281,7 +281,7 @@ namespace SignService
                     X509Certificate2 certificate = cert1;
                     try
                     {
-                        DTOSubject Subject = helper.GetSubject(cert1);
+                        DTOSubject Subject = Helper.GetSubject(cert1);
                         if (inputPersID == Subject.SerialNumber)
                         {
                             if (VerifyCertificatePassword(cert1))
@@ -343,7 +343,7 @@ namespace SignService
 
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -377,7 +377,7 @@ namespace SignService
 
                     {
                         string[] SubjectSplit = cert1.Subject.Split(',');
-                        DTOSubject Subject = helper.GetSubject(cert1);
+                        DTOSubject Subject = Helper.GetSubject(cert1);
                         bool TokenExpity = false;
                         string StatusMsg = "200";
 
@@ -446,7 +446,7 @@ namespace SignService
             List<TokenDetailsDTO> tokenDetailsDTOs = new List<TokenDetailsDTO>();
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -519,7 +519,7 @@ namespace SignService
             List<TokenDetailsDTO> tokenDetailsDTOs = new List<TokenDetailsDTO>();
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                 if (fcollection.Count > 0)
                 {
@@ -595,12 +595,12 @@ namespace SignService
 
                 if (ThumbPrint == "")
                 {
-                    fcollection = await helper.GetCertificates();
+                    fcollection = await Helper.GetCertificates();
                 }
                 else
                 {
                     X509Certificate2Collection fcol = new X509Certificate2Collection();
-                    fcol = await helper.GetCertificates();
+                    fcol = await Helper.GetCertificates();
 
                     X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
                     if (selectedCertificate != null)
@@ -798,12 +798,12 @@ namespace SignService
 
                 if (ThumbPrint == "")
                 {
-                    fcollection = await helper.GetCertificates();
+                    fcollection = await Helper.GetCertificates();
                 }
                 else
                 {
                     X509Certificate2Collection fcol = new X509Certificate2Collection();
-                    fcol = await helper.GetCertificates();
+                    fcol = await Helper.GetCertificates();
 
                     X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
                     if (selectedCertificate != null)
@@ -965,12 +965,12 @@ namespace SignService
 
                 if (ThumbPrint == "")
                 {
-                    fcollection = await helper.GetCertificates();
+                    fcollection = await Helper.GetCertificates();
                 }
                 else
                 {
                     X509Certificate2Collection fcol = new X509Certificate2Collection();
-                    fcol = await helper.GetCertificates();
+                    fcol = await Helper.GetCertificates();
 
                     X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
                     if (selectedCertificate != null)
@@ -1323,8 +1323,6 @@ namespace SignService
 
             var headers = WebOperationContext.Current?.IncomingRequest?.Headers;
 
-            string origin = headers?["Origin"];
-            string referer = headers?["Referer"];
 
             try
             {
@@ -1333,7 +1331,7 @@ namespace SignService
                 X509Certificate2Collection certCollection = new X509Certificate2Collection();
 
                 X509Certificate2Collection fcol = new X509Certificate2Collection();
-                fcol = await helper.GetCertificates();
+                fcol = await Helper.GetCertificates();
 
                 if (fcol.Count == 0)
                 {
@@ -1393,8 +1391,6 @@ namespace SignService
                 saveDigitalSignInfo.ValidToken = PublicKey.TokenValid;
                 saveDigitalSignInfo.ValidFrom = PublicKey.ValidFrom;
                 saveDigitalSignInfo.ValidTo = PublicKey.ValidTo;
-                saveDigitalSignInfo.OriginForSign = origin;
-                saveDigitalSignInfo.RefererForSign = referer;
                 foreach (string filename in files)
                 {
                 nextfile:
@@ -1409,6 +1405,7 @@ namespace SignService
                     {
                         fileforloop = filename;
                     }
+
                     if (Path.GetExtension(fileforloop) == ".pdf")
                     {
 
@@ -1441,7 +1438,7 @@ namespace SignService
                                         imageData = ImageDataFactory.Create(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalSignWT.png");
                                     }
 
-                                    DTOSubject Subject =helper.GetSubject(cert1);
+                                    DTOSubject Subject =Helper.GetSubject(cert1);
 
                                   
                                    
@@ -1452,15 +1449,14 @@ namespace SignService
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
                                  
-                                    String StrSignature =await helper.GetSignature(Subject, CustomText,cert1.Thumbprint, CheckOcsp);
+                                    String StrSignature =await Helper.GetSignature(Subject, CustomText,cert1.Thumbprint, CheckOcsp);
 
                                     saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
                                     saveDigitalSignInfo.DocumentName = Path.GetFileName(FileFullName);
-                                    var match = Regex.Match(StrSignature, @"Date\s*:\s*(\d{2}-\d{2}-\d{4}\s\d{2}:\d{2}:\d{2}\s[+-]\d{2}:\d{2})");
-
+                                    var match = Regex.Match(StrSignature, @"Date\s*:\s*(?<date>[^\r\n]+)", RegexOptions.IgnoreCase);
                                     if (match.Success)
                                     {
-                                        saveDigitalSignInfo.SignedDateTime = match.Groups[1].Value;
+                                        saveDigitalSignInfo.SignedDateTime = match.Groups["date"].Value.Trim();
 
                                     }
                                     else
@@ -1611,7 +1607,7 @@ namespace SignService
                         }
                         else
                         {
-                            helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
+                            Helper.ConvertPDF(filename, NewFileName, WdSaveFormat.wdFormatPDF);
 
                         }
 
@@ -1666,7 +1662,7 @@ namespace SignService
                 X509Certificate2Collection certCollection = new X509Certificate2Collection();
 
                 X509Certificate2Collection fcol = new X509Certificate2Collection();
-                fcol = await helper.GetCertificates();
+                fcol = await Helper.GetCertificates();
 
                 X509Certificate2 selectedCertificate = fcol.Cast<X509Certificate2>().FirstOrDefault(cert => cert.Thumbprint.Equals(ThumbPrint, StringComparison.OrdinalIgnoreCase));
 
@@ -1751,7 +1747,7 @@ namespace SignService
                                         imageData = ImageDataFactory.Create(System.Reflection.Assembly.GetEntryAssembly().Location.ToString().Replace("\\DGISAPP.exe", "") + "\\DigitalSignWT.png");
                                     }
 
-                                    DTOSubject Subject = helper.GetSubject(cert1);
+                                    DTOSubject Subject = Helper.GetSubject(cert1);
                                     inputPdfStream.Position = 0;
 
                                     saveDigitalSignInfo.SerialNo = Subject.SerialNumber;
@@ -1760,7 +1756,7 @@ namespace SignService
                                     SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
                                     IList<string> sigNames = signatureUtil.GetSignatureNames();
                                     iText.Kernel.Font.PdfFont font = PdfFontFactory.CreateFont(FontProgramFactory.CreateFont(StandardFonts.TIMES_BOLD));
-                                    String StrSignature =await helper.GetSignature(Subject,CustomText,cert1.Thumbprint,false);
+                                    String StrSignature =await Helper.GetSignature(Subject,CustomText,cert1.Thumbprint,false);
                                     //String StrSignature = "";
                                     //if (CustomText != "")
                                     //    StrSignature = CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss") + " \n © Hastakshar SEWA, DGIS";
@@ -1878,7 +1874,7 @@ namespace SignService
         {
             try
             {
-                return await helper.HasInternetConnectionAsyncTest();
+                return await Helper.HasInternetConnectionAsyncTest();
             }
             catch (Exception ex)
             {
@@ -1899,7 +1895,7 @@ namespace SignService
             try
             {
 
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
 
                 if (fcollection.Count == 0)
@@ -2083,7 +2079,7 @@ namespace SignService
                         X509Certificate2 certificate = new X509Certificate2(certBytes);
                         certificates.Add(certificate);
 
-                        DTOSubject Subject = helper.GetSubject(certificate);
+                        DTOSubject Subject = Helper.GetSubject(certificate);
 
                         ret.SignatureBy = Subject.SerialNumber + " (" + Subject.Name + ") ";
 
@@ -2177,7 +2173,7 @@ namespace SignService
             TokenDetails TokenDetailList = new TokenDetails();
             try
             {
-                X509Certificate2Collection fcollection = await helper.GetCertificates();
+                X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                 if (fcollection.Count == 0)
                 {
@@ -2205,7 +2201,7 @@ namespace SignService
                         cert1 = X509Certificate2UI.SelectFromCollection(fcollection, "Caption", "Message", X509SelectionFlag.SingleSelection)[0];
                     }
 
-                    DTOSubject Subject = helper.GetSubject(cert1);
+                    DTOSubject Subject = Helper.GetSubject(cert1);
 
                     bool TokenValidity = false;
                     string Remark = "";
@@ -2404,7 +2400,7 @@ namespace SignService
 
             int processedFiles = 0;
             int ret1=0;
-            X509Certificate2Collection fcollection = await helper.GetCertificates();
+            X509Certificate2Collection fcollection = await Helper.GetCertificates();
             X509Certificate2 cert1 = null;
             if (fcollection.Count == 1)
             {
@@ -3666,7 +3662,7 @@ namespace SignService
                     }
                     else
                     {
-                        helper.ConvertPDF(path, NewFileName, WdSaveFormat.wdFormatPDF);
+                        Helper.ConvertPDF(path, NewFileName, WdSaveFormat.wdFormatPDF);
                     } 
                     goto nextfile; 
                 } 

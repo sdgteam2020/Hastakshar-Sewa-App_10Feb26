@@ -6,13 +6,11 @@ using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using Document = Microsoft.Office.Interop.Word.Document;
-using static ValidateCertificate.ValidateCert;
 namespace SignService.Helpers
 {
-    public static class helper
+    public static class Helper
     {
         public static void ConvertPDF(string inputpath, string outputPath, WdSaveFormat format)
         {
@@ -101,9 +99,7 @@ namespace SignService.Helpers
         {
             string[] SubjectSplit = cert.Subject.Split(',');
             DTOSubject dTOSubject = new DTOSubject();
-            string StrName = "";
-            string StrICNo = "";
-            string StrRank = "";
+           
             for (int i = 0; i < SubjectSplit.Length; i++)
             {
                 if (SubjectSplit[i].Contains("SERIALNUMBER="))
@@ -125,9 +121,9 @@ namespace SignService.Helpers
                 if (OcspStatus == false)
                     StrSignature = "Offline Sign \n\n";
                 if (CustomText != "")
-                    StrSignature += CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTimeOffset.Now.ToString() + " \n © Hastakshar SEWA, DGIS";
+                    StrSignature += CustomText + "\n\n Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:sszzz") + " \n © Hastakshar SEWA, DGIS";
                 else
-                    StrSignature += "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTimeOffset.Now.ToString() + " \n © Hastakshar SEWA, DGIS";
+                    StrSignature += "Digitally Signed by \n " + Subject.Rank + " " + Subject.Name + " \n Date : " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:sszzz") + " \n © Hastakshar SEWA, DGIS";
 
                 return StrSignature;
             }
@@ -136,6 +132,7 @@ namespace SignService.Helpers
                 return null;
             }
         }
-       
+
+        
     }
 }

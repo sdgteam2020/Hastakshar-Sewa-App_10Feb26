@@ -2,6 +2,7 @@
 using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using SignService;
+using SignService.Enums;
 using SignService.Helpers;
 using SignService.HttpClients;
 using System;
@@ -175,8 +176,22 @@ namespace DGISApp
 
                 ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
                 DownloadPath = System.IO.Path.GetDirectoryName(path);
-
+               
                 FileInfo fi = new FileInfo(path);
+                
+                DocumentValidationResult validationResult =     FileValidationHelper.ValidateDocumentFile(path);
+
+
+                if (validationResult != DocumentValidationResult.Valid)
+                {
+                    FileValidationHelper.ShowFileValidationMessage(
+                        validationResult,
+                        path);
+
+                    continue;
+                }
+
+
                 if (fi.Length <= 524288000)
                 {
                     byte[] expectedHeader = System.Text.Encoding.UTF8.GetBytes("ASDC_AESGCM256");

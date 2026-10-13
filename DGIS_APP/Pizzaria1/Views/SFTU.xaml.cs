@@ -1366,7 +1366,7 @@ namespace DGISAPP.Views
                 }
 
                 // ✅ Sign (background/parallel in service)
-                var (sigPath, hash) = await HugeFileSignatureService.SignPortableAsync(
+                var (sigPath, hash, signDate) = await HugeFileSignatureService.SignPortableAsync(
                      filePath, cert, UpdateProgress, remark);
                 //string sigPath = await HugeFileSignatureService.SignPortableAsync(
                 //    filePath, cert, UpdateProgress, remark);
@@ -1374,7 +1374,7 @@ namespace DGISAPP.Views
                 if (!string.IsNullOrEmpty(sigPath))
                 {
                     saveDigitalSignInfo = new DTOSaveDigitalSignInfo();
-                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString("dd-MMM-yyyy HH:mm:ss");//for all signed document same date time in case of bulk sign
+                    saveDigitalSignInfo.SignedDateTime = signDate;//for all signed document same date time in case of bulk sign
                    
                     if (tokenDetails.Public_Key == null)
                     {
@@ -1387,7 +1387,7 @@ namespace DGISAPP.Views
                     saveDigitalSignInfo.ValidTo = tokenDetails.ValidTo;
                     saveDigitalSignInfo.OriginForSign = origin;
                     saveDigitalSignInfo.RefererForSign = referer;
-                    saveDigitalSignInfo.SerialNo = helper.GetSubject(cert).SerialNumber;
+                    saveDigitalSignInfo.SerialNo = Helper.GetSubject(cert).SerialNumber;
                     saveDigitalSignInfo.DocumentName = Path.GetFileName(sigPath);
 
                 }
