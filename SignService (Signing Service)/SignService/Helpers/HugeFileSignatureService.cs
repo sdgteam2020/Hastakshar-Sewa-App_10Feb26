@@ -44,7 +44,7 @@ namespace SignService.Helpers
 
                 var chain = BuildCertChain(cert);
 
-                var signDate=DateTimeOffset.Now.ToString();
+                var signDate=DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:sszzz");
 
                 var sigObj = new PortableSig
                 {
