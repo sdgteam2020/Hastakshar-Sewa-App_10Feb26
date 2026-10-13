@@ -1531,7 +1531,7 @@ namespace DGISAPP.Views
                                     string fileName = fi.Name.Substring(0, targetIndex);
                                     filePath = DownloadPath + "\\" + fileName;
                                     //filePath = DownloadPath + "\\" + fi.Name.Split('_')[0];
-                                    X509Certificate2Collection fcollection = await helper.GetCertificates();
+                                    X509Certificate2Collection fcollection = await Helper.GetCertificates();
 
                                     if (fcollection.Count == 0)
                                     {
