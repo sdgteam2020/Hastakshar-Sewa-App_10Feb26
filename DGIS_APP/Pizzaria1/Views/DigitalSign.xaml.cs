@@ -1052,7 +1052,7 @@ namespace DGISApp
                 {
                     try
                     {
-                        IExternalSignature es = new X509Certificate2Signature(cert1, "SHA-1", ref message);
+                        IExternalSignature es = new X509Certificate2Signature(cert1, "SHA-256", ref message);
                         if (message != null)
                         {
                             this.Dispatcher.Invoke(new Action(() => MyMessageBox.ShowDialog(message)));

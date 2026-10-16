@@ -35,22 +35,31 @@ namespace MyApp
 
         public virtual byte[] Sign(byte[] message)
         {
-            try
+            if (certificate == null)
+                throw new CryptographicException(
+                    "Signing certificate is null.");
+
+            if (message == null || message.Length == 0)
+                throw new ArgumentException(
+                    "Signing data is empty.", nameof(message));
+
+            using (RSA rsa = certificate.GetRSAPrivateKey())
             {
-                if (certificate.PrivateKey is RSACryptoServiceProvider)
-                {
-                    RSACryptoServiceProvider rsa = (RSACryptoServiceProvider)certificate.PrivateKey;
-                    return rsa.SignData(message, hashAlgorithm);
-                }
-                else
-                {
-                    DSACryptoServiceProvider dsa = (DSACryptoServiceProvider)certificate.PrivateKey;
-                    return dsa.SignData(message);
-                }
-            }
-            catch(Exception )
-            {
-                return null;
+                if (rsa == null)
+                    throw new CryptographicException(
+                        "RSA private key is unavailable. Check DSC token.");
+
+                byte[] signature = rsa.SignData(
+                    message,
+                    HashAlgorithmName.SHA256,
+                    RSASignaturePadding.Pkcs1
+                );
+
+                if (signature == null || signature.Length == 0)
+                    throw new CryptographicException(
+                        "DSC signing returned empty signature.");
+
+                return signature;
             }
         }
 
