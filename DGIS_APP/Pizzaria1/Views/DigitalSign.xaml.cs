@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -1032,14 +1033,18 @@ namespace DGISApp
                 byte[] textBytes = Encoding.UTF8.GetBytes(PublicKey.Public_Key);
 
                 var match = Regex.Match(StrSignature, @"Date\s*:\s*(?<date>[^\r\n]+)", RegexOptions.IgnoreCase);
-                if (match.Success)
+                if (match.Success && DateTimeOffset.TryParseExact(match.Groups["date"].Value.Trim(), "yyyy-MM-dd HH:mm:sszzz",    
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out DateTimeOffset signedDate))
                 {
-                    saveDigitalSignInfo.SignedDateTime = match.Groups["date"].Value.Trim();
-
+                    saveDigitalSignInfo.SignedDateTime =
+                        signedDate.ToString("O", CultureInfo.InvariantCulture);
                 }
                 else
                 {
-                    saveDigitalSignInfo.SignedDateTime = DateTime.Now.ToString();
+                    saveDigitalSignInfo.SignedDateTime =
+                        DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture);
                 }
                 saveDigitalSignInfo.PublicKey = Convert.ToBase64String(textBytes);
                 saveDigitalSignInfo.ValidToken = PublicKey.TokenValid;

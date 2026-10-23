@@ -236,53 +236,86 @@ namespace SignService.Security
         }
 
         public async Task<T> PostJsonAsync<T>(
-            string endpoint,
-            object postData,
-            string domainId,
-            string ipAddress,
-            string clientKey,
-            CancellationToken ct = default)
+       string endpoint,
+       object postData,
+       string domainId,
+       string ipAddress,
+       string clientKey,
+       CancellationToken ct = default)
         {
-            ct.ThrowIfCancellationRequested();
-
-            await EnsureTokenAsync(
-                domainId,
-                ipAddress,
-                clientKey,
-                ct
-            ).ConfigureAwait(false);
-
-            var result = await PostOnceAsync<T>(
-                endpoint,
-                postData,
-                ct
-            ).ConfigureAwait(false);
-
-            // Safe retry for 401 because authorization was rejected.
-            if (result.isUnauthorized)
+            try
             {
-                await ForceRefreshTokenAsync(
+                ct.ThrowIfCancellationRequested();
+
+                // Step 1: Ensure a valid device JWT token.
+                await EnsureTokenAsync(
                     domainId,
                     ipAddress,
                     clientKey,
                     ct
                 ).ConfigureAwait(false);
 
-                result = await PostOnceAsync<T>(
+                // Step 2: Send the API request.
+                var result = await PostOnceAsync<T>(
                     endpoint,
                     postData,
                     ct
                 ).ConfigureAwait(false);
-            }
 
-            if (!result.isSuccess)
+                // Step 3: Refresh JWT only when HTTP 401 occurs.
+                if (result.isUnauthorized)
+                {
+                    await ForceRefreshTokenAsync(
+                        domainId,
+                        ipAddress,
+                        clientKey,
+                        ct
+                    ).ConfigureAwait(false);
+
+                    // Retry only once.
+                    result = await PostOnceAsync<T>(
+                        endpoint,
+                        postData,
+                        ct
+                    ).ConfigureAwait(false);
+                }
+
+                // Step 4: Handle unsuccessful responses.
+                if (!result.isSuccess)
+                {
+                    string errorMessage =
+                        result.errorMessage ??
+                        "HTTP request failed.";
+
+                    throw new HttpRequestException(errorMessage);
+                }
+
+                // Step 5: Return successful API response.
+                return result.value;
+            }
+            catch (OperationCanceledException)
+                when (ct.IsCancellationRequested)
             {
-                throw new HttpRequestException(
-                    result.errorMessage ??
-                    "HTTP request failed.");
+                // Do not log expected cancellation as an error.
+                throw;
             }
+            catch (Exception ex)
+            {
+                try
+                {
+                    ErrorLog.LogErrorToFile(
+                        ex,
+                        "DEVICE-JWT POST JSON FAILED\n" +
+                        $"Endpoint={endpoint}\n"
+                    );
+                }
+                catch
+                {
+                    // Logging must not hide the original exception.
+                }
 
-            return result.value;
+                throw;
+            }
         }
 
         private async Task ForceRefreshTokenAsync(

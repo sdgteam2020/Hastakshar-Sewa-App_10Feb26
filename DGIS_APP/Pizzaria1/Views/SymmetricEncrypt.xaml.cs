@@ -1,4 +1,4 @@
-﻿ 
+﻿
 using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using SignService;
@@ -11,10 +11,13 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Xml;
@@ -26,7 +29,8 @@ namespace DGISApp
     {
         string[] droppedFilePaths = null;
         string download = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
-
+        private int _searchVersion = 0;
+        private bool _searchMessageShown = false;
         Aes myAes = Aes.Create();
 
 
@@ -176,10 +180,10 @@ namespace DGISApp
 
                 ConfigurationManager.AppSettings["LastSelectedLocation"] = System.IO.Path.GetDirectoryName(path);
                 DownloadPath = System.IO.Path.GetDirectoryName(path);
-               
+
                 FileInfo fi = new FileInfo(path);
-                
-                DocumentValidationResult validationResult =     FileValidationHelper.ValidateDocumentFile(path);
+
+                DocumentValidationResult validationResult = FileValidationHelper.ValidateDocumentFile(path);
 
 
                 if (validationResult != DocumentValidationResult.Valid)
@@ -435,62 +439,166 @@ namespace DGISApp
             }
         }
 
-        private async void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
+        private async void txtSearch_TextChanged( object sender, TextChangedEventArgs e)
         {
-            textpassword.Password = "";
+            int currentSearchVersion = ++_searchVersion;
 
-            string query = (txtSearch.Text ?? "").Trim().ToLower();
-
-            if (string.IsNullOrWhiteSpace(query))
+            try
             {
-                ShowSuggestions(false);
-                return;
-            }
+                textpassword.Password = "";
 
-            if (RArmyNo.IsChecked != true)
-            {
-                ShowSuggestions(false);
-                return;
-            }
+                string query = (txtSearch.Text ?? "")
+                    .Trim()
+                    .ToLowerInvariant();
 
-            DTOApiCall datatopost = new DTOApiCall();
-
-            if (RArmyNo.IsChecked == true)
-                datatopost.ArmyNo = query;
-            else
-                datatopost.Name = query;
-
-            var filteredList = await new ApiClient().PostRequestAsync("api/transaction/search", datatopost);
-
-            if (filteredList != null)
-            {
-                List<SuggestionItem> listdata = new List<SuggestionItem>();
-
-                foreach (var item in filteredList)
+                if (string.IsNullOrWhiteSpace(query))
                 {
-                    SuggestionItem data = new SuggestionItem();
-                    data.Text = item.SerialNo;
-
-                    byte[] bytes = Convert.FromBase64String(item.Public_Key);
-                    data.Value = Encoding.UTF8.GetString(bytes);
-
-                    listdata.Add(data);
+                    _searchMessageShown = false;
+                    lstSuggestions.ItemsSource = null;
+                    ShowSuggestions(false);
+                    return;
                 }
 
-                if (listdata.Count > 0)
-                {
-                    lstSuggestions.ItemsSource = listdata;
-                    ShowSuggestions(true);
-                }
-                else
+                if (RArmyNo.IsChecked != true)
                 {
                     ShowSuggestions(false);
+                    return;
                 }
-            }
-            else
-            {
+
                 ShowSuggestions(false);
 
+                // Debounce search
+                await Task.Delay(350);
+
+                // Ignore outdated requests
+                if (currentSearchVersion != _searchVersion ||
+                    RArmyNo.IsChecked != true)
+                {
+                    return;
+                }
+
+                // Validate search input
+                if (!Regex.IsMatch(query, @"^[A-Za-z0-9]{1,64}$"))
+                {
+                    lstSuggestions.ItemsSource = null;
+                    ShowSuggestions(false);
+
+                    if (!_searchMessageShown)
+                    {
+                        _searchMessageShown = true;
+
+                        MyMessageBox.ShowDialog(
+                            "Invalid search. Please enter only letters and numbers.");
+                    }
+
+                    return;
+                }
+
+                DTOApiCall datatopost = new DTOApiCall();
+
+                if (RArmyNo.IsChecked == true)
+                    datatopost.ArmyNo = query;
+                else
+                    datatopost.Name = query;
+
+                // Call API
+                var filteredList = await new ApiClient()
+                    .PostRequestAsync(
+                        "api/transaction/search",
+                        datatopost);
+
+                if (currentSearchVersion != _searchVersion ||
+                    RArmyNo.IsChecked != true)
+                {
+                    return;
+                }
+
+                List<SuggestionItem> listdata =
+                    new List<SuggestionItem>();
+
+                if (filteredList != null)
+                {
+                    foreach (var item in filteredList)
+                    {
+                        SuggestionItem data = new SuggestionItem();
+
+                        data.Text = item.SerialNo;
+
+                        byte[] bytes =
+                            Convert.FromBase64String(item.Public_Key);
+
+                        data.Value =
+                            Encoding.UTF8.GetString(bytes);
+
+                        listdata.Add(data);
+                    }
+                }
+
+                // No matching records
+                if (listdata.Count == 0)
+                {
+                    lstSuggestions.ItemsSource = null;
+                    ShowSuggestions(false);
+
+                    // Avoid popup on every initial keystroke
+                    if (query.Length >= 4 && !_searchMessageShown)
+                    {
+                        _searchMessageShown = true;
+
+                        MyMessageBox.ShowDialog(
+                            "No matching record found. Please check the entered Army Number.");
+                    }
+
+                    return;
+                }
+
+                // Matching records found
+                _searchMessageShown = false;
+
+                lstSuggestions.ItemsSource = listdata;
+                ShowSuggestions(true);
+            }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "SEARCH API ERROR: " + ex);
+
+                if (currentSearchVersion == _searchVersion)
+                {
+                    lstSuggestions.ItemsSource = null;
+                    ShowSuggestions(false);
+
+                    if (!_searchMessageShown)
+                    {
+                        _searchMessageShown = true;
+
+                        MyMessageBox.ShowDialog(
+                            "Unable to search records at the moment. Please try again.");
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore cancelled requests
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "SEARCH ERROR: " + ex);
+
+                if (currentSearchVersion == _searchVersion)
+                {
+                    lstSuggestions.ItemsSource = null;
+                    ShowSuggestions(false);
+
+                    if (!_searchMessageShown)
+                    {
+                        _searchMessageShown = true;
+
+                        MyMessageBox.ShowDialog(
+                            "An unexpected error occurred while searching. Please try again.");
+                    }
+                }
             }
         }
 
@@ -779,18 +887,28 @@ namespace DGISApp
 
         private void ApplySuggestion(SuggestionItem selectedItem)
         {
-            if (selectedItem == null) return;
+            if (selectedItem == null)
+                return;
+
+            ++_searchVersion;
+            _searchMessageShown = false;
 
             txtSearch.TextChanged -= txtSearch_TextChanged;
-            txtSearch.Text = selectedItem.Text;
-            txtSearch.CaretIndex = txtSearch.Text.Length;
-            txtSearch.TextChanged += txtSearch_TextChanged;
+
+            try
+            {
+                txtSearch.Text = selectedItem.Text;
+                txtSearch.CaretIndex = txtSearch.Text.Length;
+            }
+            finally
+            {
+                txtSearch.TextChanged += txtSearch_TextChanged;
+            }
 
             ShowSuggestions(false);
 
             textpassword.MaxLength = 5000;
             textpassword.Password = selectedItem.Value;
-
             textpassword.Visibility = Visibility.Visible;
         }
 
