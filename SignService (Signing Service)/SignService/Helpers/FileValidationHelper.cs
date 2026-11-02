@@ -295,37 +295,37 @@ namespace SignService.Helpers
             {
                 case DocumentValidationResult.FileNotFound:
 
-                    MyMessageBox.ShowDialog($"File not found.\n\nFile: {fileName}");
+                    MyMessageBox.ShowDialog($"File not found.\nFile: {fileName}");
 
                     break;
 
                 case DocumentValidationResult.ZeroByte:
 
-                    MyMessageBox.ShowDialog($"The selected file is empty (0 byte).\n\nFile: {fileName}\n\nPlease select a valid document.");
+                    MyMessageBox.ShowDialog($"The selected file is empty (0 byte).\nFile: {fileName}\nPlease select a valid document.");
 
                     break;
 
                 case DocumentValidationResult.TooLarge:
 
-                    MyMessageBox.ShowDialog($"File size is too large.\n\nFile: {fileName}\n\nPlease select a file less than 500 MB.");
+                    MyMessageBox.ShowDialog($"File size is too large.\nFile: {fileName}\nPlease select a file less than 500 MB.");
 
                     break;
 
                 case DocumentValidationResult.PasswordProtected:
 
-                    MyMessageBox.ShowDialog($"The selected document is password protected or encrypted.\n\nFile: {fileName}\n\nPlease remove the password/encryption and try again.");
+                    MyMessageBox.ShowDialog($"The selected document is password protected or encrypted.\nFile: {fileName}\nPlease remove the password/encryption and try again.");
 
                     break;
 
                 case DocumentValidationResult.Corrupted:
 
-                    MyMessageBox.ShowDialog($"The selected document is corrupted or unreadable.\n\nFile: {fileName}\n\nPlease select a valid PDF or Word document.");
+                    MyMessageBox.ShowDialog($"The selected document is corrupted or unreadable.\nFile: {fileName}\nPlease select a valid PDF or Word document.");
 
                     break;
 
                 case DocumentValidationResult.Unsupported:
 
-                    MyMessageBox.ShowDialog($"Unsupported file type.\n\nFile: {fileName}\n\nOnly PDF, DOC and DOCX files are allowed.");
+                    MyMessageBox.ShowDialog($"Unsupported file type.\nFile: {fileName}\nOnly PDF, DOC and DOCX files are allowed.");
 
                     break;
             }
